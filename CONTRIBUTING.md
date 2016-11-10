@@ -12,7 +12,7 @@ If you wish to supply actual code examples in the LaTeX format, I ask that you u
 #
 # An example command...
 #
-&iquest;\tld&iquest; pwd &#955
+&iquest;\tld&iquest; pwd &#955;
 ```
 &#955;
 ### Linux Code
