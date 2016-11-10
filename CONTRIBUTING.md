@@ -8,13 +8,14 @@ This book is generated using the LaTeX document preparation system. I would be v
 
 If you wish to supply actual code examples in the LaTeX format, I ask that you use the same LaTeX format for the command prompt that I use throughout the document...as well as the pound symbol for lines of comment
 
-```
+```html
 #
 # An example command...
 #
 <p>&iquest;\tld&iquest; pwd &#955;</p>
 ```
 &#955;
+
 ### Linux Code
 
 Linux code should conform to standard bash syntax.
