@@ -8,13 +8,10 @@ This book is generated using the LaTeX document preparation system. I would be v
 
 If you wish to supply actual code examples in the LaTeX format, I ask that you use the same LaTeX format for the command prompt that I use throughout the document...as well as the pound symbol for comment lines.
 
-&#35;
-
-<p>&#35; An example of a bash command...print the current working directory.</p>
-
-<p>&#35;</p>
-
-<p>&#191;\tld&#191; pwd</p>
+&#35;<br>
+&#35; An example of a bash command...print the current working directory.<br>
+&#35;<br>
+&#191;\tld&#191; pwd<br>
 
 ### Linux Code
 
