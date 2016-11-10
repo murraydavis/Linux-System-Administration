@@ -14,7 +14,7 @@ If you wish to supply actual code examples in the LaTeX format, I ask that you u
 #
 &iquest;\tld&iquest; pwd &#955
 ```
-
+&#955;
 ### Linux Code
 
 Linux code should conform to standard bash syntax.
