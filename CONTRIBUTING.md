@@ -6,15 +6,12 @@ This document provides guidelines for suggesting changes to this Linux System Ad
 
 This book is generated using the LaTeX document preparation system. I would be very pleased to receive recommendations on how to improve the quality of the final product, the PDF document called main.pdf. Thus, I would happily countenance suggestions that would improve the quality of the  typesetting and general appearance.
 
-If you wish to supply actual code examples in the LaTeX format, I ask that you use the same LaTeX format for the command prompt that I use throughout the document...as well as the pound symbol for lines of comment
+If you wish to supply actual code examples in the LaTeX format, I ask that you use the same LaTeX format for the command prompt that I use throughout the document...as well as the pound symbol for comment lines.
 
-```html
 #
-# An example command...
+# An example of a bash command...
 #
-<p>&iquest;\tld&iquest; pwd &#955;</p>
-```
-&#955;
+&#191;\tld&#191; pwd
 
 ### Linux Code
 
