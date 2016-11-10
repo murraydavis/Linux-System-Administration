@@ -4,3 +4,15 @@
 *.toc
 *.tdo
 *.log
+*.lof
+*.nlg
+*.nlo
+*.nls
+*.gz
+*.ilg
+*.ind
+*.tex
+*.pdf
+*.html
+*.lot
+*.txt
