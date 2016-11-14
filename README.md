@@ -2,7 +2,7 @@
 
 Mastering The Command Line - A Latex Compiled Document
 
-The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you can simply download and read the main.pdf document. But, ugh, github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly . I will research how to fix this, but for now, save main.pdf.fdp as main.pdf on your local system.
+The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you can simply download and read the main.pdf document. But, ugh, github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly . I will research how to fix this, but for now, you can only download all the code and compile to get a working version.
 
 ### Compile Steps using TeXstudio
 
