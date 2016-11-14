@@ -10,9 +10,15 @@ If you wish to supply actual code examples in the LaTeX format, I ask that you u
 
 &#35;<br>
 &#35; An example of a bash command...print the current working directory.<br>
-&#35; The best way to typeset a command prompt that appears as a tilde ~ centered inside square brackets is to use my LateX macro: \newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}<br>
-&#35;<br>
+&#35; The best way to typeset a command prompt that appears as a tilde [~] centered inside square brackets is to use my LateX macro: \newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}<br>
+&#35;<br> 
 &#191;\tld&#191; pwd<br>
+&#35; The upside down question marks is a feature of the lstlisting package. At the start of each code section, I define typesetting properties.<br>
+&#35; If bash command output is not in tabular form.<br>
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]<br>
+&#35; If bash command output is in tabular form.<br>
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]<br>
+&#35;<br>
 
 ### Linux Code
 
