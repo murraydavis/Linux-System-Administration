@@ -17,18 +17,18 @@ The best way to typeset a command prompt in LaTeX so that it appears as a tilde 
 ```
 \newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}<br>
 ```
-So, when compiled the above code will appear as the following in the main.pdf document.
+So, when compiled, the above code will appear as the following in the main.pdf document. Actually, the appearance of this markdown document is not quite correct, the tilde is not quite centered where as in the main.pdf document, the tilde is centered.
 
 &#35;<br>
 &#35; An example of a bash command...print the current working directory.<br>
 &#35;<br>
 [~] pwd<br>
 
-The upside down question marks is a feature of the lstlisting package. At the start of each code section, I define typesetting properties. If bash command output is not in tabular form...<br>
+The upside down question marks is a feature of the lstlisting package. At the start of each code section, I define typesetting properties for when bash command output is not in tabular form...<br>
 ```
 \begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
 ```
-If bash command output is in tabular form...<br>
+If bash command output is in tabular form, I must add an additional instruction.<br>
 ```
 \begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
 ```
@@ -46,11 +46,11 @@ Please provide appropriate URL links to original sources so that we can uphold t
 
 * Read the entire book first. You may have a good idea and want to contribute something important. However, it is possible that I have covered your area of interest in a later section of the book. Perform a cursory search for your topic or for a keyword.
 
-* Finding spelling errors and identifying poor grammar usage. I hold the old-school belief that spelling mistakes and poor implementation of the rules of grammar impede the flow of ideas and distract the reader. I am not holding myself out as a paragon of good writing, but I do strive with a perfectionist edge towards the goal of writing intelligently and correctly.
+* Find spelling errors and identify poor grammar usage. I hold the old-school belief that spelling mistakes and poor implementation of the rules of grammar impede the flow of ideas and distract the reader. I am not holding myself out as a paragon of good writing, but I do strive with a perfectionist edge towards the goal of writing intelligently and correctly.
 
-* Finding syntax errors in coding blocks. Spelling errors in the code blocks would be fatal to command execution. I may have also entered a command in a command table that is not correct and that does not work. 
+* Finding syntax errors in coding blocks. Spelling errors in the code blocks would be fatal to command execution. I may have also placed a command in a command table that is not correct and that does not work. 
 
-* I have included a todo list at the back of the book. Any help completing this list would be appreciated. Actually, this is not a great place for a todo list. I will eventually move it to a 'Task List' in the github repository.
+* I included a todo list at the back of the book. Any help completing this list would be appreciated. Actually, this is not a great place for a todo list. I will eventually move it to a 'Task List' in the github repository.
 
 #### How to submit or make a contribution
 
