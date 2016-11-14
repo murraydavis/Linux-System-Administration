@@ -2,7 +2,7 @@
 
 Mastering The Command Line - A Latex Compiled Document
 
-The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you cannot simply download and read the main.pdf document. github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly. You can download the whole repository. Click on the green button "Clone or download". Download the zip file, go to the download, unzip the file, and then launch it with firefox.
+The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you cannot simply download and read the main.pdf document. github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly. The easiest way to get the main.pdf document is just to download the whole repository. Click on the green button "Clone or download". Download the zip file, go to the download folder, unzip the zip file, cd into the unzipped folder, and then launch main.pdf with firefox. Those familiar with github can of course simply clone the repository using either SSH or HTTPS.
 
 ```
 unzip Linux-System-Administration-master.zip
