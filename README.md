@@ -7,7 +7,7 @@ The documents in this GitHub repository will allow you to compile a LaTeX packag
 ```
 unzip Linux-System-Administration-master.zip
 cd Linux-System-Administration-master/
-firefox main.zip &
+firefox main.pdf &
 ```
 
 ### Compile Steps using TeXstudio
