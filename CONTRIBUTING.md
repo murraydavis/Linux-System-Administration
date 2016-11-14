@@ -1,6 +1,6 @@
 ### Guidelines for Contributors
 
-This document provides guidelines for suggesting changes to this Linux System Administion project. The rules are few and fairly simple.
+This document provides guidelines for suggesting changes to this Linux System Administration project. The rules are few and fairly simple.
 
 ### LaTeX
 
@@ -10,6 +10,7 @@ If you wish to supply actual code examples in the LaTeX format, I ask that you u
 
 &#35;<br>
 &#35; An example of a bash command...print the current working directory.<br>
+&#35; The best way to typeset a command prompt that appears as a tilde ~ centered inside square brackets is to use my LateX macro: \newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}<br>
 &#35;<br>
 &#191;\tld&#191; pwd<br>
 
