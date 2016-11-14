@@ -1,0 +1,463 @@
+\chapter{dnf}
+\pagestyle{fancy}
+\label{ch:dnf}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+All RPM-based Linux distributions such as RHEL, CentOS, and Fedora use the \keyword{dnf} package manager. The previous package manager was called \keyword{yum}, which stood for \href{https://en.wikipedia.org/wiki/Yellowdog\_Updater,\_Modified}{\emph{Yellowdog Updater, Modified}}. \emph{dnf} or \emph{dandified yum} is just the next generation of the RPM-based package manager.
+
+The manpage for \emph{dnf} is quite extensive. Likely, you will only use a very limited subset of the available commands. \emph{dnf} is basically used to keep your system up-to-date as well as managing each application: installs, removes, changing versions, etc.
+
+In the table below, I list the commands that I frequently use to manage packages. Some of these commands are available to all non-root users such as the search and info options. You may want to create an alias to simpify things: \emph{alias dnf=\tqs{sudo dnf}}.
+
+\section{Table of dnf commands}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{dnf commands}\label{table:dnf-commands}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+\textit{\color{red}How to install a package} &\\[2mm]
+dnf install pkgname & Install a specific package. You do not have to append the architecture.\\[3mm]
+	
+\textit{\color{red}How to downgrade a package} & \\[2mm]
+dnf downgrade pkgname & Only downgrade this one package, no others.\\[3mm]
+	
+\textit{\color{red}How to remove a package} & \\[2mm]
+dnf remove pkgname & Remove a specific package.\\[2mm]
+dnf autoremove &  Remove any legacy packages that are no longer required. These packages may have been installed as pre-requisites for other packages which have been removed from the system.\\[3mm]
+	
+\textit{\color{red}How to update system \& all packages} & \\[2mm]
+dnf update & Update all packages.\\[2mm]
+dnf update -x texlive-minted & Update all packages except \emph{texlive-minted}. I had an alias for this command so that the \emph{texlive-minted} package was never updated.\\[2mm]
+dnf update pkgname.x86\_64 & Only update this one package, no others, specifying the system architecture.\\[2mm]
+dnf update pkgname & Only update this one package, no others. There is no need to append architecture. The kernel figures this out.\\[2mm]
+dnf check-updates & Just check and show pending updates, don't start the installation process.\\[3mm]
+	
+\textit{\color{red}How to search} & \\[2mm]
+dnf search pkgname & Search for all packages with the string \emph{pkgname} in the full package name or in the brief description of the package.\\[3mm]
+	
+\textit{\color{red}How to get info} & \\[2mm]
+dnf info pkgname & Get basic information on \emph{pkgname} such as version and release number, summary, and description.\\[3mm]
+dnf provides /path/to/command & What package provided this command? Commands that you typically find in \textsl{/usr/bin} and \textsl{/usr/sbin}.\\[3mm]
+	
+\textit{\color{red}How to list} & \\[2mm]
+dnf list installed & Get a list of all packages installed on the system.\\[2mm]
+dnf list installed | wc -l & Get a count of the number of packages installed on the system...approximate only.\\[2mm]
+dnf list installed | sed \tqs{1,2d} | sed -e \emph{/\textasciicircum{} /d} | wc -l & Remove the count of the first two lines since they are only headers and remove any line beginning with a space. Packages with long names wrap around two lines with the second line begining with a space...accurate.\\[2mm]
+dnf list installed | grep pkgname & Is \emph{pkgname} installed?\\[2mm]
+dnf list installed pkgname & Is \emph{pkgname} installed? There is no need to use grep. If package is installed, there are three columns of info: package name, version \& release info, and source of package.\\[2mm]
+dnf list & Display available (still not installed) and installed packages: three columns: package name c/w architecture, version and release numbers, source of package.\\[2mm]
+dnf list | awk \tqs{\{print \$3\}} | sort | uniq & We only want a distinct listing of the sources used to install packages. We can then use the output to grep categories as shown below.\\[2mm]
+dnf list available & List all packages that are availble to install...that haven't been installed.\\[2mm]
+dnf list available | grep updates & Another way of finding pending updates.\\[2mm]
+dnf list available | grep @updates & What packages were installed as part of an update?\\[2mm]
+dnf list available | grep pkgname & List both 32-bit and 64-bit packages for \emph{pkgname}.\\[2mm]
+dnf list available pkgname & Same as above, \emph{grep} is not needed when referring to specific packages.\\[2mm]
+dnf list available | grep pkgname.x86\_64 & Only list the 64-bit package. Or, simply \emph{grep pkgname.x*}.\\[2mm]
+dnf list available pkgname.x* & Again, grep is not needed.\\[2mm]
+dnf list available | grep pkgname.i686 & Only list the 32-bit package.\\[2mm]
+dnf list available pkgname.i* & Same as above.\\[2mm]
+dnf list available | grep updates | less & What updates are available? Use the spacebar to scroll through the list.\\[2mm]
+dnf list | grep @@commandline & This will list packages installed from the command line...including any dependencies installed with the root package. You must use \emph{grep}.\\[2mm]
+dnf list installed | grep *string* & You may not remember the correct package name, but only a part of the package name.\\[2mm]
+dnf list installed *string* & Fewer characters to type!\\[3mm]
+\bottomrule
+\end{tabularx}
+
+\section{Package groups}
+
+According to the \tbi{dnf} manpage, \tbi{groups} are defined as virtual collections of packages. 
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{dnf groups}\label{table:dnf-groups-commands}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+\textit{\color{red}How to manage package groups} & \\[2mm]
+dnf group list & List all group packages. Some packages are installed not individually but as part of a collection of packages. The output for this command is separated into three categories: Available environment groups, Installed groups, and Available groups. Alternate forms of this command: dnf grouplist, dnf groups list, but not dnf groupslist.\\[2mm] 
+dnf grouplist | grep \tqs{   } | while read line; do dnf groupinfo "\$line"; done & This code was snagged from...\href{http://unix.stackexchange.com/questions/236935/dnf-how-to-find-which-group-package-belongs-to}{List the individual packages contained in each package group}. Note: You are grepping 3 blank spaces.\\[4mm]
+dnf grouplist | grep grppkgname | grep \tqs{   } | while read line; do dnf groupinfo "\$line"; done & List the packages that make up the package group  \emph{grppkgname}.\\[6mm]
+dnf groupinfo grppkgname & The above command was just listed for illustration, you would not actually use it. You would use this command. \\[2mm]
+dnf group remove grppkgname & Remove the \emph{grppkgname} group.\\[6mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{Listing package groups}
+
+In the code below, when I want a verbose listing of group packages, I use a \emph{grep after} option to deal with a wonky issue that I believe is a \emph{dnf} bug related to non-standard Fedora packages. Without the \emph{grep after} option, I get about 30 lines of what looks like error codes. It is possible that I somehow foobarred my PC and thus the error codes are unique to my PC.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ dnf group list
+Last metadata expiration check performed 0:21:39 ago on Tue Feb  2 07:33:47 2016.
+¿\color{red}{Available environment groups:}¿
+Minimal Install
+Fedora Server
+Fedora Workstation
+.
+.
+Web Server
+Infrastructure Server
+Basic Desktop
+¿\color{red}{Available groups:}¿
+Administration Tools
+Audio Production
+Authoring and Publishing
+Books and Guides
+.
+.
+Window Managers
+#
+# There is also a verbose version of this command...that generates some error messages similar to those below that appear right before the 'Available environment groups'.
+#
+¿\tld¿ dnf grouplist -v
+cachedir: /var/tmp/dnf-murrayda-vChWtb
+Loaded plugins: download, config-manager, needs-restarting, 
+DNF version: 1.1.6
+repo: using cache for: fedora
+not found deltainfo for: Fedora 23 - x86\_64
+not found updateinfo for: Fedora 23 - x86\_64
+.
+.
+google-chrome: using metadata from Thu Feb 11 09:51:16 2016.
+Last metadata expiration check performed 0:09:18 ago on Tue Feb 16 09:53:14 2016.
+group persistor md version: 0.6.0
+¿\color{red}{Available environment groups:}¿
+Minimal Install (minimal-environment)
+Fedora Server (server-product-environment)
+.
+.
+¿\color{red}{Installed groups:}¿
+Editors (editors)
+¿\color{red}{Available groups:}¿
+Administration Tools (admin-tools)
+Audio Production (audio)
+.
+.
+3D Printing (3d-printing)
+Window Managers (window-managers)
+¿\color{red}{Available language groups:¿|
+Oriya Support (oriya-support) [or]
+Arabic Support (arabic-support) [ar]
+.
+.
+Vietnamese Support (vietnamese-support) [vi]
+Yiddish Support (yiddish-support) [yi]
+#
+# Ok, let's get rid of the error codes using the 'grep after' option. The output is listed with two names: Formal name (common name).
+#
+¿\tld¿ dnf grouplist -v | grep -A300 "Available environment groups"
+¿\color{red}{Available environment groups:}¿
+Minimal Install (minimal-environment)
+Fedora Server (server-product-environment)
+.
+.
+Basic Desktop (basic-desktop-environment)
+¿\color{red}{Installed groups:}¿
+Editors (editors)
+¿\color{red}{Available groups:}¿
+Administration Tools (admin-tools)
+Anaconda tools (anaconda-tools)
+Audio Production (audio)
+Authoring and Publishing (authoring-and-publishing)
+Books and Guides (books)
+.
+.
+XMonad (xmonad)
+XMonad for MATE (xmonad-mate)
+¿\color{red}{Available language groups:}¿
+Oriya Support (oriya-support) [or]
+Arabic Support (arabic-support) [ar]
+.
+.
+Vietnamese Support (vietnamese-support) [vi]
+Yiddish Support (yiddish-support) [yi]
+#
+# We can then use the verbose naming convention's common name instead of the formal name in our commands. You need to enclose formal names that have spaces inside double quotes.
+#
+¿\tld¿ dnf groupinfo "Books and Guides"
+Last metadata expiration check performed 0:05:14 ago on Tue Feb 16 09:53:14 2016.
+
+Group: Books and Guides
+Description: Books and Guides for Fedora users and developers
+Default Packages:
+diveintopython
+javanotes
+ldd-pdf
+#
+# It is much easier to use the common names provided by the verbose, group list. For example, under Available Groups, we see Books and Guides (books), where books is the common name.
+#
+¿\tld¿ dnf groupinfo books
+Last metadata expiration check performed 0:03:04 ago on Tue Feb 16 09:53:14 2016.
+
+Group: Books and Guides
+Description: Books and Guides for Fedora users and developers
+Default Packages:
+diveintopython
+javanotes
+ldd-pdf
+\end{lstlisting}
+
+\subsection{Installing package groups}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Ok, what's inside the Editors group?
+#
+¿\tld¿ dnf groupinfo editors
+Last metadata expiration check performed 0:01:03 ago on Tue Feb 16 08:58:05 2016.
+
+Group: Editors
+Description: Sometimes called text editors, these are programs that allow you to create and edit text files. This includes Emacs and Vi.
+Optional Packages:
+code-editor
+cssed
+emacs
+.
+.
+vim-enhanced
+xemacs
+.
+.
+xmlcopyeditor
+zile
+¿\tld¿ 
+#
+# Oh, look, vim-enhanced. When you go to install a group package, you may find that you have previously installed some of its components. Only those components not yet installed get installed. Let's go ahead and install the Editors group. Note, I do not show the output that the install command generates.
+#
+¿\tld¿ dnf groupinstall editors	
+#
+# Ok, let's see if we have installed any package groups. Note: sed '$d' deletes last line.
+#
+¿\tld¿ dnf group list | grep -A50 -i "installed groups" | grep -B50 -i "available groups" | sed '$d'
+Installed groups:
+Editors
+#
+# How many packages do we have installed in each group category? Note, the following command does not list the 'Available environment groups'.
+#
+¿\tld¿ dnf group summary
+Last metadata expiration check performed 0:11:28 ago on Tue Feb  2 13:41:23 2016.
+Installed Groups: 1
+Available Groups: 34
+#
+# Ok, let's play a little. Let's list our groups again...I elide the full listing for brevity. We see that we do now have a new category called 'Installed Groups'.
+#
+¿\tld¿ dnf group list
+Last metadata expiration check performed 4:58:50 ago on Mon Feb 15 09:49:37 2016.
+¿\textit{\color{red}Available environment groups:}¿
+Minimal Install
+Fedora Server
+.
+.
+Infrastructure Server
+Basic Desktop
+¿\textit{\color{red}Installed groups:}¿
+Editors
+¿\textit{\color{red}Available groups:}¿
+Administration Tools
+Audio Production
+.
+.
+3D Printing
+Window Managers
+#
+# I want a count of the number of packages in each group category. I am going to use the bc command. To understand my command, break it down in its parts. Why do I subtract two in the first two commands? Why don't I need the second 'grep' command in the last command and only subtract 1?
+#
+¿\tld¿ echo "`dnf group list | grep -A100 "Available environment groups:" | grep -B100 "Installed groups:" | wc -l` -2" | bc
+15
+¿\tld¿ echo "`dnf group list | grep -A100 "Installed groups:" | grep -B100 "Available groups:" | wc -l` -2" | bc
+1
+¿\tld¿ echo "`dnf group list | grep -A100 "Available groups:" | wc -l` -1" | bc
+34
+\end{lstlisting}
+
+Did you know that there are \keyword{hidden package groups}? 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# As we found out from the above section, when we use the verbose dnf option, we need to remove the error messages from the top of the listing.
+#
+¿\tld¿ dnf grouplist -v hidden | grep -A300 "Available environment groups"
+¿\textit{\color{red}Available environment groups:}¿
+Minimal Install (minimal-environment)
+Fedora Server (server-product-environment)
+.
+.
+Basic Desktop (basic-desktop-environment)
+¿\textit{\color{red}Installed groups:}¿
+Editors (editors)
+¿\textit{\color{red}Available groups:}¿
+Administration Tools (admin-tools)
+Anaconda tools (anaconda-tools)
+Audio Production (audio)
+.
+.
+XMonad (xmonad)
+XMonad for MATE (xmonad-mate)
+¿\textit{\color{red}Available environment groups:}¿
+Oriya Support (oriya-support) [or]
+Arabic Support (arabic-support) [ar]
+.
+.
+Urdu Support (urdu-support) [ur]
+Vietnamese Support (vietnamese-support) [vi]
+Yiddish Support (yiddish-support) [yi]
+#
+# Let's compare the number of regular or unhidden packages with the number of hidden packages. We have 50. We subtract 4, 3 four the group headings and 1 for the first line of output of 'dnf grouplist'.
+#
+¿\tld¿ echo "`dnf grouplist | wc -l` -4" | bc
+50
+#
+# Alright, how many unhidden and hidden group packages do we have? Wow, 198! We still subtract 4. We have no output heading because of the grep, but we now have an additional heading 'Available language groups:'. 
+#
+¿\tld¿ echo "`dnf grouplist -v hidden | grep -A300 "Available environment groups" | wc -l` -4" | bc
+198
+
+¿\tld¿ dnf grouplist -v hidden | grep -A300 "Available environment groups" | grep groups
+Available environment groups:
+Installed groups:
+Available groups:
+Available language groups:
+#
+# Ok, let's get the count of the individual groups. No, change in the number of 'Available environment groups' or 'Installed groups'.
+#
+¿\tld¿ echo "`dnf group list -v hidden | grep -A100 "Available environment groups:" | grep -B100 "Installed groups:" | wc -l` -2" | bc
+15
+
+¿\tld¿ echo "`dnf group list -v hidden | grep -A100 "Installed groups:" | grep -B100 "Available groups:" | wc -l` -2" | bc
+1
+#
+# Note, I have to change the after and before grep metric because the count is above 100.
+#
+¿\tld¿ echo "`dnf group list -v hidden | grep -A200 "Available groups:" | grep -B200 "Available language groups:" | wc -l` -2" | bc
+137
+#
+# And, finally...
+#
+¿\tld¿ echo "`dnf group list -v hidden | grep -A200 "Available language groups:" | wc -l` -1" | bc
+45
+\end{lstlisting}
+
+	\section{\keyword{dnf repositories}}
+
+\emph{dnf} relies on repositories and uses a global configuration file \textsl{/etc/dnf/dnf.conf} and individual \textsl{*.repo} files located in the \textsl{/etc/yum.repos.d} directory. These configuration files tell the system how to find system packages and updates. Although, you can append \emph{repo} configurations settings to the end of the  \textsl{/etc/dnf/dnf.conf} configuration file, this is not recommended. It is must easier to troubleshoot repository issues if you use separate files for each repository.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Here is  a list of my repos files...
+#
+¿\tld¿ ls /etc/yum.repos.d
+adobe-linux-x86_64.repo      hipchat.mydomain.com_clients_linux_yum.repo  rpmfusion-free-updates-testing.repo
+_copr_helber-atom.repo       home:garminplugin.repo.old                 rpmfusion-nonfree-rawhide.repo
+fedora.repo                  ozonos.repo.old                            rpmfusion-nonfree.repo
+fedora-updates.repo          playonlinux.repo                           rpmfusion-nonfree-updates.repo
+fedora-updates-testing.repo  rpmfusion-free-rawhide.repo                rpmfusion-nonfree-updates-testing.repo
+folkswithhats.repo           rpmfusion-free.repo
+google-chrome.repo           rpmfusion-free-updates.repo
+#
+# An example of a .repo file. Note: I shortened the baseurl for formatting purposes; therefore, this baseurl is incorrect.
+#
+¿\tld¿ cat _copr_helber-atom.repo 
+[helber-atom]
+name=Copr repo for atom owned by helber
+baseurl=https://copr-be.cloud.fedoraproject.org/results/helber/atom/fedora-release
+gpgcheck=1
+gpgkey=https://copr-be.cloud.fedoraproject.org/results/helber/atom/pubkey.gpg
+enabled=1
+enabled_metadata=1
+¿\tld¿ 
+
+¿\tld¿ cat /etc/dnf/dnf.conf
+[main]
+gpgcheck=1
+installonly_limit=3
+clean_requirements_on_remove=True	
+\end{lstlisting}
+
+	\subsection{Disabling a \keyword{repo}}
+
+\begin{enumerate}
+	\item{Remove the repo file from \textsl{/etc/yum.repos.d}}
+	\item{Rename the repo file's extension, i.e., \textsl{copr\_helber-atom.repo.disabled}}
+	\item{Edit the repo file and change the line \emph{enabled=1} to \emph{enabled=0}}
+\end{enumerate}
+
+% I had a heck of a time getting the table to stay with the subsection header. I have to revisit this as it is not an optimal solution in terms of typesetting. I also don't like the \newpage command.
+
+\newpage
+\subsection{Repo commands}
+
+As with any other \emph{dnf} commands, these commands require \emph{sudo privilege}.
+
+\begin{table}[!htpb]
+\caption{repo commands}
+\begin{tabular}{|>{\bfseries}l p{6cm}|}
+\hline
+\normalfont{Command} & Action \\\hline
+\textit{\color{red}How to manage repositories} & \\[2mm]
+dnf repolist & Three columns of info: repo-id, repo-name and number of packages within repo...not the number of packages installed from this repo.\\[2mm]
+dnf repository-packages repo-id list & List the packages from the specified \emph{repo-id}. Output is grouped as \emph{Installed Packages} and \emph{Available Packages}.\\[2mm]
+dnf repolist disabled & List of all repos not currently in use.\\[2mm]
+dnf repolist enabled & Same as \emph{dnf repolist}.\\[2mm]
+
+\textit{\color{red}1. How to enable repos - by reponame and user/project} & \\[2mm]
+dnf copr enable dacr/brackets & \emph{copr} is the repo, \emph{dacr} is the user, and \emph{brackets} is the project. In these three methods of enabling repositories, I am using specific examples.\\[3mm]
+dnf copr list helber & Note, to list packages for a specific user \emph{helber} from a specific repos \emph{copr.}\\[3mm]
+
+\textit{\color{red}2. How to enable repos - by repo url} & \\[2mm]
+\multicolumn{2}{|l|}{\textbf{\begin{small}dnf config-manager --add-repo=http://negativo17.org/repos/fedora-spotify.repo\end{small}}}\\
+& You may have to do a bit of hunting to find the specific link on the repo's website.\\[3mm]	
+\multicolumn{2}{|l|}{\textbf{\begin{small}su -c "wget http://rpm.playonlinux.com/ playonlinux.repo -O /etc/yum.repos.d/playonlinux.repo"\end{small}}}\\
+& Alternative, download the actual repo file and put it in the repo directory \textsl{/etc/yum.repos.d}. This is how I enabled the \emph{Playonlinux} repo.\\[3mm]
+
+\textit{\color{red}3. How to enable repos - by repo file} & \\[2mm]
+Download repo file from repo's website & The repo file is usually on the Overview page of the project. Place the \textsl{project.repo} file in \textsl{/etc/yum.repos.d} directory.\\[3mm]	
+\hline
+\end{tabular}
+\end{table}
+
+\section{Old School}
+
+It used to be a nightmare when you tried to install packages via the old \emph{RPM-Redhat Package Mangler} process. You could fight for days with dependencies and sometimes even kill your system or at least seriously damage already installed packages. Fortunately, \keyword{dnf} can handle dependencies and still use source packages that come in the form of \textsl{.rpm} files. However, there are some very useful \keyword{rpm} commands available regardless of whether or not you actually install a package using the \keyword{rpm} command. Don't forget to \emph{sudo}!
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{dnf rpm commands}\label{table:dnf-rpm-commands}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+dnf install \ttb{}Downloads/tito-0.6.2-1.fc22.noarch.rpm & This example is taken from the \emph{dnf} manpage. Of course, you would have to find this package on the maintainer's website and download it into your \textsl{Downloads} folder.\\[2mm]
+dnf install https://fedoraproject.org/tito-0.6.0-1.fc22.noarch.rpm & Or, simply install it directly from the URL. Also, taken from the manpage, but path abbreviated for formatting.\\[2mm]	
+rpm -qa --last | head -10 | sort & List the last 10 packages installed sorted by package name.\\[2mm]
+rpm -qa -{}-{}qf \tqs{\%\{NAME\} \%\{VENDOR\}\textbackslash{}n} | grep -v "Fedora Project" & List all packages that are installed that are not \emph{Fedora} packages; displaying only the name of the package and the vendor name. \\[2mm]
+rpm -{}-{}querytags | less & List all possible headings to use with \tqs{-{}-{}qf} option.\\[2mm]
+rpm -qa & List all installed packages.\\[2mm]
+rpm -q pkg.rpm & Version info.\\[2mm]
+rpm -qf /path/to/file & What package installed this file?\\[2mm]
+rmp -ql bash & What files were installed by \emph{bash}?\\[2mm]
+rpm -qp -{}-{}requires pkg.rpm & Are there any prerequisites for this package?\\[2mm]
+rpm -V pkg.rpm & Verify this package.\\[2mm]
+rpm -e -{}-{}test pkgname & Test removing this package.\\[2mm]
+rpm -ivh pkg.rpm & Install this pacakge. Note, \emph{rpm} does not handle prerequisites, whereas the \emph{dnf} command does.\\[2mm]
+rpm -U pkgname & Upgrade the package.\\[2mm]
+rpm -U -{}-{}oldpackage pkgname & Downgrade the package.\\[2mm]
+rpm -qlp pkg.rpm & What files are in the pkg?\\[2mm]
+\bottomrule
+\end{tabularx}

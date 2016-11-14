@@ -1,0 +1,308 @@
+\chapter{Solutions}
+\label{ch:solutions}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{enumerate}
+
+\item\hypertarget{echopwd.}{An Important Chapter - echo pwd .}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ echo pwd .
+pwd .	
+\end{lstlisting}	
+	
+\item\hypertarget{quotes.sh}{An Important Chapter - quotes.sh}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ cat quotes.sh
+#!/bin/bash
+x=5 # initialize x to 5
+# use double quotes
+echo "Using double quotes, the value of x is: $x"
+# use single quote
+echo 'Using single upright quotes, the value of x is: $x'
+echo "Using single quotes inside double quotes, I can execute a command, x = $x, x = '$x'"
+
+¿\tld¿ ./quotes.sh
+Using double quotes, the value of x is: 5
+Using single upright quotes, the value of x is: $x
+Using single quotes inside double quotes, I can execute a command, x = 5, x = '5'
+#
+# Did you expect the last line to print x = 5, x = $x?
+#
+# Which quotes have precedence? Do we work from inside out or outside in? Does it matter?
+#
+# Ok, let's work from inside out. Single quotes don't evaluate a variable, so $x remains $x. However, we are inside double quotes, which we know does evaluate variables. So, $x is evaluated to '5' and the single quotes are left unchanged.
+#
+# You have to think about the code you write. Not every $ is a dollar!
+#	
+\end{lstlisting}
+
+\item\hypertarget{singlequote}{An Important Chapter - Quotes and grep}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ grep "'"'$MARS'"' is a planet" ur.txt
+'$MARS' is a planet
+#
+# You cannot pass single quotes within double quotes. You have to pass single quotes within double quotes within single quotes. So, with '$MARS', the string inside is taken literally, no expansion of the variable. Usually, strings inside double quotes are expanded, but we override this by putting "'$MARS'" inside another set of single quotes. Another way of saying this is that you can't pass a single quote within another single quote.
+\end{lstlisting}
+
+\item\hypertarget{catfileheaders}{Programming - glob-expand-word}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ find *.doc -type f -print -exec cat {} \;
+errors.doc
+bash: ./Echopwd: No such file or directory
+success.doc
+/home/corp.vcom.com/mgda/scripts
+\end{lstlisting}
+
+\item\hypertarget{prgrm_typeset}{Programming - Naming conventions for functions}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# typeset is a builtin command. To read about it, you can use my mbib function. I will not list the output of the following command. Of course, you can simply open the builtin man page and scroll to typeset.
+#
+¿\tld¿ mbib typeset dirs
+#
+# Here is the command that you need. Note, it is quite complex!
+#
+¿\tld¿ typeset | grep "trudeau ()" ; typeset | grep -A10 "trudeau ()" | sed -n -e '/{/,/}/p' | grep -B10 "{" | sed '$d'
+trudeau () 
+{ 
+echo "Absolutely smoked Brazeau!";
+echo "Fight called in third round.";
+echo "At a charity event."
+}
+#
+# Break this command down into its different parts. For example, what happens if you remove the last pipe to sed? There are two commands separated by a semi-colon. Run each command separately to see what it does. The second command has 4 pipes. Try removing a pipe.
+#
+\end{lstlisting}
+
+\item\hypertarget{sortbyfileext}{Programming - Redirecting stdout and stderrs}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+ls -lX *.sh *.doc > myfile.lst 2&1
+¿\tld¿ cat myfile.lst
+-rw-r--r--. 1 mgda mygrp  43 Feb 22 09:54 errors.doc
+-rw-r--r--. 1 mgda mygrp  37 Feb 22 09:56 success.doc
+-rwxr--r--. 1 mgda mygrp 109 Feb 19 15:10 EchoPWD.sh
+-rwxr-xr-x. 1 mgda mygrp 437 Jul 27  2015 exits.sh
+.
+.
+-rw-r--r--. 1 mgda mygrp 218 Mar  8 09:07 srvs.prod.sh
+-rwxr--r--. 1 mgda mygrp 276 Mar  8 08:39 srvs.sh
+\end{lstlisting}
+
+\item\hypertarget{searchspaceminus}{Programming - Regex}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# We do not escape the space, nor do we say it is at the beginning of a line.
+#
+¿\tld¿ man stat | grep ' --[a-z]'
+-L, ¿\textbf{\color{red}{-{}-{}d}}¿ereference
+-f, ¿\textbf{\color{red}{-{}-{}f}}¿ile-system
+-c  ¿\textbf{\color{red}{-{}-{}f}}¿ormat=FORMAT
+¿\textbf{\color{red}{-{}-{}p}}¿rintf=FORMAT
+like  ¿\textbf{\color{red}{-{}-{}f}}¿ormat,  but interpret backslash escapes, and do not output a mandatory trailing newline; if
+-t, ¿\textbf{\color{red}{-{}-{}t}}¿erse
+¿\textbf{\color{red}{-{}-{}h}}¿elp display this help and exit
+¿\textbf{\color{red}{-{}-{}v}}¿ersion
+The valid format sequences for files (without ¿\textbf{\color{red}{-{}-{}f}}¿ile-system):
+\end{lstlisting}
+
+
+\item\hypertarget{oj}{Profiles - user specific aliases}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I will begin in terminal window 'pts/1'.
+#
+¿\tld¿ ps
+PID   TTY          TIME CMD
+3281  pts/1    00:00:00 bash
+15739 pts/1    00:00:00 ps
+#
+# Let's issue the j alias. I am returned to the command prompt. I have no running jobs.
+#
+¿\tld¿ j
+¿\tld¿
+#
+# Unalias the j alias. You are returned to the command prompt.
+#
+¿\tld¿ u j
+¿\tld¿
+#
+# Let's try to issue the j alias again. The output makes sense, we no longer have a j alias.
+#
+¿\tld¿ j
+bash: j: command not found...
+¿\tld¿
+#
+# What if I switched to a different terminal window?
+#
+¿\tld¿ ps
+PID TTY          TIME CMD
+3291 pts/3    00:00:00 bash
+15810 pts/3    00:00:00 ps
+#
+# Let's issue the j alias. It works since I am returned to the command prompt. Therefore,  I also have no running jobs in this terminal window. So, the unalias command only affects the current terminal window which in my case is pts/1.
+#
+¿\tld¿ j
+¿\tld¿ 
+#
+# Return to pts/1 and reload .bashrc to restore the j alias.
+#
+¿\tld¿ source ~/.bashrc
+¿\tld¿ j
+¿\tld¿ 
+#
+# The possibility was that after I hit the enter key in pts/1, .bashrc would be re-loaded and thus my j alias would be reset. As we saw, that was not the case.
+#
+\end{lstlisting}
+
+\item\hypertarget{insertlines}{Simple File Tricks}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat my.dblspc.file 
+one sock
+two sock
+three sock
+sock one
+three socks
+#
+# I will not issue these commands inline but instead send the output to stdout. Task: insert a blank line after every second line.
+#
+¿\tld¿ sed '0~2 a\\' my.dblspc.file 
+one sock
+two sock
+
+three sock
+sock one
+
+three socks
+#
+# Insert a blank line after every third line.
+#
+¿\tld¿ sed '0~3 a\\' my.dblspc.file 
+one sock
+two sock
+three sock
+
+sock one
+three socks
+#
+# Another way of inserting a blank line after each line.
+#
+¿\tld¿ sed -e 'G' my.dblspc.file 
+one sock
+
+two sock
+
+three sock
+
+sock one
+
+three socks
+#
+# Insert two blank lines...
+#
+¿\tld¿ sed -e 'G;G' my.dblspc.file 
+one sock
+
+
+two sock
+
+
+three sock
+
+
+sock one
+
+
+three socks
+#
+# Insert a blank line using awk.
+#
+¿\tld¿ awk '1;{print ""}' my.dblspc.file 
+one sock
+
+two sock
+
+three sock
+
+sock one
+
+three socks
+#
+# Insert two blank lines after each line.
+#
+¿\tld¿ awk '1;{print ""};{print ""}' my.dblspc.file 
+one sock
+
+
+two sock
+
+
+three sock
+
+
+sock one
+
+
+three socks
+
+
+
+\end{lstlisting}
+
+\item\hypertarget{sedel}{Processes - Breaking a complex command into parts}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ w | awk '{print $2}' | sed '1,2d'
+tty2
+pts/0
+pts/1
+pts/2
+pts/3
+\end{lstlisting}
+	
+\item\hypertarget{numints}{Network Processes - Number of physical interfaces}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Let's list our interfaces for a multi-homed server.	
+#
+rootless@bigboss:~# netstat -i
+Kernel Interface table
+Iface MTU Met  RX-OK RX-ERR RX-DRP RX-OVR TX-OK TX-ERR TX-DRP TX-OVR Flg
+eth0  1500 0  775127     0    277  0      20272     0      0      0 BMRU
+eth1  1500 0  303355     0      0  0     345316     0      0      0 BMRU
+lo   65536 0  064445     0      0  0     064445     0      0      0 LRU
+#
+# Let's get a count of the physical interfaces. We use egrep to remove lines beginning with: Kernel, Iface, lo, and any virtual interfaces.
+#
+¿\tld¿  wc -w <<< $(netstat -i | cut -d" " -f1 | egrep -v "^Kernel|Iface|lo|virbr*")
+2
+#
+# What are our IP addresses? There is one inside, private; and one outside, public, IP address.
+#
+rootless@bigboss:~# ifconfig | grep -A1 "^eth*"
+eth0      Link encap:Ethernet  HWaddr 00:0d:26:da:4a:1d  
+inet addr:192.168.0.20  Bcast:192.168.0.255  Mask:255.255.255.0
+--
+eth1      Link encap:Ethernet  HWaddr 00:00:19:ca:4a:27  
+inet addr:202.18.78.60  Bcast:202.18.78.61  Mask:255.255.255.224
+
+\end{lstlisting}
+	
+\end{enumerate}

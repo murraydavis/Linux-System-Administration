@@ -11,8 +11,6 @@
 *.gz
 *.ilg
 *.ind
-*.tex
-*.pdf
 *.html
 *.lot
 *.txt

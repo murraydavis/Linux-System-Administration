@@ -1,0 +1,254 @@
+\chapter{setuid, setguid, and sticky-bit}
+\label{ch:setuid}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+There are three special types of permissions in Linux that can be set on executable files and directories. When these permissions are set, any user who runs that executable file assumes the user ID of the owner (or group) of the executable file. You must be extremely careful when you set special permissions, because these permissions constitute a security risk. For example, a user can gain superuser (root) privileges by executing a program that sets the user ID (UID) to root. All users can set special permissions for files they own, which constitutes another security concern.
+
+\tbi{Permission Groups}
+\begin{itemize}
+	\item \tbi{SUID / Set User ID: }An executable or program is executed with the file owner's permissions rather than with the permissions of the user who executes it. In almost all Linux variants, SUID on a directory has no effect.
+	\item \tbi{SGID / Set Group ID: }Files created in the directory inherit its SGID. When a directory is shared between users and the SGID is implemented on that shared directory, files and directories created in the shared directory have the same SGID or group owner of its parent directory (the shared directory). SGID on a directory means that any files created in that directory will be owned by the group who owns the directory. 
+	\item \tbi{Sticky Bit: }It is mainly used on folders in order to avoid deletion of a folder and its contents by a user other than the owner. If the sticky bit is enabled on a folder, the folder can only be deleted by the owner of the folder or the superuser (root). This is a security measure to prevent deletion of critical folders when all users may have full permissions inside the folder to create/modify/delete files and folders.
+\end{itemize}
+
+Special permissions are set using the \keyword{chmod} command. We can see if SUID is set on a file if the letter \tbi{s or S} appears where the \tbi{execute} bit is normally displayed which is in the first octet of the files permissions...moving from left to right. Similarly, the GUID bit is set if we see a \tbi{s or S} in place of the group's execute \tbi{x} bit which is in the next octet. Finally, for the sticky bit, a \tbi{t or T} appears in place of the other users' \tbi{execute} bit which is in the last octet.
+
+In the following table, there are 10 bits listed from left to right. I only indicate whether or not the special permissions are set when looking at a long listing. The special permissions are always indicated on the execute bit, the 4th (SUID), 7th (GUID), and 10th (sticky) bits.\\
+\begin{enumerate}
+\item{high-ordered-bit sum for special permissions: SUID, GID, sticky bit}
+\item{user owner - read bit}
+\item{user owner - write bit}
+\item{user owner - execute bit and SUID}
+\item{group owner - read bit}
+\item{group owner - write bit}
+\item{group owner - execute bit and GUID}
+\item{others - read bit}
+\item{others - write bit}
+\item{others - execute bit and sticky bit}
+\end{enumerate}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Symbols of special permissions}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls -l & get a long and all listing of files and folders to see permissions\\
+-{}-{}-{}S-{}-{}-{}-{}-{}-{} & SUID is set, but user/owner execute bit is not set\\
+-{}-{}-{}s-{}-{}-{}-{}-{}-{} & SUID is set and user/owner execute bit is set\\
+-{}-{}-{}-{}-{}-{}S-{}-{}-{} & SGID is set, but user/owner execute bit is not set\\
+-{}-{}-{}-{}-{}-{}s-{}-{}-{} & SGID is set and user/owner execute bit is set\\
+-{}-{}-{}-{}-{}-{}-{}-{}-{}T & Sticky bit is set, but other users' execute bit is not set\\
+-{}-{}-{}-{}-{}-{}-{}-{}-{}t & Sticky bit is set and other users' execute bit is set\\
+\label{table:suid_perms} % is used to refer this table in the text
+\end{tabularx}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{How to set special permissions}\label{table: suid_symnum}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls -la myfile & if myfile has all permissions set for all users, the permissions would be displayed as -rwxrwxrwx, the first high-ordered bit (the minus) is the position where the sum of the SUID, SGID, and the sticky bit values are displayed. 4=SUID, 2=SGID, 1=sticky bit, and - = none set. When the stat command is used, the last symbol appears as a period.\\
+chmod u+s myfile & set UID the symbolic way\\
+chmod g+s myfile & set GID\\
+chmod ug+s myfile & set both\\
+chmod o+t myfile & set sticky bit\\
+chmod u-s myfile & unset SUID\\
+chmod ugo+rwxs & set rwx for all three (owner,group, other) and SUID and SGID\\
+chmod 4775 myfile & Set SUID the numerical/octal way. The permissions would appear in a long listing as: -rwsrwxr-x. Note, we do not see the higher-ordered bit value of 4 for SUID, instead we see only a minus sign. See the discussion on the \emph{stat} command that follows shortly.\\
+\label{table:suid_set} % is used to refer this table in the text
+\end{tabularx}
+
+So, when we do a long listing, we see the permissions displayed as symbols, not as numbers. r=read, w=write, and x=execute. These values are grouped in what is called an octet, all powers of 2. So, there is an octet for the owner, one for the group, and one for other users. \keyword{chmod} can use either numbers or symbols in setting permissions, both regular and special. When you do a long-listing, you do not see the octal value of special permissions, only the symbolic value in each octet. You need the \keyword{stat} command to see the octal value of special permissions.
+
+Regular permissions:\\
+$2^2 = 4$ for read, $2^1 = 2$ for write and $2^0 =1$ for execute.\\
+\\
+Special permissions:\\
+$2^2 = 4$ for SUID, $2^1 = 2$ for GUID and $2^0 =1$ for sticky bit.\\
+
+\begin{tabularx}{\linewidth}{c  c  c  c  c  c  c  c  c  c  c} % the X is needed to wrap text
+\caption{All regular permissions set, no special permissions}\\ % title of Table
+\toprule
+- & u & u & u & g & g & g & o & o & o & grouped by owner, u=user, g=group, o=other\\
+- & 4 & 2 & 1 & 4 & 2 & 1 & 4 & 2 & 1 & binary representation of permissions grouped: -777 \\
+- & r & w & x & r & w & x & r & w & x & symbolic representation as displayed by ls -l\\
+\bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\linewidth}{c  c  c  c  c  c  c  c  c  c  c} % the X is needed to wrap text
+\caption{All regular permissions set and SUID set}\\ % title of Table
+\toprule
+- & u & u & u & g & g & g & o & o & o & grouped by owner, u=user, g=group, o=other\\
+4 & 4 & 2 & 1 & 4 & 2 & 1 & 4 & 2 & 1 & binary representation of permissions grouped: 4777\\
+- & r & w & s & r & w & x & r & w & x & symbolic representation as displayed by ls -l\\
+\bottomrule
+\end{tabularx}
+
+\begin{tabularx}{\linewidth}{c  c  c  c  c  c  c  c  c  c  c} % the X is needed to wrap text
+\caption{All regular permissions set except user's execute bit and SUID set}\\ % title of Table
+\toprule
+- & u & u & u & g & g & g & o & o & o & grouped by owner, u=user, g=group, o=other\\
+4 & 4 & 2 & 0 & 4 & 2 & 1 & 4 & 2 & 1 & binary representation of permissions grouped: 4677 \\
+- & r & w & S & r & w & x & r & w & x & symbolic representation as displayed by ls -l\\
+\bottomrule
+\end{tabularx}
+
+\section{When is SUID used?}
+\begin{itemize}
+	\item When we don't want to give elevated (execute) permissions to users, but we still want specific files to be run as the owner of the file.
+	\item When we don't want to add users to the sudoers file which would allow them to \tbi{sudo su}, i.e., become the root user, just to execute a file.
+\end{itemize}
+
+Note, we typically set the SUID in order to allow non-root users to execute a file as the root user. Setting this bit will not permit them to delete or modify the file, just execute it. \textit{Be careful when allowing users to run scripts or programs that take arguments at the command line, because we would have no control over what gets passed to the script, i.e., malformed parameters}.
+
+\textit{Pay particular close attention to moves and copies of files with SUID and SGID bits set}. If you copy a file with the SUID bit set into another folder, that SUID bit will be removed and the file will inherit the bits that are already set on the destination folder. However, you can issue the command: \tbi{sudo cp -p myfile mydir/} and the file will keep the original permissions including the SUID. Also, if you just issued this command \tbi{sudo cp myfile mydir/}, the file would be copied, but now its owner and group are both \emph{root}.
+
+\textit{Because of the security risk of unauthorized use of \tbi{setuid} and \tbi{setgid}, one should monitor a server that has shared folders and that has enabled remote access.} You can monitor by regularly searching your system for SGID and SUID files as shown in the table below.
+
+\section{Searches based on SUID, GUID, and stick bit permissions}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Searches based on SUID, GUID, and sticky bit}\label{table: suid_symnum}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+find / -user root -perm -4000 -exec ls -ldb \tbx > mylist & find all files on the system (we are starting at the / root folder) owned by root and which have the SUID bit set and pass these to the ls (list) command which is then written to the file \textsl{mylist}\\[2mm]
+find / -user root -perm -4000 -exec ls -ldb \tbx & just send the long listed output to the command line\\[6mm]
+find / -user root -perm -4000 -ls & a simpler version of the above, also a long listing\\[2mm]
+find / -user root -perm -u+s -ls & an alternative to the above using symbolic notation\\[2mm]
+find / -user root -perm -6000 -ls & find files with both SUID and SGID\\[2mm]
+find / -user root -perm -ug+s -ls & find files with both SUID and SGID using symbolic notation\\[2mm]
+find / -type f -perm -6002 -ls & find all files that are both SUID and SGID and are world writeable (everyone can modify or delete the files). This would be very bad!!!\\[2mm]
+find / -type -perm /6002 -ls & the forward slash says find files that have either SUID or SGID, or both set. Surprisingly, /4000 only finds files with SUID set.\\[2mm]
+find / -type f -perm -4000 -o -perm -2000 & find all files that have either SUID or SGID set. it will also list a file with both set. Note that we do not use the list (ls) command.\\[2mm]
+find / -type f \textbackslash{}( -perm -4000 -o -perm -2000 \textbackslash{}) -exec ls \tbx & Alternative to above using the list (ls) command. Note: the spaces after the \textbackslash{}( and before the \textbackslash{}) are mandatory.\\[2mm]
+find / -type f -perm -4000 -o -perm -2000 -o -perm -1000 & find all files with any of SUID, SGID, or stick bit\\[2mm]
+ls -la & \tbi{-rwxrwxrwt. 1 me mygrp 5 Dec 11 08:07 A.txt} is the only file in this folder. Note: the sticky bit is set and the other users' execute bit is also set (small cap t).\\[1mm]
+find . -perm 777 -exec ls \tbx & find files with \tbi{exact} permission of 777 or -rwxrwxrwx, nothing is returned, why is \textsl{A.txt} not returned?\\[1mm]
+find . -perm 1777 -exec ls \tbx & \textsl{A.txt} is returned because it has exactly this permission, sticky bit set for other users and \tbi{rwx} for owner, group, other users\\[1mm]
+find . -perm 1777 -exec ls \{\} + & alternate syntax, \textbf{\{\} +} can always be used to replace \textbf{\tbx}, \textsl{A.txt} is returned because it has exactly this permission\\[1mm]
+\end{tabularx}
+
+\section{Display full binary representation of Linux permissions}
+
+The full list command \emph{ls -l} provides the full symbolic representation of access rights...although we still need to interpret if the underlying execute bit is set when SUID (S or s), GUID (S or s), or the sticky bit (T or t) is set. It also provides the binary representation of the regular permissions, but it omits the binary representation for SUID, GUID, and the sticky bit. We can get this information with a different command called: \keyword{stat}.
+	
+In the example below, the long listing shows us that \textsl{A.txt} has the sticky bit set...indicated by the lower case \tbi{t} which also says that the underlying execute bit is also set for \emph{other users}. Therefore, we can conclude that the basic binary representation is: \tbi{-421421421} or \tbi{777} which corresponds to the symbolic representation: \tbi{-rwxrwxrwx}. The stat command prepends the value of the sticky bit in front of the basic binary representation of the permissions. Recall that the binary value of the sticky bit = 1, the binary value of SUID = 4, and the binary value of GID =2.
+
+\%a = access rights in octal\\
+\%n = file name\\
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# stat's -c option = format, what columns of information to display
+#
+¿\tld¿ stat -c '%a %n' *
+644 afile.txt
+644 afile.txt.bak
+1777 A.txt
+
+¿\tld¿ ls -la
+total 8
+drwxrwxrwx. 2 me mygrp  4096 Jan 15 13:03 .
+drwxr-xr-x. 4 me mygrp  4096 Jan 15 12:30 ..
+-rw-rw-r--. 1 me mygrp     0 Jan 15 13:03 a.txt
+-rw-rw-r--. 1 me mygrp     0 Jan 15 13:03 a.txt
+-rwxrwxrwt. 1 me mygrp    0 Jan 15 13:03 A.txt
+
+¿\tld¿ chmod u+s A.txt # set the SUID
+
+¿\tld¿ stat -c '%a %n' * | grep A.txt
+5777 A.txt # SUID + sticky bit = 4 + 1
+
+¿\tld¿ chmod g+s A.txt # set the GUID
+
+¿\tld¿ stat -c '%a %n' * | grep A.txt
+7777 A.txt # SUID + GUID + sticky bit = 4 + 2 + 1
+\end{lstlisting}
+
+We can also use the \emph{find} command with the \keyword{-printf} option and switches.\\	
+
+\%m = access rights in octal\\
+\%f = file name
+\\n = newline\\
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ find . -printf "%m:%f\n" | grep A.txt
+7777:A.txt
+\end{lstlisting}
+
+So, either one of these is a good candidate for a \textsl{.bashrc} function. When we want to see the octal representation of regular and special permissions we just call the function.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# add this function to your .bashrc file and then source ¿\tldi{}/¿.bashrc
+#
+function lnum ()
+{
+stat -c '%a %n' *
+}
+\end{lstlisting}
+
+I came across a fabulous article at \href{http://stackoverflow.com/questions/1795976/can-the-unix-list-command-ls-output-numerical-chmod-permissions}{Stackoverflow}. I added the following code to my \textsl{.bashrc} file.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+function lsym ()
+{
+	ls -l | awk '{
+		k = 0
+		s = 0
+		for( i = 0; i <= 8; i++ )
+		{
+			k += ( ( substr( $1, i+2, 1 ) ~ /[rwxst]/ ) * 2 ^( 8 - i ) )
+		}
+		j = 4 
+		for( i = 4; i <= 10; i += 3 )
+		{
+			s += ( ( substr( $1, i, 1 ) ~ /[stST]/ ) * j )
+			j/=2
+		}
+		if ( k )
+		{
+			printf( "%0o%0o ", s, k )
+		}
+		print
+	}'
+}	
+\end{lstlisting}
+
+So, let's see the new functions in action...
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ lnum
+644 afile.txt
+644 afile.txt.bak
+7777 A.txt
+
+¿\tld¿ lsym
+0644 -rw-r--r--. me mygrp    0 Jan 15 11:52 afile.txt
+0644 -rw-r--r--. me mygrp    0 Jan 15 11:52 afile.txt.bak
+7777 -rwsrwsrwt. me mygrp    0 Jan 15 11:45 A.txt	
+\end{lstlisting}
+
+
+
+
+	

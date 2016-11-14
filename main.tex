@@ -1,0 +1,112 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% 
+%% documentclass for Europe
+%% \documentclass[a4paper]{book}
+%%
+%% documentclass for Canada
+%% \documentclass[twoside,letterpaper,11pt]{book|article|report}
+%%
+\documentclass[twoside,letterpaper,11pt]{book}
+
+%% packages
+\input{settings/packages}
+\input{settings/macros}
+
+\AtBeginDocument{%
+	\def\PYZsq{\textquotesingle}%
+}
+
+%% page settings
+\input{settings/page}
+
+%% own commands
+%%
+%%
+% The following command is called 'tbi' and it takes only one parameter. The 'tbi' command is composed of LaTeX commands so th command is textbf (boldface) and then textit (italicize) an imput. The command is commented out because all our customizations are done in the  settings/macros.tex file.
+%\newcommand{\tbi}[1]{\textbf{\textit{#1}}}
+
+%\input{langdefs/bash} % messed up my commentstyle color
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+%% for indenting text
+\newlist{MyIndentedList}{itemize}{4}
+\setlist[MyIndentedList]{%
+	label={},
+	noitemsep,
+}
+%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{empty}
+
+\title{Linux System Administration - My 90:9:\textbf{\color{red}1}\footnote{\href{https://en.wikipedia.org/wiki/1\%25_rule_(Internet_culture)}{1 \% rule}} Contribution\newline}
+
+%%
+%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\author{Murray Davis}
+\date{}
+\maketitle
+\input{content/title_page_1} % downloaded template, note we do not have to specify '.tex' ending.
+
+\pagestyle{plain}
+% 
+%
+% tableofcontents is a command
+%
+% all lines beginning with '\chapter', '\section', 'subsection', etc.,  are complied/processed and a table of contents is created and placed where the line '\tableofcontents' appears in the 'main.tex' document. Everything is numbered automatically.
+%
+%
+\setcounter{secnumdepth}{4} % how many sectioning levels to assign numbers to
+\setcounter{tocdepth}{4}    % how many sectioning levels to show in ToC
+
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Note: instead of including each chapter inside the 'main.tex' document, we could create seperate files for each chapter. This would be useful if different persons worked on each chapter.
+%%
+%%
+\input{content/ch_intro}
+\input{content/ch_handy}
+\input{content/ch_program}
+\input{content/ch_manuals}
+\input{content/ch_profiles}
+\input{content/ch_vi}
+\input{content/ch_find}
+\input{content/ch_setuid}
+\input{content/ch_acl}
+\input{content/ch_file_tricks}
+\input{content/ch_users_groups}
+\input{content/ch_processes}
+\input{content/ch_dnuf}
+\input{content/ch_compression}
+\input{content/ch_network}
+\input{content/ch_selinux}
+\input{content/ch_kernelservices}
+\input{content/ch_workingwithdrives}
+\input{content/ch_solutions}
+\listoftodos
+\listoffigures
+\listoftables
+\printindex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

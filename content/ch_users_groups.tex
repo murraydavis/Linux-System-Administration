@@ -1,0 +1,1049 @@
+\chapter{Users and groups}
+\label{ch:usersgroups}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Managing Users}
+\subsection{Introduction}
+Managing stand-alone servers that have one principal user are typically easy to manage, especially if only one Linux administrator is responsible for the stand-alone system.
+
+\subsection{Important manpages}
+There are many different commands that can be used to manage users. It is best to begin by studying the manpages of the programs used to manage accounts.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Import User and Group Manpages}\\
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+man usermod & open the manpage for \keyword{usermod} which is used to modify a user account\\[2mm]
+man usermod | col -b | grep -A1000 -x "OPTIONS" | grep -B1000 -x "CAVEATS" & display only the options section of the \emph{usermod} manpage\\[6mm]
+mang usermod options caveats & my \textsl{.bashrc mang} function makes it easier to get this information\\[2mm]
+man usermod | col -b | grep "\textasciicircum{}\textbackslash{} *.-" & list just the options for \emph{usermod}\\[1mm]
+m- usermod & my \textsl{.bashrc -m} function makes it easier to get this info\\[3mm]
+usermod -{}-{}help & more verbose information than my \textsl{.bashrc -m} function\\[1mm]
+man passwd & command to update user tokens, i.e., change passwords\\[1mm]
+man getent & get entries for Name Service Switch libraries like \emph{passwd}\\[1mm]
+man id & print real and effective user and group IDs\\[1mm]
+man useradd & add new accounts\\[1mm]
+man userdel & delete accounts\\[1mm]
+man chage & change password expiry information\\[1mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{Getting basic user info}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Ok, let's create a new user. We are logged on as user mgcr, an account that has sudo privileges.
+#
+¿\tld¿ useradd newuser
+bash: /sbin/useradd: Permission denied
+#
+# Oops, we have to use sudo, ie., have root privilege.
+#
+¿\tld¿ sudo useradd newuser
+#
+# Let's get the details on the new user, newuser. Each user's account has 7 fields of information separated by colons. Some fields are optional...they will appear blank if not configured.
+#
+# Format: username:x indictates the password is encrypted: UserID (UID): GroupID (GID): UserID info or comment: home directory path: user shell path
+#
+¿\tld¿ getent passwd newuser
+newuser:x:1001:1001::/home/newuser:/bin/bash
+#
+# Another way to get this info...
+#
+¿\tld¿ grep newuser /etc/passwd
+newuser:x:1001:1001::/home/newuser:/bin/bash
+#
+# Get user and group IDs.
+#
+¿\tld¿ id newuser
+uid=1001(newuser) gid=1001(newuser) groups=1001(newuser)
+#
+# What is the status of the new account?
+#
+¿\tld¿ sudo passwd -S newuser
+newuser LK 2015-12-17 0 99999 7 -1 (Password locked.)
+#
+# At this point, newuser would not be able to logon...until the password is set by root.
+# In the following, the passwd command complains about short passwords, but still accepts the short password.
+#
+¿\tld¿ sudo passwd newuser
+Changing password for user newuser.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+#
+# Ok, now let's check the status of the account.
+#
+¿\tld¿ sudo passwd -S newuser
+newuser PS 2015-12-17 0 99999 7 -1 (Password set, SHA512 crypt.)
+#
+# Ok, let's now logon as this user and load his profile so that we start in his home directory.
+# The minus sign tells the system to load the user's profile and switch to the user's home directory.
+#
+¿\tld¿ su - newuser
+Password: 
+#
+# Print working directory
+#
+¿\tld¿ pwd
+/home/newuser
+¿\tld¿ exit
+logout
+#
+# Let's logon again, but without the minus sign.
+# We see that we remained in the directory of the account that was logged on.
+# 
+#
+¿\tld¿ su newuser
+Password: 
+
+¿\tld¿ pwd
+/home/mgcr
+\end{lstlisting}
+
+\subsection{Checking on users}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ getent passwd newuser
+newuser:x:1001:1001::/home/reallynewuser:/bin/zsh
+
+¿\tld¿ grep newuser /etc/passwd
+newuser:x:1001:1001::/home/reallynewuser:/bin/zsh
+
+¿\tld¿ id -u newuser
+1001
+\end{lstlisting}
+
+\subsection{Getting a list of users}
+
+According to the \keyword{useradd} manpage:
+
+\begin{addmargin}[1em]{2em}
+User names \tbi{\color{red}must start with a lower case letter or an underscore}, followed by lower case letters, digits, underscores, or dashes. They can end with a dollar sign.
+
+In regular expression terms: [a-z\_][a-z0-9\_-]*[\$]?
+
+User names may only be up to 32 characters long.
+\end{addmargin}
+
+However, the above declarations seem only to be a recommendation. You can in fact create a user name beginning with uppercase characters, etc. \textit{So, I would instead say, follow best practices! Create user names that begin with lowercase letters and only include lowercase letters, hypens, and the underscore character} Anything else will simply confuse your users. Keeping user names in lowercase, that follow a template or pattern, will help cut down on calls to the help desk when new users begin working and try logging on for the first time.
+
+Is there a way to get a list of just the usernames?
+
+Method 1 - using grep
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+grep -oE '^[^:]+' /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{-o} tells grep to return only the part of the line that matches
+	\item \textbf{-E} turns on extended regex so that the + sign will work
+	\item \textbf{\textasciicircum{}} matches at the beginning of the line
+	\item \textbf{[\textasciicircum{}:]} matches anything except a colon, circumflex changes meaning inside the square brackets
+	\item \textbf{+} means match as many characters as possible
+	\item \tbi{summary} select as many characters up to but not including the first colon
+	\item \tbi{limitations} none, always works
+\end{itemize}
+
+Method 2 - using grep
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+grep -oE '^[a-z]*' /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{[\textasciicircum{}[a-z]*]} matches any number of lower case characters
+	\item \tbi{summary} select as many of lower case characters at the beginning of the line
+	\item \tbi{limitations} usernames such as my-acct, my\_acct, and Myacct will not be listed
+\end{itemize}
+
+Method 3 - Let's use the manpage example
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+grep -oE '^[a-z_][a-z0-9_-]*[\$]?' /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{[\textasciicircum{}[a-z]\_]} matches a lowercase character or the underscore at the beginning of the username
+	\item \textbf{[a-z0-9\_-]*} matches any number of lowercase characters, digits, underscores, hyphens
+	\item \textbf{[\textbackslash{}\$]?} the account name can also end with a dollar sign
+	\item \tbi{summary} list all account names that start with a lowercase character or underscore, followed by any number of lowercase characters, digits, underscores, hypens, and possibly ending in a dollar sign
+	\item \tbi{limitations} would not list usernames beginning with uppercase characters or special characters or which include uppercase characters or other special characters
+\end{itemize}
+
+Conclusion for Methods 2-3\\
+
+These methods are somewhat unreliable. If you do set a policy, use a grep that searches for exceptions, everything that doesn't conform to the pattern, using the -v switch. For example...
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+grep -ovE '^[a-z_][a-z0-9_-]*[\$]?' /etc/passwd
+\end{lstlisting}
+
+Method 4 - Using cut
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+cut -d: -f1 /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{-d:} set the cut delimiter to the colon
+	\item \textbf{-f1} get the first field up to the 1st colon
+	\item \textbf{limitations} none, this will always work
+\end{itemize}
+
+Method 5 - Using sed
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+sed 's/:.*//' /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{s} substitute according to the following criteria
+	\item \textbf{/:.*} text to replace - a colon (the first) and any number of characters after this colon
+	\item \textbf{//} text replacement - nothing, in effect, delete the text to replace
+	\item \textbf{limitations} none, this will always work
+\end{itemize}
+
+Method 6 - Using awk
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+awk -F: '{print $1}' /etc/passwd
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{-F:} set the field separator as the colon
+	\item \textbf{\tqs{{print \$1}}} print out the first colon separated field, i.e., the username
+	\item \textbf{limitations} none, this will always work
+\end{itemize}
+
+\subsection{System files that contain user info}
+
+There are two main files that contain user info. The first is a world-readable file \textsl{/etc/passwd}. All users need to be able to read this file in order to load their profile. However, only root can edit this file. As we know, this file contains colon separated elements.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ grep newuser /etc/passwd
+newuser:x:1001:1001::/home/reallynewuser:/bin/bash
+\end{lstlisting}
+
+As you can see there are 7 pieces of information from left to right:
+\begin{itemize}
+	\item \tbi{username:} the user's logon name
+		\item \tbi{password indicator:} x indicates that a password exists in the \textsl{/etc/shadow} file
+	\item \tbi{UserID or UID:} the user id, non-admin user UID's typically start at 1000
+	\item \tbi{GroupID or GID:} the group id, by default this equals the UID unless otherwise modified at account creation or at a later point in time
+	\item \tbi{comment or communinity string:} a short descriptor
+	\item \tbi{shell path:} the path to the user's shell
+\end{itemize}
+
+Linux uses another file to store an encrypted version of the user's password. This file is: \textsl{/etc/shadow} and it is readable/writeable only by root.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ sudo grep newuser /etc/shadow 
+newuser:$6$ltwsABNeGXAon/WAHfj2JI3/ZlgXa9HyS/3WdvaOWFPWGOQEc:16790::::::
+\end{lstlisting}
+
+As you can see, there are 8 colon separated fields. Note, I shortened the encrypted password for formatting reasons. For a complete description of the password field see: \href{http://www.slashroot.in/how-are-passwords-stored-linux-understanding-hashing-shadow-utils}{Shadow Utils.}
+
+\begin{itemize}
+	\item \tbi{username:} the user's logon name
+	\item \tbi{encrypted password:} One way hash of password split in three sections separated by dollar signs: Section 1 = hash algorithm, Section 2 = salt, Section 3 = password
+	\item \tbi{days:} the number of days since the password has changed
+	\item \tbi{days:} the number of days after which it is necessary to change the password
+	\item \tbi{days:} the number of days before the required password change that the user gets a warning
+	\item \tbi{days:} if password has expired, the number of days when the account will be disabled
+	\item \tbi{days:} number of days since \href{https://en.wikipedia.org/wiki/Unix_time}{Unix Time} when the account is disabled
+\end{itemize}
+
+\subsection{Disabling a user account}
+
+The following table showcases four examples of how to disable a user account.
+ 
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\color{red}{ 1. Using \emph{chage} - change password expiry date to a previous date.}¿
+#
+# First let's see the current password expiry info. We can do this with the chage command which must be run as sudo.
+#
+¿\tld¿ sudo chage -l newuser
+Last password change				: Dec 18, 2015
+Password expires					: never
+Password inactive					: never
+Account expires						: never
+Minimum number of days between password change		: 0
+Maximum number of days between password change		: 99999
+Number of days of warning before password expires	: 7
+#
+# Note: the 'passwd -S' command does not provide any expiry date info.
+#
+¿\tld¿ sudo passwd -S newuser
+newuser PS 2015-12-17 0 99999 7 -1 (Password set, SHA512 crypt.)
+#
+# What is today's date?
+#
+¿\tld¿ date
+Sun Dec 20 11:23:39 PST 2015
+#
+# Let's set the expiry to the previous day.
+#
+¿\tld¿ sudo chage -E 2015-12-19 newuser
+#
+# Get current expiry info.
+#
+¿\tld¿ sudo chage -l newuser
+Last password change				: Dec 18, 2015
+Password expires					: never
+Password inactive					: never
+Account expires						: Dec 19, 2015
+Minimum number of days between password change		: 0
+Maximum number of days between password change		: 99999
+Number of days of warning before password expires	: 7
+#
+# Note, no change is indicated when issuing the command: sudo passwd -S.
+#
+¿\tld¿ sudo passwd -S newuser
+newuser newuser ¿\color{red}{PS}¿ 2015-12-17 0 99999 7 -1 (Password set, SHA512 crypt.)
+#
+# Can the user logon?
+#
+¿\tld¿ su - newuser
+Password: 
+Your account has expired; please contact your system administrator
+su: User account has expired
+#
+# Let's reset the account, using -1 to indicate no expiry.
+#
+¿\tld¿ sudo chage -E -1 newuser
+¿\tld¿ sudo chage -l newuser
+Last password change				: Dec 20, 2015
+Password expires					: never
+Password inactive					: never
+Account expires						: never
+Minimum number of days between password change		: 0
+Maximum number of days between password change		: 99999
+Number of days of warning before password expires	: 7
+
+¿\color{red}{ 2. This time we will lock the account with \emph{usermod}.}¿
+
+¿\tld¿ sudo usermod -L newuser
+#
+# Note, the passwd status command clearly shows that the account is now locked. 
+#
+¿\tld¿ sudo passwd -S newuser
+newuser ¿\color{red}{LK}¿ 2015-12-20 0 99999 7 -1 (Password locked.)
+# 
+#
+# But the chage command does not indicate that the account is locked.
+#
+¿\tld¿ sudo chage -l newuser
+Last password change				: Dec 20, 2015
+Password expires					: never
+Password inactive					: never
+Account expires						: never
+Minimum number of days between password change		: 0
+Maximum number of days between password change		: 99999
+Number of days of warning before password expires	: 7
+#
+# Let's unlock the account again, but this time using the passwd command.
+#
+¿\tld¿ sudo passwd -u newuser
+Unlocking password for user newuser.
+passwd: Success
+
+¿\tld¿ sudo passwd -S newuser
+newuser ¿\color{red}{PS}¿ 2015-12-20 0 99999 7 -1 (Password set, SHA512 crypt.)
+
+¿\color{red}{ 3. Next, we will lock the account  by changing the shell of the account.}¿
+#
+# Both /dev/null and /bin/false shells will disable the account.
+#
+¿\tld¿ sudo usermod -s /dev/null newuser
+#
+# Let's try to logon...
+#
+¿\tld¿ su - newuser
+Password: 
+su: failed to execute /dev/null: Permission denied
+#
+# Change the shell back to the default in order to re-enable the account.
+#
+¿\tld¿ sudo usermod -s /bin/bash newuser
+
+¿\color{red}{4. Manually erase the encrypted password in the \textsl{/etc/shadow} file and replace with characters that indicate that the password is disabled.}¿
+
+¿\tld¿ sudo grep newuser /etc/shadow 
+newuser:$6$ltwsABNe$GXAon/WAHfj2JI3/ZlgXa9HyS/3WdvaOWF$.:16790::::::
+#
+# Edit /etc/shadow and go directly to the line with newuser.
+# Note, we have to :wq! when saving and exiting this file since it is read-only.
+#
+¿\tld¿ sudo vi +/newuser /etc/shadow
+#
+# So, what did we change? We replaced the password with two exclamation points which disables the account.
+#
+¿\tld¿ sudo grep newuser /etc/shadow 
+newuser:!!:16790::::::
+#
+# Can we logon?
+#
+¿\tld¿ su - newuser
+Password: 
+su: Authentication failure
+#
+# Ok, reset the password.
+#
+¿\tld¿ sudo passwd newuser
+Changing password for user newuser.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+#
+# Let's see newuser's shadow info again.
+#
+¿\tld¿ sudo grep newuser /etc/shadow 
+newuser:$6$nkukzMjK$DqfpXnY.Sf1Ld12ob0cuiFGgzU3hUnTy$:16790::::::
+#
+# We can now logon.
+#
+¿\tld¿ su - newuser
+Password: 
+¿\tld¿ exit
+logout 
+\end{lstlisting}
+
+\subsection{Managing shells}
+In the previous section, we changed the shell to a shell that prevented login. All valid shells are kept in a flat file: \textsl{/etc/shells}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat /etc/shells
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/usr/bin/tmux
+/bin/tmux
+/usr/bin/zsh
+/bin/zsh
+#
+# Alternatively, we can issue this command...
+#
+¿\tld¿ chsh --list-shells
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/usr/bin/tmux
+/bin/tmux
+/usr/bin/zsh
+/bin/zsh
+\end{lstlisting}
+
+Let's look at switching shells. We can temporarily switch shells by typing the name of the new shell. For example, we know our current shell is \textsl{/bin/bash}, let's switch to the \textsl{/bin/zsh} shell. Visit this URL \href{http://code.joejag.com/2014/why-zsh.html}{My favourite Zsh features} for an overview of the power of the \tbi{zsh} shell.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# When we first activate a new shell, we may have to answer a few questions...which is the case for zsh. I chose to create the .zshrc configuration file which is similar to bash's .bashrc file.
+#
+¿\tld¿ zsh	
+This is the Z Shell configuration function for new users,
+zsh-newuser-install.
+You are seeing this message because you have no zsh startup files
+(the files .zshenv, .zprofile, .zshrc, .zlogin in the directory
+~).  This function can help you with a few settings that should
+make your use of the shell easier.
+
+You can:
+
+(q)  Quit and do nothing.  The function will be run again next time.
+
+(0)  Exit, creating the file ~/.zshrc containing just a comment.
+That will prevent this function being run again.
+
+(1)  Continue to the main menu.
+	
+--- Type one of the keys in parentheses --- 0
+#
+# There is a interesting environment variable that let's us know what shell level we are at. By default, the starting shell level is 1, but we just switched to a new shell level.
+#
+¿\tld¿ echo $SHLVL
+2	
+#
+# Now, we want to know the name of our new shell...hmm...still says bash...since bash is our permanent shell!
+#
+¿\tld¿ echo $SHELL
+/bin/bash	
+#
+# To know what is our current operating shell, we issue this command.
+#
+¿\tld¿ echo $0
+zsh
+#
+# Let's change our shell permanently to zsh, we do this with the chsh command. Note: if we did not know where our new shell was located, we could use command expansion: 
+# chsh -s `which zsh` or chsh -s $(which zsh)
+#
+¿\tld¿ chsh -s /bin/zsh
+Changing shell for newuser.
+Password: 
+Shell changed.
+
+¿\tld¿ echo $SHELL
+/bin/bash
+¿\tld¿ echo $0
+zsh
+#
+# Ok, so obviously we have to do something else to set our permanent shell variable. Let's try reading our configuration file.
+#
+¿\tld¿ source .zshrc
+¿\tld¿ echo $SHELL
+/bin/bash
+#
+# In the end, we need to log out and back on. We can do this by su'ing to another user or by typing exit
+#
+¿\tld¿ su - otheruser
+¿\tld¿ su - newuser
+¿\tld¿ echo $SHELL
+/bin/zsh
+#
+# If we install the finger package, we can also issue this command...
+#
+¿\tld¿finger newuser
+Login: newuser        			Name: 
+Directory: /home/reallynewuser      	Shell: /bin/zsh
+Last login Tue Dec 22 08:49 (PST) on pts/1
+No mail.
+No Plan.
+\end{lstlisting}
+
+\subsection{no login - no shell}
+Obviously, from a security point of view, we may want to see what accounts can login to our system. Initially, I  do a inverse grep of \emph{nologin} on our \textsl{/etc/passwd} file. But, a better command is to search exactly for shells.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ grep -v nologin /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mgc:x:1000:1000:mgc:/home/mgc:/bin/bash
+newuser:x:1001:1001::/home/reallynewuser:/bin/zsh
+#
+# The line for shutdown, halt, and sync are not relevant.
+#
+¿\tld¿  grep -Ew 'sh|bash|zsh' /etc/passwd
+root:x:0:0:root:/root:/bin/¿\textcolor{red}{bash}¿
+mgc:x:1000:1000:mgc:/home/mgc:/bin/¿\textcolor{red}{bash}¿
+newuser:x:1001:1001::/home/newuser:/bin/¿\textcolor{red}{zsh}¿
+\end{lstlisting}
+
+So, from the above information, the only accounts that can login are: root, mgc, and newuser. These are the only accounts that have a valid Linux shell. We can also get a list of users by grepping on the shell name.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ grep -v nologin /etc/passwd | grep bash
+root:x:0:0:root:/root:/bin/bash
+mgc:x:1000:1000:mgc:/home/mgc:/bin/bash
+
+¿\tld¿ grep -v nologin /etc/passwd | grep zsh
+newuser:x:1001:1001::/home/newuser:/bin/zsh
+\end{lstlisting}
+
+We can also sort on the last column of the passwd field, column 7.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# If using the -v nologin switch...
+#
+¿\tld¿ grep -v nologin /etc/passwd | sort -t':' -k 7,7
+mgc:x:1000:1000:mgc:/home/mgc:/bin/bash
+root:x:0:0:root:/root:/bin/bash
+sync:x:5:0:sync:/sbin:/bin/sync
+newuser:x:1001:1001::/home/newuser:/bin/zsh
+halt:x:7:0:halt:/sbin:/sbin/halt
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+#
+# If using the grep's -Ew switch...
+#
+¿\tld¿  grep -Ew 'sh|bash|zsh' /etc/passwd | sort -t':' -k 7,7
+mgc:x:1000:1000:mgc:/home/mgc:/bin/bash
+root:x:0:0:root:/root:/bin/bash
+newuser:x:1001:1001::/home/newuser:/bin/zsh
+\end{lstlisting}
+
+\subsection{useradd - creating new users}
+
+On a multi-user system, one of the most common tasks is to create user accounts. Fortunately, there are system templates that determine default settings for newly created accounts.\\
+
+System Templates
+\begin{itemize}
+		\item \tbi{/etc/skell} This directory contains hidden files that are copied to \textsl{/home/username.} Some examples are: .bash\_logout, .bash\_profile, .bashrc, .zshrc.
+	\item \tbi{/etc/login.defs} This file references: MAIL\_DIR, passwd aging controls, UID+GID min/max, create home directory toggle, permission mask (umask), encryption method.
+	\item \tbi{/etc/profile} This file references: pathmunge, history settings, and umask.
+	\item \tbi{/etc/profile.d} This directory contains: scripts to set aliases and environment variables.
+\end{itemize}
+
+There is also a \keyword{useradd} default file that sets environment variables.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat /etc/default/useradd
+# useradd defaults file
+GROUP=100
+HOME=/home
+INACTIVE=-1
+EXPIRE=
+SHELL=/bin/bash
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=yes
+\end{lstlisting}	
+
+The \keyword{useradd} command has many options. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ m- useradd	# see my .bashrc m- function
+-b, --base-dir BASE_DIR
+-c, --comment COMMENT
+-d, --home-dir HOME_DIR
+-D, --defaults
+-e, --expiredate EXPIRE_DATE
+-f, --inactive INACTIVE # Note: -f=0, account locked; -f=-1, no expiry
+-g, --gid GROUP
+-G, --groups GROUP1[,GROUP2,...[,GROUPN]]]
+-h, --help
+-k, --skel SKEL_DIR
+-K, --key KEY=VALUE
+-l, --no-log-init
+-m, --create-home
+-M
+-N, --no-user-group
+-o, --non-unique
+-p, --password PASSWORD
+-r, --system
+-R, --root CHROOT_DIR
+-s, --shell SHELL
+-u, --uid UID
+-U, --user-group
+-Z, --selinux-user SEUSER
+-b, --base-dir BASE_DIR
+-e, --expiredate EXPIRE_DATE
+-f, --inactive INACTIVE
+-g, --gid GROUP
+-s, --shell SHELL
+#
+# I found it interesting that my 'm-' function shows an empty field for the '-M' option. Why? Was there a problem with my function or with the manpage? Turns out there was an inconsistency in the manpage. All options except '-M' had an alternative format of the option beginning with '--' on the same line. So, we can issue the command 'useradd -m newuser' or the command 'useradd --no-create-home newuser'. The '-M' option did not have an alternative form on the same line. It just described what the option did...on the following line.
+#
+¿\tld¿ man useradd | grep -A2 '^\ *-M'
+-M
+Do no create the user's home directory, even if the system wide setting from /etc/login.defs
+(CREATE_HOME) is set to yes.
+#
+¿\textbf{\color{red}Ho hum, always pay attention to the detail!}¿
+#
+# The '--help' builtin however clearly shows that there is an  alternate form of the option.
+#
+¿\tld¿ useradd --help | grep '^\ *-M'
+-M, --no-create-home ¿\quad¿          do not create the user's home directory
+\end{lstlisting}
+
+\subsubsection{accounts with no shell, restricted logon}
+Why would you create a user with no logon shell, that is, why create an account that cannot logon to a PC/Server? The answer is that typically when you want an account for specific purposes such as for email (POP3 or SMTP) or FTP. To get these resources, you do not need that account to logon to the system. The account just needs resources that are located on the system such as email and files...but you still need some form of authentication. 
+
+As well, system accounts also do not need logon privileges. Here is a snippet from the \keyword{useradd} manpage that refers to system accounts:
+
+\begin{addmargin}[2em]{2em}
+System users will be created with no aging information in /etc/shadow, and their numeric identifiers are chosen in the SYS\_UID\_MIN-SYS\_UID\_MAX range, defined in /etc/login.defs, instead of UID\_MIN-UID\_MAX(and their GID counterparts for the creation of groups).
+
+Note that useradd will not create a home directory for such an user, regardless of the default setting in /etc/login.defs (CREATE\_HOME). You have to specify the -m options if you want a home directory for a system account to be created.
+\end{addmargin}
+
+Here is a URL that provides a good explanation of system accounts found at \href{http://www.linuxquestions.org/questions/linux-newbie-8/useradd-r-option-and-system-account-question-892978/}{LinuxQuestions.org}
+
+System accounts are reserved for services and daemons. Old Unix systems would typically allow daemons and services access to files as root, which would create serious security problems if a service is hijacked. Thus, system accounts were implemented to limit the access of services and daemons to files on the system. With system accounts, access by services can be restricted to files pertinent to the service. In this way, we limit the amount of potential damage that could be caused were the service hijacked or compromised. A shell of \textsl{/sbin/nologin} prevents anyone from logging in with a service account, making it that much more difficult to compromise the service and the system.
+
+\subsubsection{Creating a system account}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+# 
+# Let's create a system account. -r = system account.
+#
+¿\tld¿ sudo useradd -r moveslikejagger
+¿\tld¿ grep moveslikejagger /etc/passwd
+moveslikejagger:x:978:970::/home/moveslikejagger:/bin/bash
+# 
+# Note, it doesn't make much sense to have a home directory for a system account that will never logon. The account has the /bin/bash shell.
+#
+# Let's remove the account and try again. For userdel, - r = remove.
+#
+¿\tld¿ sudo userdel -r moveslikejagger
+userdel: moveslikejagger mail spool (/var/spool/mail/moveslikejagger) not found
+userdel: moveslikejagger home directory (/home/moveslikejagger) not found
+#
+# Hmm, even though /etc/passwd said that there was a home directory, it was not created when we created the account. Let's check that the account was removed. It was; grep does not find the string "moveslikejagger" in the /etc/passwd file.
+#
+¿\tld¿ grep moveslikejagger /etc/passwd
+¿\tld¿
+#
+# Ok, let's specify no home directory, the /sbin/nologin shell, and no group membership. Note, even though we said no group, useradd by default added moveslikejagger to GID 100 which is the default group...as specified in /etc/logon.defs.
+#
+# -N = no user group, -M = no home directory, -r = system account, -s = shell
+# 
+¿\tld¿ sudo useradd -M -N -s /sbin/nologin -r moveslikejagger
+#
+# # However, when we grep for the new account, the listing still specifies that we have a home directory when in fact we do not.
+#
+¿\tld¿ grep moveslikejagger /etc/passwd
+moveslikejagger:x:978:100::/home/moveslikejagger:/sbin/nologin
+#
+# We verify that we have no home directory by grepping for the string "moveslikejagger". Nothing was returned, just the command prompt.
+#
+¿\tld¿ ls /home | grep moveslikejagger
+¿\tld¿
+#
+# Let's set the password and check if we can logon.
+#
+¿\tld¿ sudo passwd moveslikejagger
+Changing password for user moveslikejagger.
+New password: 
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+
+¿\tld¿ su - moveslikejagger
+Password: 
+Creating home directory for moveslikejagger.
+This account is currently not available.
+#
+# Even though we could not logon, the process of attempting to logon created the home directory.
+#
+¿\tld¿ ls /home | grep moveslikejagger
+moveslikejagger
+#
+# Let's get rid of the home directory
+#
+¿\tld¿ sudo usermod -d "" moveslikejagger
+#
+# We can now see that the user does not have a home directory. Nothing appears between the 5th and 6th colon.
+#
+¿\tld¿ grep moveslikejagger /etc/passwd
+moveslikejagger:x:978:100:::/sbin/nologin
+#
+# Let's try logging on as moveslikejagger. The message is a bit misleading, but obviously we cannot logon.
+#
+¿\tld¿ su - moveslikejagger
+su: user moveslikejagger does not exist
+\end{lstlisting}
+
+So, even though we specify no home directory, the \textsl{/etc/passwd} file still indicates that there is one. By default, without the -M switch, the directory is not created for system accounts, so we do not have to use this switch. Also, we said don't create a default group, but we saw that the account is assigned to the GID 100...which is the default users group.
+
+Also, when we tried to logon, the system created the home directory. This makes sense since \textsl{/etc/passwd} says that the account should have a home directory. So, after the fact, we had to delete the home directory. At that point, we see that we still cannot logon, but the error message is slightly different and a bit misleading.
+
+\subsubsection{useradd examples}
+
+The following examples also illustrate command expansion.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{useradd examples}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+sudo useradd -e \tgr{date -d "3 months" +\%y-\%m-\%d} -f 5 jagr & create a new account called \emph{jagr} that expires three months from today's date and becomes inactive after a 5 day grace period\\[1mm]
+sudo useradd -e 2016-03-22 -f 5 jagr & specifying an exact date for password expiration\\[2mm]
+sudo userdel jagr & delete the \emph{jagr} account, but preserve his home directory, \textsl{/home/jagr} and mail spool file \textsl{/var/spool/mail/jagr}\\[2mm]
+sudo userdel -r jagr & delete the \emph{jagr} account and also remove his home directory \textsl{/home/jagr} and mail spool file \textsl{/var/spool/mail/jagr}\\[2mm]
+sudo useradd -d /myhome/jagr -s /bin/zsh -c "Look-Out-Messier" jagr & create a new user \emph{jagr}, but use a different home directory, specify a different shell, and add a comment. \textit{\color{red}Note, the root home directory \textsl{/myhome} must already exist. If it doesn't, the account is still created, but the user has no home directory.}\\[2mm]
+grep jagr /etc/passwd & jagr:x:1002:1002:Look-Out-Messier:/myhome/jagr:/bin/zsh\\[2mm]
+sudo userdel -r jagr & again, delete the \emph{jagr} account and also remove his home directory\\[2mm]
+sudo useradd -s /usr/sbin/nologin -c "email-only-account, no logon permitted" jagr & create user \emph{jagr} with no shell login; thus no remote or local logon, just email access.\\[2mm]
+grep jagr /etc/passwd & jagr:x:1002:1002:email-only-account:/home/jagr:/usr/sbin/nologin\\[4mm]
+sudo groupadd thebest -g 2020 & create a new group called \emph{thebest} and assign it the GID:2020\\[1mm]
+grep thebest /etc/group & thebest:x:2020:\\[2mm]
+sudo useradd -u 1020 -g 2020 jagr & we could also create the user \emph{jagr} with specific UID and GID using the useradd command, if the group did not exist, you would get an error message "useradd: group \tqs{2020} does not exist" and the account would not be created\\[2mm]
+grep jagr /etc/passwd & jagr:x:1020:2020::/home/jagr:/bin/bash\\[1mm]
+\bottomrule
+\end{tabularx}
+
+
+At this point, \emph{jagr's} password has not been set. Regardless, let's lock the account. Note: any user listed in the \textsl{/etc/sudoers} file can issue \emph{sudo} commands (as root) according to permissions assigned in this file.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ sudo passwd -l jagr
+Locking password for user jagr.
+passwd: Success
+#
+# Ok, let's unlock the account.
+#
+¿\tld¿ sudo passwd -u jagr
+Unlocking password for user jagr.
+passwd: Warning: unlocked password would be empty.
+passwd: Unsafe operation (use -f to force)
+#
+# So, we can override this warning. Be aware that the account has no password!
+#
+¿\tld¿ sudo passwd -uf jagr
+Unlocking password for user jagr.
+passwd: Success
+#
+# Let's look at the status of the jagr account
+#
+¿\tld¿ sudo passwd -S jagr
+jagr NP 2015-12-21 0 99999 7 -1 (Empty password.)
+#
+# Can we login? Yes, and we can without having to supply a password. This is bad!
+#
+¿\tld¿ su - jagr
+¿\tld¿	# Note, we were not prompted for a password.
+#
+# So, let's set jagr's password using sudo while logged on as jagr.
+#
+¿\tld¿ sudo passwd jagr
+
+We trust you have received the usual lecture from the local System
+Administrator. It usually boils down to these three things:
+
+¿\tbi{\#}¿1) Respect the privacy of others.
+¿\tbi{\#}¿2) Think before you type.
+¿\tbi{\#}¿3) With great power comes great responsibility.
+
+¿\color{red}{jagr is not in the sudoers file.  This incident will be reported.}¿
+#
+# This makes sense. jagr is not in the sudoers file and cannot thus become root or issue commands as root. We have to exit back to an account that has sudoer privelege.
+#
+¿\tld¿ exit
+logout
+
+¿\tld¿ whoami
+mgc
+#
+# Ok, let's see if this account is in the sudoers file.
+# Note, we can't even read this file without using the sudo command even though mgc is listed in the /etc/sudoers file.
+#
+¿\tld¿ grep mgc /etc/sudoers
+grep: /etc/sudoers: Permission denied
+#
+# The entry below for mgc says that that account can issue all commands requiring sudo and no password is required. This is a security risk!
+#
+¿\tld¿ sudo grep mgc /etc/sudoers
+mgc	ALL=(ALL)	NOPASSWD: ALL
+#
+# As above, since we are a sudo user, we can issue sudo commands.
+#
+¿\tld¿ sudo passwd jagr
+Changing password for user newuser.
+New password: 
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+#
+# Of course, when we were logged on as jagr, we could have easily changed his password.
+#
+¿\tld¿ su - jagr
+¿\tld¿ passwd
+Changing password for user jagr.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+passwd: Have exhausted maximum number of retries for service
+#
+# Ok, so only root can override the restriction on minimum password characters.
+#
+¿\tld¿ passwd
+#
+# I am initally going to use 'mypass123' as the password. When this fails, I choose a more complex password.
+#
+Changing password for user jagr.
+New password: 
+BAD PASSWORD: The password fails the dictionary check - it is based on a dictionary word
+New password: 
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+¿\tld¿
+\end{lstlisting}
+
+\subsection{usermod and passwd compared}
+
+Note: all commands issued as root, that is, \emph{sudo} precedes the actual command.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X | X} % the X is needed to wrap text
+\caption{usermod and passwd compared}\label{table:users-usermod-passwd}\\ % title of Table
+\toprule
+\normalfont{Command} & usermod & passwd \\% inserts table heading, unbolds 1st column heading
+\midrule
+lock user account & usermod -L user & passwd -l user\\[1mm]
+unlocck user account & usermod -U user & passwd -u user\\[1mm]
+set expiry date & usermod -e yyyy-mm-dd -f \# user & passwd -e user\\[1mm]
+{\color{red}- explanation} & set specific expiry date; if date is in past the account is locked; if \tqs{-f 0}, the account is locked & forces \tqs{user} to change password at next logon\\[1mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{chage and passwd compared}
+
+Note: all commands issued as root, that is, \emph{sudo} precedes the actual command.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X | X} % the X is needed to wrap text
+\caption{chage and passwd compared}\label{table:users-chage-passwd}\\ % title of Table
+\toprule
+\normalfont{Command} & chage & passwd \\% inserts table heading, unbolds 1st column heading
+\midrule
+account aging info & chage -l user & passwd -S user\\[2mm]
+set minimum number of password days & chage -m \# user & passwd -n \# user\\[2mm]
+set maximum number of password days & chage -M \# user & passwd -N \# user\\[2mm]
+set number of days prior to password expiration to send warning & chage -W \# user & passwd -w \# user\\[2mm]
+set number of days of inactivity after password expiration before account is locked & chage -I \# user & passwd -i \# user\\[1mm]
+\bottomrule
+\end{tabularx}
+
+Note: \keyword{chage} can also be used interactively to manage the account aging info for a user.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# You are presented with 6 lines of information one at a time with the default values between square [] brackets. Each time you accept the default value or enter a new value and hit the enter key, the next line appears.
+#
+¿\tld¿ sudo chage jagr
+Changing the aging information for jagr
+Enter the new value, or press ENTER for the default
+
+Minimum Password Age [0]: 
+Maximum Password Age [99999]: 
+Last Password Change (YYYY-MM-DD) [2015-12-22]: 
+Password Expiration Warning [7]: 
+Password Inactive [-1]: 
+Account Expiration Date (YYYY-MM-DD) [-1]: 
+¿\tld¿
+\end{lstlisting}
+
+\section{Managing Groups}
+
+\subsubsection{Introduction}
+Typically, when a new user is created, that user is added to a new group that has the same name as the user account.
+
+\subsubsection{Important manpages}
+There are many different commands that can be used to manage users' group membership. \textit{It is best to begin by studying the manpages of the programs used to manage groups prior to creating user or group accounts.}\\
+
+As covered previously, \textsl{/etc/passwd}, contains a GID in the fourth colon separated field. That GID is the \emph{primary group} of the user.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Manpages}\\
+\toprule
+\normalfont{Command} & Brief summary of manpage\\% inserts table heading, unbolds 1st column heading
+\midrule
+man groupmod & open the manpage for\emph{ groupmod} which is used to modify a group\\[4mm]
+man groupmod | col -b | grep -A1000 -x "OPTIONS" | grep -B1000 -x "CONFIGURATION" & display only the options section of the \emph{groupmod} manpage\\[4mm]
+mang groupmod options configuration & my \emph{.bashrc mang} function makes it easier to get this info\\[4mm]
+man groupmod | col -b | grep "\textasciicircum{}\textbackslash{} *.-" & list just the switches for \emph{groupmod}\\[4mm]
+m- groupmod & my \emph{.bashrc m-} function for the above\\[4mm]
+man usermod & \emph{usermod} can also be used to modify a user's group membership\\[4mm]
+man passwd & the \emph{passwd} command is not used to modify groups, but primary group info is embedded in \textsl{/etc/passwd}\\[4mm]
+man getent & get entries for Name Service Switch libraries like \emph{group}\\[4mm]
+man id & print real and effective user and group IDs\\[4mm]
+man groupadd & add new groups\\[4mm]
+man groupdel & delete groups\\[4mm]
+man groups & print the groups a user is in\\[4mm]
+\bottomrule
+\end{tabularx}
+
+\subsubsection{group command examples}
+
+As with all commands used to manage users, you must issue group-related commands with \emph{sudo} privilege.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{group command examples}\\
+\toprule
+\normalfont{Command} & Action\\% inserts table heading, unbolds 1st column heading
+\midrule
+groupadd -g 1111 mygrp & create a new group called \emph{mygrp} with GID of 1111. Note, user created groups will always start above GID 1000. You do not have to specify the GID as it is automatically created.\\[2mm]
+groupadd -o 1111 my2grp & create a new group called \emph{my2grp} that has the same GID as \emph{mygrp}\\[2mm]
+groupmod -g 1112 mygrp & change \emph{mygrp} GID\\[2mm] 	
+groupdel mygrp & delete \emph{mygrp}, note: you cannot remove the primary group of a user, you must remove the user account first\\[2mm]
+usemod -aG sagrp meme & add the user \emph{meme} to the group \emph{sagrp}\\
+\bottomrule
+\end{tabularx}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Let's get group info on the group: jagr. Note, nothing is returned at the command prompt.
+#
+¿\tld¿ getent group jagr
+¿\tld¿
+#
+# Oops, oh yeah, when we created the account, we added him to a group called: thebest. The command we used was: sudo useradd -u 1020 -g 2020 jagr
+#
+¿\tld¿ grep jagr /etc/passwd
+agr:x:1020:2020::/home/jagr:/bin/bash
+#
+# So, in this case jagr's GID happens to be 2020 which is the GID of the group: thebest. We created thebest with this command: sudo groupadd thebest -g 2020. Usually, when we create a user, we do not specify a GID. The default for a new user is the UID = GID...see the howe user below.
+#
+¿\tld¿ getent group thebest
+thebest:x:2020:
+#
+# The above command only tells us that thebest's has a member whose GID is 2020...which happens to be jagr's GID. To what groups does the account jagr belong?
+#
+¿\tld¿ groups jagr
+jagr : thebest
+#
+# Let's add the account howe to the thebest group, but first let's see what groups howe is currently in. Note, howe's UID=GID.
+#
+¿\tld¿ groups howe
+howe: howe 
+
+¿\tld¿ grep howe /etc/passwd
+howe:x:1021:1021::/home/howe:/bin/bash
+#
+# We will use the usermod command to add howe to the thebest group.
+#
+¿\tld¿ sudo usermod -G thebest howe
+#
+# Note, howe's primary group was not changed.
+#
+¿\tld¿ grep howe /etc/passwd
+howe:x:1021:1021::/home/howe:/bin/bash
+#
+# Ok, let's get the list of howe's groups.
+#
+¿\tld¿ groups howe
+howe: howe thebest
+#
+# Let's list the poperties of the group thebest...note, jagr is still shown as a GID.
+#
+¿\tld¿ getent group thebest
+thebest:x:2020:howe
+#
+# And, we can also grep the file: /etc/group.
+#
+¿\tld¿ grep thebest /etc/group
+thebest:x:2020:howe
+#
+# So, it seems that adding a user to the new group doesn't affect the primary group. What happens if we add howe to another group?
+#
+¿\tld¿ sudo usermod -G wheel howe
+¿\tld¿ groups howe
+howe: howe wheel
+#
+# Oops, we removed howe from the thebest group. Let's try again.
+#
+¿\tld¿ sudo usermod -aG thebest howe
+¿\tld¿ groups howe
+howe: howe wheel thebest
+#
+# Remember to use the -a = add switch, -G by itself replaces all additional groups! The exception is the primary group, that is not replaced.
+#
+\end{lstlisting}

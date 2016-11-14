@@ -1,0 +1,31 @@
+\documentclass{article}
+% Note, we do not have to use the 'todonotes' package.
+%\usepackage{todonotes}
+\usepackage{lipsum}                     % Dummytext
+\usepackage{xargs}                      % Use more than one optional parameter in a new commands
+\usepackage[pdftex,dvipsnames]{xcolor}  % Coloured text etc.
+\colorlet{OLIVEGREEN}{OliveGreen}
+% One site recommended using the following for the problem with OliveGreen.
+%\usepackage{sectsty}
+%\usepackage{titlesec}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+%
+\begin{document}
+\pagestyle{empty}
+\todo[inline]{The original todo note withouth changed colours.\newline Here's another line.}
+\lipsum[11]\unsure{Is this correct?}\unsure{I'm unsure about also!}
+\lipsum[11]\change{Change this!}
+\lipsum[11]\info{This can help me in chapter seven!}
+\lipsum[11]\improvement{This really needs to be improved!\newline\newline What was I thinking?!}
+\lipsum[11]
+\thiswillnotshow{This is hidden since option `disable' is chosen!}
+\improvement[inline]{The following section needs to be rewritten!}
+\lipsum[11]
+\newpage
+\listoftodos[Notes]
+\end{document}

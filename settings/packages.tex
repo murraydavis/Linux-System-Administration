@@ -1,0 +1,138 @@
+%% packages
+%\usepackage{microtype}
+\usepackage{enumerate} % needed for numeric ordered indexing
+\usepackage{array}	% needed for \bfseries in tables
+\usepackage{booktabs} % needed for top/mid/bottomrule in tables
+\usepackage{longtable} % this and next 2 pkgs allow tables to flow over multiple pages
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{tocloft} % address issue where space between table of contents index and section/subsection title becomes 0 spaces
+\setlength{\cftsecnumwidth}{3em} % set above space to 3em for section headings
+\setlength{\cftsubsecnumwidth}{4em} % set above space to 4em for subsection headings
+\usepackage{indentfirst}
+%\usepackage{minted}
+\usepackage{textcomp}    % also needed for upquotes in lstlisting
+\usepackage{color}
+\usepackage[parfill]{parskip} % Use for no indent.
+\usepackage{float} % needed for [H] place here option for figures
+\usepackage{scrextend} % needed for indenting block of text
+\usepackage{blindtext} % needed for creating dummy text passages
+\usepackage{xparse,nameref}
+\usepackage[french,main=english]{babel} % if you didn't specify main=english, chapter appears as chapitre in chapter headings and autorefs
+\usepackage{amsmath} % very little math in this document
+\usepackage{soul} % for hl command (highlighting with yellow background)
+\usepackage{upquote}
+%\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc} % needed for upquotes in lstlisting and accented characters, XeLaTeX or LuaLaTeX can accpet UTF-8 input natively.
+\usepackage{multirow}
+\usepackage{fancyvrb}
+\usepackage{alltt}
+%% todo
+
+% With many thanks to MLC for this todo section. Modified slightly: added [inline] and had to define colors.
+% http://tex.stackexchange.com/questions/9796/how-to-add-todo-notes
+\usepackage{xargs}
+\usepackage[pdftex,dvipsnames]{xcolor} % Coloured text.
+\colorlet{OLIVEGREEN}{OliveGreen}
+\colorlet{PROCESSBLUE}{ProcessBlue}
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommandx{\howto}[2][1=]{\todo[inline,linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[inline,linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\add}[2][1=]{\todo[inline,linecolor=ProcessBlue,backgroundcolor=ProcessBlue!25,bordercolor=ProcessBlue,#1]{#2}}
+\newcommandx{\find}[2][1=]{\todo[inline,linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improve}[2][1=]{\todo[inline,linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\why}[2][1=]{\todo[inline,linecolor=violet,backgroundcolor=violet!25,bordercolor=violet,#1]{#2}}
+\newcommandx{\donotshow}[2][1=]{\todo[disable,#1]{#2}}
+
+%% listing package --- the most package for displaying code, supports highlighting of all the most common languages and it is highly customizable
+\usepackage{listings}
+\lstset{
+	keywords={tar,gzip},
+	%backgroundcolor=\color{lbcolor},
+	%tabsize=4,
+	rulecolor=,
+	language=bash,
+	%basicstyle=\scriptsize,
+	basicstyle=\ttfamily,
+	upquote=true,
+	aboveskip={1.5\baselineskip},
+	%columns=fixed,
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=true,
+	%prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	prebreak={},
+	%breakatwhitespace=false,
+	frame=single,
+	%numbers=left,
+	%stepnumber=1,
+	%numbersep=10pt,
+	%numberstyle=footnotesize,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\color[rgb]{0,0,1},
+	%keywordstyle=\bfseries\ttfamily\color[rgb]{0,0,1},
+	%commentstyle=\color[rgb]{0.133,0.545,0.133},
+	commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+	stringstyle=\color[rgb]{0.627,0.126,0.941},
+	%columns=flexible,texcl
+}
+
+%% miscellaneous paging settings
+\usepackage{changepage} % needed for adjustwidth
+\usepackage{lastpage} % if you want footer page of pages
+\usepackage{xspace} % for \xspace, one space
+
+%% hyperlinks
+\usepackage[english, % have to specify english or autorefs will be in french because of using the babel package
+	%pdftex, % 
+	colorlinks=true % false would place a box around the word instead of coloring the word
+	,breaklinks % allows a link description to flow over several lines
+	%,ngerman
+	]{hyperref} % needed for creating hyperlinks in the document, the option colorlinks=true gets rid of the awful boxes, breaklinks breaks lonkg links (list of figures), and ngerman sets everything for german as default hyperlinks language
+	
+%\usepackage[hyphenbreaks]{breakurl} % needed for breaking of URLs in literature references, hyphenbreaks even at the left going through a page (with hypenation)
+%%
+
+%% Mauricio did not like the default hyperlink, citation, or url colors so he designed his own. In order to do this you need the 'xcolor' package.
+
+%% custom colours
+\definecolor{c1}{rgb}{0,0,1} % blue
+\definecolor{c2}{rgb}{0,0.3,0.9} % light blue
+\definecolor{c3}{rgb}{0.3,0,0.9} % red blue
+
+%% hyperlink colours
+\hypersetup{
+    linkcolor={c1}, % internal links
+    citecolor={c2}, % citations
+    urlcolor={c3} % external links/urls
+}
+
+%% Mauricio likes the citation format 'Author (year)'. You need the 'natbib' package for this. That is why the 'cite' package is uncommented.
+%\usepackage{cite} % needed for cite
+
+%% Miscellaneous packages
+\usepackage[round,authoryear]{natbib} % needed for cite and abbrvnat bibliography style
+\usepackage[nottoc]{tocbibind} % needed for displaying bibliography and other in the table of contents
+\usepackage{graphicx} % needed for \includegraphics
+\usepackage{media9}
+\usepackage{multimedia} % for embedding videos
+
+\usepackage{longtable} % needed for long tables over pages
+\usepackage{bigstrut} % needed for the command \bigstrut
+\usepackage{enumitem} % needed for some options in enumerate and indent
+\usepackage{todonotes} % needed for todos
+
+% Create Index
+%\usepackage{nomencl}
+%\makenomenclature
+% user0:Make Nomenclature makeindex -s nomencl.ist -t %.nlg -o %.nls %.nlo
+\usepackage{makeidx}
+\makeindex
+%\usepackage[splitindex]{imakeidx}
+%\makeindex[options=-s latex.ist -c, intoc, columns=3]
+%\makeindex
+%\usepackage[splitindex]{imakeidx} % needed for creating an index
+%\makeindex[name=style, title=Index of styles, options=-s latex.ist -c, intoc, columns=3]

@@ -1,0 +1,391 @@
+\chapter{The Big Squeeze}
+\label{ch:squeeze}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%\setlength{\footheight}{13.6pt}
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+Disk space is always at a premium. To help manage disk space, we often take advantage of two utilities:
+
+\begin{itemize}
+	\item \tbi{Archiving: }Assemble a directory structure and file contents into a single file.
+	\item \tbi{Compression: }Using compression algorithms, we try to reduce the size of a file or archive.
+\end{itemize}
+
+Archiving is an efficient way of consolidating a large number of files and folders into a single file. This enables us to efficiently move, backup, or otherwise change the location of the files and folders because we are dealing with only one file. It is easier to send a single file by Email, FTP, or TFTP than to send multiple files. Most archiving tools also offer a compression option that, of course, helps in gaining more efficiency in the actual movement. The smaller the file, the faster it will move whether across a \emph{LAN}, a \emph{VPN tunnel}, or the \emph{Internet}.
+
+\section{Archiving tools}
+\begin{itemize}
+	\item \tbi{tar }The standard Linux archiving utility. Compression options available.
+	\item \tbi {shar }Not installed by default. Extraction can be executed with \textsl{/bin/bash} instead of \emph{unshar}, so \textsl{.shar} archives can be considered as an executable. Compression options available.
+	\item \tbi{ar } Typically installed by default, predates \emph{tar} and is used to create, modify, and extract archives.
+	\item \tbi{cpio } Stands for \emph{copy in and out} and is used to copy files to and from archives. \emph{cpio} is often used in conjunction with the \emph{rpm} command.
+\end{itemize}
+
+\subsection{tar}
+
+\subsubsection{tar archiving commands}
+
+\keyword{tar} options can be typed with or without a minus sign.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{tar archive commands}\label{table:tar-arvhive-commands}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+\textit{\color{red}common tar options} & c=create, v=verbose, f=file, t=list, x=extract, p=permissions, d=compare\\[2mm]
+\textit{\color{red}common compression formats} & j=bzip2, J=xz, z=gzip, Z=compress (kernel-based)\\[2mm]
+tar -cvf my.tar mydirectory & Archive the contents of \textsl{mydirectory} into a single file \textsl{my.tar}. When there is no leading slash before the directory name, the directory is in the current working directory.\\[2mm]
+tar -{}-{}create -{}-{}verbose -{}-{}file my.tar mydirectory & As above, but using words instead of letters for the options.\\[2mm]
+tar cvf my.tar dir1 dir2 dir3 & Create an archive from multiple sources.\\[2mm]
+tar cpf my.tar mydirectory & Archive, no verbose, maintain permissions.\\[2mm]
+tar dvf my.tar mydirectory & Compare contents of archive with source. Differences are typically listed as: \emph{Mod time differs} and \emph{Size differs}.\\[2mm]
+tar tf my.tar & List contents of \textsl{my.tar}, lists file and paths.\\[2mm]
+tar xf my.tar & Extract my.tar to its original location.\\[2mm]
+tar xf my.tar -C path/to/newdir & Extract my.tar, that is, \textsl{mydirectory} to \textsl{path/to/newdir}\\[2mm]
+cd path/to/newdir \&\& ls & You will see \textsl{mydirectory}. Oops, we made a mistake, we did not want this archive extracted here. Let's reverse the process.\\[2mm]
+rm -fr \tgr{tar tf ../../../my.tar} & This recursively removes \textsl{mydirectory} and its contents from this location. We are using the list (t) option to list the contents of the archive and one at a time remove each file/directory. Note, \textsl{my.tar} is three directory levels back. We can also use absolute paths such as \textsl{/home/mgdc/my.tar}.\\[2mm]
+tar -{}-{}selinux -{}-{}xattrs -{}-{}acls -cvf test.tar mydir & Create an archive preserving SELinux, x-atrributes, and ACLs of the directory \textsl{mydir}.\\[2mm]
+tar xvf my.tar somefile & Extract a specific file from an archive.\\[2mm]
+tar xvf my.tar mydir & Extract \textsl{mydir} directory from an archive.\\[2mm]
+tar xvf my.tar file1 file2 file3 & Extract three specific files from an archive.\\[2mm]
+tar xvf my.tar -{}-{}wildcards -{}-{}no-anchored \tqs{*.bak} & Extract only files ending in the extension \textsl{.bak}.\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\subsubsection{tar compression algorithms}
+
+\tbi{tar} has several options that allow you to compress archives using different compression algorithms. Each of these algorithms are indicated by letters: z=gzip, j=bzip, and J=xz. In addition, we can use the archiving tool itself. These tools are not used to bundle multiple files into a single archive (we need an archiving tool for that), rather the tools are used to compress a single file or an archive itself.
+
+\begin{itemize}
+	\item \tbi{bzip2 }Very fast tool used for compressing and decompressing files. The default extensions are typically: .bz and .bz2. With tar, the extensions become: tar.bz and tar.bz2 or .tbz and .tbz2. In fact, any file extension can be used, but it is best to use an extension that reflects the underlining archive and compression tool. bzip2 uses the \href{https://en.wikipedia.org/wiki/Bzip2}{Burrows-Wheeler algorithm}. Use the \tbi{j} option for \tbi{bzip2} compression.
+	\item \tbi {xz }Uses LZMA/LZMA2 compression file format similiar to 7-zip. File extension is typically \tbi{.xz}. See \href{https://en.wikipedia.org/wiki/Xz}{xz}. Use the \tbi{J} option for \tbi{xz} compression.
+	\item \tbi{gzip } Like \emph{bzip} and \emph{xz}, \emph{gzip} is used to compress single files or an archive. It uses the deflate compression algorithm. File extensions are typically: .gz, tar.gz, and .tgz. Go to this URL \href{https://en.wikipedia.org/wiki/Gzip}{gzip} for more information. gzip has three speeds of compression: default - level 6, fastest (less compression) - level 1, and slowest (optimal compression) - level 9. The -n switch is used to specify the speed level. Use the \tbi{z} option for \tbi{gzip} compression.
+\end{itemize}
+
+\subsubsection{tar compression and extraction commands}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{tar compression commands}\label{table:tar-compression-commands}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+tar czf my.tar.gz /path/to/mydirectory & Archive \textsl{mydirectory} and compress using the \emph{gzip} compression algorithm. The path starts at the root directory, indicated by the leading slash.\\[2mm]
+tar czf my.tgz files[0-9] & Archive 10 files in the current directory named file0 to file9 and compress using the \emph{gzip} compression algorithm.\\[2mm]
+tar xzf my.tar.gz & This extracts the compressed archive back to \textsl{/path/to/mydirectory}.\\[2mm]
+cd !!\$:r:r & Change directory into /path/to/mydirectory. !!\$ refers to the last argument of the above command. r:r refers to tar.gz. If the argument was \emph{my.tar}, you would only need one \emph{r}.\\[2mm]
+tar xzf my.tar.gz -C /different/directory & This extracts the compressed archive not to \textsl{/path/to/mydirectory}, but to an alternate directory /different/directory.\\[2mm]
+tar czvf my.tgz /path/to/mydirectory & \textsl{my.tar.gz} is equivalent to \textsl{my.tgz}, both indicate a gzipped tar archive. I want to see each step in the process so I added the verbose option.\\[2mm]
+rm -fr \tgr{tar ztf /path/to/file.tar.gz} & Remove the compressed archive that was extracted to the current working directory.\\[2mm]
+tar cjf my.tar.bz2 /path/to/mydirectory & Achive and compress using \emph{bzip2} compression algorithm.\\[2mm]
+tar cJf my.tar.xz /path/to/mydirectory & Achive and compress using \emph{xz} compression algorithm.\\[2mm]
+tar -{}-{}newer \tqs{2014-09-16} -czf my.tgz /path/to/mydirectory & Archive and compress files in \textsl{/path/to/mydirectory} that are newer than Sept. 16, 2014.\\[2mm]
+tar -{}-{}after-date \tqs{2014-09-16} -czf my.tgz /path/to/mydirectory & Archive and compress files in \textsl{/path/to/mydirectory} that are older than Sept. 16, 2014.\\[2mm]
+curl -s https://mydomain.com/myfile.tgz | tar xvf - mydir/file1.dat file2.dat & Using \emph{curl} download and extract specific files from the compressed archive.\\[2mm]
+\bottomrule
+\end{tabularx}
+
+The command from the above table that I have found most useful is the command to remove a recently expanded compressed archive. For example, I often download a compressed archive that contains a package or utility from an open source provider. If I incorrectly expand the archive into my \textsl{Dowloads} directory, I need a quick way of removing all the extracted files. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# By mistake, I extract the archive in my current working directory, my Downloads directory.
+#
+¿\tld¿ tar xzf package.tar.gz
+#
+# Damn, so now my Downloads directory is full of all the files and folders from this package. I am assuming that the extraction wasn't to a single folder. If it was, I could just issue this command 'rm -fr foldername'. But instead, I assume that it extracted many files and directories into my Downloads directory and not a directory of its choosing. So, what to do? I wouldn't use 'rm . *' since that would remove everything in my Downloads directory. Instead I use command substitution as follows...
+#
+¿\tld¿ rm -fr `tar xtf package.tar.gz`
+#
+¿\color{red}{\# Tr\'es cool! Command redirection rocks!}¿ 
+# The command between the back quotes, of course, lists the contents of the archive and passes this list to 'rm -fr'.  And, now I can extract the package to my '/opt' folder.
+#
+¿\tld¿ tar xzf package.tar.gz - C /opt/pkgname
+\end{lstlisting}	
+
+\section{gzip}
+
+\keyword{gzip} is part of a trio of files used to compress and expand files: gzip, gunzip, and zcat.
+
+\subsection{gzip's compression levels}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Let's archive and compress the files in a folder called newerdir that are newer, more recent than Feb. 2, 2016.  YYYY,MM,DD is the date format used on my system.
+#
+¿\tld¿ tar --newer '2016-02-02' -czf mymy.tgz newerdir
+#
+# Tell me about the compression metrics of file: mymy.tgz.
+#
+¿\tld¿ gzip -l mymy.tgz
+compressed        uncompressed  ratio uncompressed_name
+187               10240         98.3% mymy.tar
+#
+# And, what are the contents of the compresses archive?
+#
+¿\tld¿ tar -tf mymy.tgz
+newerdir/
+newerdir/a
+newerdir/b
+newerdir/c
+#
+# Let's try something a little bit different. Let's separate the archiving and compression commands and then compare the new compression ratio to the above compression ratio. Note, I specify a compression level of 9. The default level is 6.
+#
+¿\tld¿ tar --newer '2016-02-02' -cf my.tar newerdir
+¿\tld¿ gzip -9 my.tar
+#
+# Note, with gzip we do not have to supply a file name for the compressed file. By default, it adds the .gz extension to the file being compressed...which is my.tar.
+#
+¿\tld¿ gzip -l my.tar.gz
+         compressed        uncompressed  ratio uncompressed_name
+         179               10240         98.5% my.tar
+#
+# The default compression level in the combined command compresses at a slightly lower compression ratio, 98.3% compared to level 9's ratio of 98.5%. Let's break the command down and specify the compression ratio. Note, between each step, I am deleting my.tar.gz overriding my 'rm' alias so that I don't have to confirm each delete. As well, I am piping the tar command to gzip so that I only have to issue one command. The two isolated minus signs are manadatory in these commands.
+#
+# Level 1, fastest, but least amount of compression.
+#
+¿\tld¿ tar --newer '2016-02-02' -cf - newerdir | gzip -1 - > my.tar.gz
+
+¿\tld¿ gzip -l my.tar.gz
+compressed        uncompressed  ratio uncompressed_name
+237               10240         97.9% my.tar
+	
+¿\tld¿ \rm my.tar.gz
+#
+# Level 6, slower and better compression, the default.
+#
+¿\tld¿ tar --newer '2016-02-02' -cf - newerdir | gzip -6 - > my.tar.gz
+¿\tld¿ gzip -l my.tar.gz
+compressed        uncompressed  ratio uncompressed_name
+187               10240         98.3% my.tar
+	
+¿\tld¿ \rm my.tar.gz
+#
+# Level 9, slowest, but best compression.
+#
+¿\tld¿ tar --newer '2016-02-02' -cf - newerdir | gzip -9 - > my.tar.gz
+¿\tld¿ gzip -l my.tar.gz
+compressed        uncompressed  ratio uncompressed_name
+172               10240         98.5% my.tar
+#	
+# My files were quite small. So, I really didn't notice a difference in speed. We can easily see the impact of the different compression levels as we changed the compression level: 97.9%, 98.3%, and 98.5%.
+#
+\end{lstlisting}
+
+
+\subsection{gzip challenge}
+
+As a challenge, take a very large file or directory, or vary the type of files, and run the above commands changing the compression level. How do the compression ratios change? If you want to measure the time that it takes to run each command, preface each command with the \keyword{time} command.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# I want to create an archive containing two files and find out how long it takes. The files are very smal so the time values are negligible.
+#
+¿\tld¿ time tar -cvf my.tar suid.txt test.txt
+suid.txt
+test.txt
+
+real	0m0.002s
+user	0m0.000s
+sys	0m0.001s
+\end{lstlisting}
+
+\subsection{gzip vs bzip2}
+
+Like \keyword{gzip}, \keyword{bzip2} is part of a four member family: \emph{bzip2} and \keyword{bunzip} for compressing and expanding files, \keyword{bzcat} for decompressing files to stdout, and \keyword{bzip2recover} for recovering damaged \textsl{.bzip2} files.
+
+There is one major difference between \emph{gzip} and \emph{bzip2}. When you compress a file with \emph{gzip} the source file is removed and replaced by a file with the suffix \textsl{.gz}. When you compress a file with the \emph{bzip2} command, the source file is not removed and the compressed file has the suffix \textsl{.bz2}.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{compression}\label{table:compression-gzip-bzip}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+gzip test.tar & Compress the archive \textsl{test.tar} which is removed by \emph{gzip}. The file \textsl{test.tar.gz} is created.\\[2mm]
+bzi2p test.tar & Compress the archive \textsl{test.tar} which is not removed by \emph{bzip}. The file \textsl{test.tar.bz2} is created.\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{Gunning for you}
+
+\keyword{dnf} caches its working files in \textsl{/var/cache/dnf} as compressed files. We can use \keyword{gunzip} to see the contents of these compressed file.  Let's take a peek...
+
+% I embeded Latex escape characters throughout the following code to avoid lstlisting's color coding. I had to escape the underscore.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Let's look at the xml.gz files for the google-chrome repository.
+#
+¿\tld¿ cd /var/cache/dnf/google-chrome-eb0d6f10ccbdafba/repodata
+¿\tld¿ ls -la
+total 28
+drwxr-xr-x. 2 root root 4096 Feb 17 12:00 .
+drwxr-xr-x. 4 root root 4096 Feb 17 12:00 ..
+-rw-r--r--. 1 root root 1646 Feb 17 12:00 filelists.xml.gz
+-rw-r--r--. 1 root root 1899 Feb 17 12:00 primary.xml.gz
+-rw-r--r--. 1 root root  951 Feb 17 12:00 repomd.xml
+#
+# Do you want to see the dump of a compressed .xml file? It is unreadable...I only show a small snippet of the dump.
+#
+¿\tld¿ gunzip -d -c filelists.xml.gz
+¿<?xml version="1.0" encoding="UTF-8"?>
+<filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="3">
+<package pkgid="f9d8a81848147d7b76bc77b994e8ba416ffdb04f" name="google-chrome-beta" arch="x86\_64"><version epoch="0" ver="50.0.2661.57" rel="1"/><file>/etc/cron.daily/google-chrome-beta</file><file>/opt/google/chrome-beta/PepperFlash/
+.
+.¿
+#
+# Fortunately, there is a default package called xml_pp, xml pretty print.
+#
+¿\tld¿ gunzip -d -c primary.xml.gz | xml_pp
+¿<?xml version="1.0" encoding="UTF-8"?>
+<filelists packages="3" xmlns="http://linux.duke.edu/metadata/filelists">
+<package arch="x86\_64" name="google-chrome-unstable" pkgid="f43bff62073ff6db3029a4c297ce4c795d51afa3">
+<version epoch="0" rel="1" ver="50.0.2652.0"/>
+<file>/etc/cron.daily/google-chrome-unstable</file>
+<file>/opt/google/chrome-unstable/PepperFlash/libpepflashplayer.so</file>
+.
+.
+<file type="dir">/opt/google/chrome-beta/default\_apps</file>
+<file type="dir">/opt/google/chrome-beta/locales</file>
+<file type="ghost">/usr/bin/google-chrome</file>
+</package>
+</filelists>¿
+#
+# We can also grep specific information.
+#
+¿\tld¿ gunzip -d -c filelists.xml.gz | xml_pp | grep "package arch"
+¿<package arch="x86\_64" name="google-chrome-unstable" pkgid="f43bff62073ff6db3029a4c297ce4c795d51afa3">
+<package arch="x86\_64" name="google-chrome-stable" pkgid="6f55c7ba7adab3ab46870b4ef667acc4c75c9eec">
+<package arch="x86\_64" name="google-chrome-beta" pkgid="61e43b286443c383aaf35340c8ab336debeb0dec">¿
+#
+# What is its compressions level of filelists.xml.gz?
+#
+¿\tld¿ gunzip -l -c filelists.xml.gz
+compressed        uncompressed  ratio uncompressed_name
+1646              16678         90.6% filelists.xml
+\end{lstlisting}
+
+\section{Zed, not Zee; but I do need some ZZZs}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ cat one.msg
+This is my secret message...Be happy!
+This is my sad message...I am broke!
+#
+# Ok, let's zip this file.
+#
+¿\tld¿ gzip one.msg
+#
+# Is the originally unzipped file still there? It turns out that gzip deletes the original.
+#
+¿\tld¿ ls one.msg
+ls: cannot access one.msg: No such file or directory
+#
+# 'gzip' appends its extension.
+#
+¿\tld¿ ls one.msg.gz
+one.msg.gz
+#
+# Can we display the contents of a zipped file to the command line? Yes, there are several ways of doing that.
+#
+¿\tld¿ zcat one.msg.gz
+This is my secret message...Be happy!
+This is my sad message...I am broke!
+#
+# Let's use gunzip. -d = decompress, but -c = to-stdout, to the command line, not to a file.
+#
+¿\tld¿ gunzip -d -c one.msg.gz
+This is my secret message...Be happy!
+This is my sad message...I am broke!
+#
+# If we recall the contents of the zipped file, we can even grep a known string...and it even tells us what line number.
+#
+¿\tld¿ zgrep -n sad one.msg.gz
+2:This is my sad message...I am broke!
+#
+# We could also use gunzip.
+#
+¿\tld¿ gunzip -d -c one.msg.gz | grep -n happy
+1:This is my secret message...Be happy!
+#
+# We can even use regex with the zgrep command.
+#
+¿\tld¿ zgrep 'sad\|happy' one.msg.gz
+This is my secret message...Be happy!
+This is my sad message...I am broke!
+#
+# Let's tar two files. 
+#
+¿\tld¿ cat suid.txt
+my suid is 0
+
+¿\tld¿ cat test.txt
+my test is 0
+
+¿\tld¿ tar -czf my.msg.tgz suid.txt test.txt
+#
+# List the files inside my compressed archive.
+#
+¿\tld¿ tar -tf my.msg.tgz
+suid.txt
+test.txt
+#
+# Suppose, I just want to see the contents of suid.txt. This following is quite a useful command. Imaging if you had hundreds of files in your compressed archive, but you only wanted to see the contents of a specific file. The option is the capital letter o, not a zero or lower case o. Note, when we use the -x = extract option with -O = to-stdout, the file in question is not actually extracted. Instead its contents are sent to the command line.
+#
+¿\tld¿ tar -xf my.msg.tgz -O suid.txt
+my suid is 0
+\end{lstlisting}
+
+\subsection{Summary of catching some zzzs}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Catching some zzzs}\label{table:compression-zzzs}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+zcat file.gz & Display contents of compressed file.\\[2mm]	
+zcat file.gz | grep mystring & Display only those lines of compressed file that contain "mystring"\\[2mm]
+zmore file.gz & Display contents of compressed file using \emph{more} paging command.\\[2mm]
+zless file.gz & Display contents of compressed file using \emph{less} paging command.\\[2mm]
+zgrep -n mystring file.gz & Display only those lines of compressed file that contain "mystring"\\[2mm]
+zgrep \tqs{regexpression} file.gz & Display only those lines of compressed file that contain a string stated using a regex format such as: 'sad\/happy'.\\[2mm]
+zdiff file1.gz file2.gz & Compare contents of two compressed files and list the differences.\\[2mm]
+gunzip -d -c file.gz & Display contents of compressed file.\\[2mm]
+gunzip -d -c file.gz | grep -n mystring & Display only those lines of compressed file that contain "mystring".\\[2mm]
+vi file.gz & Open compressed file in \emph{vi} to view contents of file\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\section{rpm packages and cpio}
+
+From a website, you download an interesting looking package that is in the form of a RPM file. You want to see inside this RPM file before you go ahead and install it. You will use the \keyword{cpio} command, copy files to and from and archive.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{RPM files and cpio}\label{table:compression-cpio}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+rpm2cpio pkgname.rpm | cpio -t & List the files in this package. This command is equivalent to \tqs{rpm -qlp pkgname}.\\[2mm]
+rpm2cpio pkgname.rpm | cpio -ivd /path & Extract all files and create directory structure inside \textsl{/path}. \\[2mm]
+rpm2cpio pkgname.rpm > pkgname.cpio & Convert the RPM file to a \textsl{.cpio} file so that you can then use the \emph{cpio} commands.\\[2mm]
+\bottomrule
+\end{tabularx}

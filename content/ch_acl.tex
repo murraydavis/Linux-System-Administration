@@ -1,0 +1,182 @@
+\chapter{Access Control List - ACL}
+\label{ch:acl}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\tbi{Access Control Lists (ACLs)} provide a richer access control model than the traditional UNIX \tbi{Discretionary Access Control (DAC)} that sets read, write, and execute permissions for the owner, group, and all other system users. You can configure ACLs that define access rights for more than just a single user or group, and specify rights on programs, processes, files, and directories. If you set a default ACL on a directory, its descendents or sub-components inherit the same rights automatically. The kernel provides ACL support for: ext3, ext4, and NFS-exported file systems.\\
+
+\section{getfacl and sefacl command options}
+There are two primary commands that we use when working with ACLs: \tbi{getfacl} and \tbi{setfacl}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld\textbf{ getfacl -h}¿
+getfacl 2.2.52 -- get file access control lists
+Usage: getfacl [-aceEsRLPtpndvh] file ..
+-a,  --access           display the file access control list only
+-d, --default           display the default access control list only
+-c, --omit-header       do not display the comment header
+-e, --all-effective     print all effective rights
+-E, --no-effective      print no effective rights
+-s, --skip-base         skip files that only have the base entries
+-R, --recursive         recurse into subdirectories
+-L, --logical           logical walk, follow symbolic links
+-P, --physical          physical walk, do not follow symbolic links
+-t, --tabular           use tabular output format
+-n, --numeric           print numeric user/group identifiers
+-p, --absolute-names    don't strip leading '/' in pathnames
+-v, --version           print version and exit
+-h, --help              this help text
+\end{lstlisting}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld\textbf{ setfacl -h}¿
+setfacl 2.2.52 -- set file access control lists
+Usage: setfacl [-bkndRLP] { -m|-M|-x|-X ... } file ...
+-m, --modify=acl        modify the current ACL(s) of file(s)
+-M, --modify-file=file  read ACL entries to modify from file
+-x, --remove=acl        remove entries from the ACL(s) of file(s)
+-X, --remove-file=file  read ACL entries to remove from file
+-b, --remove-all        remove all extended ACL entries
+-k, --remove-default    remove the default ACL
++\hspace{26pt}+--set=acl           set the ACL of file(s), replacing the current ACL
++\hspace{26pt}+--set-file=file     read ACL entries to set from file
++\hspace{26pt}+--mask              do recalculate the effective rights mask
+-n, --no-mask           don't recalculate the effective rights mask
+-d, --default           operations apply to the default ACL
+-R, --recursive         recurse into subdirectories
+-L, --logical           logical walk, follow symbolic links
+-P, --physical          physical walk, do not follow symbolic links
++\hspace{26pt}+--restore=file      restore ACLs (inverse of `getfacl -R')
++\hspace{26pt}+--test              test mode (ACLs are not modified)
+-v, --version           print version and exit
+-h, --help              this help text
+\end{lstlisting}
+
+\section{What indicates that an ACL is set on a file?}
+
+So, if you look at a long listing for a file, you will see the regular Linux permissions for that file. There is also a file type indicator at the end. For example, the file \textsl{myfile} has a period after the regular Linux permissions to indicate that it is a regular file. We have to use the \keyword{getfacl} command to see ACLs. Note, there are two sections: Owners and Permissions. As you can see, without any ACL set, the ACL permissions match the Linux permissions for the file.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# See regular Linux file permissions
+#
+¿\tld¿ ls -la myfile
+-rw-rw-r--. 1 me mygrp 0 Dec 11 14:07 myfile
+#
+# See ACL permissions.
+#
+¿\tld¿ getfacl myfile
+# file: myfile
+# owner: me
+# group: mygrp
+user::rw-
+group::rw-{}-{}
+other::r-{}-{}
+\end{lstlisting}
+
+Using \keyword{setfacl}, let's give the user \emph{mgc} read and write permission on this file. Suppose that we want to do this because we do not want to add that user to the group \emph{mygrp} because that would grant that account permissions that we do not want him to have. We also do not want to modify the other users permissions. Now, notice that after granting \emph{mgc} \tbi{rw} ACL permissions, the long listing for the file has a plus sign at the end. This tells us that there are additional privileges granted on the file, the ACLs.  The \keyword{getfacl} command still lists the owner information, but now we have two additional pieces of information. We have a second \emph{user} line that lists the specific ACL for the \emph{mgc} account. We also have a \tbi{mask} entry. The mask can be considered as the maximum permission granted on the file. Its value always takes precedence. A user cannot have greater permissions than the mask value.
+
+With the \emph{setfacl} command, we can add an ACL by user and by group. In the following example, we add an ACL for a specific user.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# We use the -m = modify switch, -u =user, followed by a colon and then the user name and her permissions and then the filename.
+#
+¿\tld¿ setfacl -m u:mgc:rw myfile
+#
+# Note again, in the long-listing, the plus sign at the end of the regular permissions indicates the presence of an ACL.
+#
+¿\tld¿ ls -la myfile
+-rw-rw-rw-+ 1 me mygrp 0 Dec 11 14:07 myfile
+#
+# Note, with the output of getfacl, a # precedes the file, owner, and group line items. Also, note the two additions: the ACL for mgc and the permissions mask.
+#
+¿\tld¿ getfacl myfile
+¿\tbi{\#}¿ file: myfile
+¿\tbi{\#}¿ owner: mgc
+¿\tbi{\#}¿ group: mygrp
+user::rw-
+¿\textbf{\color{red}user:mgc:rw-}¿
+group::rw--
+¿\textbf{\color{red}mask::rw-}¿
+other::r--
+\end{lstlisting}
+
+\section{ACL examples}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's remove all ACLs	
+#
+¿\tld¿ setfacl -b myfile
+¿\tld¿ getfacl myfile
+¿\tbi{\#}¿ file: myfile
+¿\tbi{\#}¿ owner: mgc
+¿\tbi{\#}¿ group: mygrp
+user::rw-
+group::rw-
+other::r--	
+#
+# Let's add ACLs for two groups (wireshark and lighttpd) at the same time. There is no space after the comma that separates the two sections.
+#
+¿\tld¿$ setfacl -m g:wireshark:rw,g:lighttpd:rw myfile
+¿\tld¿$ getfacl myfile
+¿\tbi{\#}¿ file: myfile
+¿\tbi{\#}¿ owner: mgc
+¿\tbi{\#}¿ group: mygrp
+user::rw-
+group::rw-
+group:lighttpd:rw-
+group:wireshark:rw-
+mask::rw-
+other::r--	
+#
+# Let's remove one of the permissions, not all the ACLs.
+#
+¿\tld¿$ setfacl -x g:wireshark myfile
+¿\tld¿$ getfacl myfile
+¿\tbi{\#}¿ file: myfile
+¿\tbi{\#}¿ owner: mgc
+¿\tbi{\#}¿ group: mygrp
+user::rw-
+group::rw-
+group:lighttpd:rw-
+mask::rw-
+other::r--	
+#
+# Let's copy the ACL from one myfile to myotherfile. Note: --set-file=- contains no spaces.
+#
+¿\tld¿$ getfacl myfile | setfacl --set-file=- myotherfile
+¿\tld¿$ getfacl myotherfile
+¿\tbi{\#}¿ file: myfile
+¿\tbi{\#}¿ owner: mgc
+¿\tbi{\#}¿ group: mygrp
+user::rw-
+group::rw-
+group:lighttpd:rw-
+mask::rw-
+other::r--	
+\end{lstlisting}
+
+
+
+

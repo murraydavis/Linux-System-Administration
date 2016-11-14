@@ -1,0 +1,906 @@
+\chapter{Vi Text Editor}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+How do Linux System Administrators interact with workstations and servers? The answer is that most LSA's work at the CLI, the \href{https://en.wikipedia.org/wiki/Command-line\_interface}{command line interface}. You sit physically in front of your system and type on a keyboard. Or, you remote into your system using a communication application or protocol. Typically, your typing is an editing process. You edit or create configuration files for applications or system daemons and you create documents. My favourite editing tool is \keyword{vi}.
+
+\section{Overview of vi}
+\tbi{vi} is a text editor that uses the keyboard to control everything...no mouse is needed. I have been using \emph{vi} since the days when Linux did not have a desktop, that is, no graphical environment. \emph{vi} is a wonderfully easy-to-use text editor, although one must memorize an odd assortment of commands and syntax.
+
+Some readers may ask, "Easy-to-use, are you kidding me?" My response is that it is easy-to-use if you use only a small subset of \emph{vi's} feature set. However, you will work very inefficiently until you master the more complex commands and features.
+
+Fortunately, \emph{vi} has a powerful online help tool that provides examples for each command. There are other popular text editors such as \href{https://www.gnu.org/software/emacs/}{emacs} and \href{http://www.nano-editor.org/}{nano}, but this chapter focuses only on \href{http://vim.wikia.com/wiki/Vim_Tips_Wiki}{vi/vim}.
+
+\section{vi is vim}
+In the early days of Linux, you typically could have both \tbi{vi} and \tbi{vim---Vi IMproved} installed on your system. \keyword{vim}, of course, has more features and capabilities. Today, you really only have \emph{vim} on your system, but the \emph{vi} command is still used to launch \emph{vim}. However, take note of the discussion that follows comparing \tbi{Vi IMproved} and \tbi{Vim-enhanced}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I just want the first line of the vi versioning information.
+#
+¿\tld¿ vi --version | head -1
+VIM - Vi IMproved 7.4 (2013 Aug 10, compiled Aug 20 2015 09:51:26)
+\end{lstlisting}
+
+If you just type \emph{vi} and hit the enter key at the command line, \emph{vi} will open and display the following splash-screen...which will disappear as soon as you start entering text.
+
+\begin{center}
+VIM - Vi IMproved\\
+Version 7.4.827\\                                                 
+by Bram Moolenaar et al.\\                                               
+Modified by <bugzilla@redhat.com>\\                                       
+Vim is open source and freely distributable\\                                     
+
+Help poor children in Uganda!\\                                            
+type  :help iccf<Enter>       for information\\                                     
+
+type  :q<Enter>               to exit\\                                             
+type  :help<Enter>  or  <F1>  for on-line help\\                                    
+type  :help version7<Enter>   for version info \\    
+\end{center}
+
+The version of vi that comes with Fedora 23 is \emph{Vi IMproved}, not \emph{Vim-enhanced}. Why is this important? Well, you will soon find out that certain commands don't work with \emph{Vi IMproved}. Try splitting a \emph{vi} window vertically before you have \emph{Vim-enhanced} installed! When starting \emph{vi}, after you install \emph{Vim-enhanced}, it is interesting that you will get the same splash screen as shown. So, the splash screen does not tell you which version of \emph{vi} is installed.
+
+I hope the exploration of this topic will help illustrate how I logically try to resolve technical issues. As I dig, as I explore, I discover new commands and I master new features of existing commands that I already know. I may start sounding rather pushy and pedantic, but \textit{don't just sit there and be confused, do some work, test some things, and don't be afraid to make mistakes...as long as you have several different types and sources of backups!} Why? At the worst possible moment, you may find that your only backup is corrupted or too outdated to be useful!
+
+\subsection{vim-minimal}
+
+We will see from the code below that the package \keyword{vim-minimal} is in fact \emph{Vi Improved}.
+
+\why{Why does dnf provides show two repos for vi package, @system and fedora?}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines, language={bash},keywords={which,ls,type,dnf,rpm,sudo}]
+#
+# Which default vi package gets executed?
+#
+¿\tld¿ which vi
+/bin/vi
+#
+# Does this path have a symbolic link? That is, does it actually point to another file? How do we determine whether it does or does not point to another file? One way is to issue the ls command with the all option. As we see, vi does not point to another file. 
+#
+¿\tld¿ ls -la /bin/vi
+-rwxr-xr-x. 1 root root 1021960 Aug 20 02:52 /bin/vi
+#
+# If vi pointed to another file, we would see a symbolic link. So, what does a symoblic link look like? If we use the ls command, only the color will tell us whether or not the file has a symbolic link. I am going to use actual colors for the file lists to illustrate how symbolic links appear at the command line. The color of normal files will be white when your default is white foreground and black background. However, files with a symbolic link will be Aquamarine and executable files will be green in colour. I am using Latex's colors to show the distinction, so the colours will appear a bit off.
+#
+# The path /usr/sbin/telinit is Aquamarine in colour and this colour indicates that the file has a symbolic link, it points to another file.
+#
+¿\tld¿ ls /usr/sbin/telinit
+¿\textbf{\color{Aquamarine}/usr/sbin/telinit}¿
+#
+# The path /usr/sbin/tc is green in colour which indicates that tc is an executable file.
+#
+¿\tld¿ ls /usr/sbin/tc
+¿\textbf{\color{green}/usr/sbin/tc}¿
+#
+# The full file listing for tc is also in green and there is no indication of a symbolic link.
+#
+¿\tld¿ ls -la /usr/sbin/tc
+-rwxr-xr-x. 1 root root 337072 Oct 26 13:26 ¿\textbf{\color{green}/usr/sbin/tc}¿
+#
+# However, we get both a color representation with a long listing for telinit and a clear indication that telinit has a symbolic link. Note, /usr/sbin/telinit points to /usr/bin/systemctl...which is in green and thus is an executable file.
+#
+¿\tld¿ ls -la /usr/sbin/telinit
+lrwxrwxrwx. 1 root root 16 Feb  1 06:04 ¿\textbf{\color{Aquamarine}/usr/sbin/telinit}¿ -> ¿\textbf{\color{green}../bin/systemctl}¿
+#
+# A normal file will have the default foreground colour for both ls and ls -la. Latex's lstlisting package that I am using to display bash commands uses the colour blue to highlight bash commands.
+#
+¿\tld¿ ls myfile.txt
+myfile.txt
+
+¿\tld¿ ls -la myfile.txt
+-rw-rw-r--. 1 mgcr mygrp 44869 Jan 20 10:24 myfile.txt
+
+#
+# We can also use the type command to verify that vi has no symbolic link.
+#
+¿\tld¿ type -a /bin/vi
+/bin/vi is /bin/vi
+#
+# Ok, what package provided /bin/vi? We see below that it is vim-minimal.
+#
+¿\tld¿ dnf provides /bin/vi
+Last metadata expiration check performed 21 days, 0:54:03 ago on Thu Dec 24 10:08:26 2015.
+vim-minimal-2:7.4.827-1.fc23.x86_64 : A minimal version of the VIM editor
+Repo        : @System
+
+vim-minimal-2:7.4.827-1.fc23.x86_64 : A minimal version of the VIM editor
+Repo        : fedora
+#
+# So, do we have vim-minimal? Let's check. The following command asks if vim-minimal is installed. As we can see it is installed.
+#
+¿\tld¿ dnf list installed vim-minimal
+Last metadata expiration check performed 12 days, 20:00:28 ago on Tue Feb  2 13:41:23 2016.
+Installed Packages
+vim-minimal.x86_64                                   2:7.4.827-1.fc23                                   @@commandline
+#
+# We can also get this info using the rpm command. -q=query, -f=file
+#
+¿\tld¿ rpm -qf /bin/vi
+vim-minimal-7.4.827-1.fc23.x86_64
+#
+# We use the following rpm command to  see what files vim-minimal installed. Old school!
+#
+¿\tld¿ rpm -ql vim-minimal
+/etc/virc
+/usr/bin/ex
+/usr/bin/rvi
+/usr/bin/rview
+/usr/bin/vi
+/usr/bin/view
+/usr/share/man/man1/ex.1.gz
+/usr/share/man/man1/rvi.1.gz
+/usr/share/man/man1/rview.1.gz
+/usr/share/man/man1/vi.1.gz
+/usr/share/man/man1/view.1.gz
+/usr/share/man/man1/vim.1.gz
+/usr/share/man/man5/virc.5.gz
+#
+# The new school way...
+#
+¿\tld¿ dnf repoquery -l vim-minimal
+/etc/virc
+/usr/bin/ex
+/usr/bin/rvi
+/usr/bin/rview
+/usr/bin/vi
+/usr/bin/view
+/usr/share/man/man1/ex.1.gz
+/usr/share/man/man1/rvi.1.gz
+/usr/share/man/man1/rview.1.gz
+/usr/share/man/man1/vi.1.gz
+/usr/share/man/man1/view.1.gz
+/usr/share/man/man1/vim.1.gz
+/usr/share/man/man5/virc.5.gz
+#
+# Does /usr/bin/vi point to /bin/vi?
+#
+¿\tld¿ type -a /usr/bin/vi
+/usr/bin/vi is /usr/bin/vi
+#
+# At this point, I was at a loss as to why the command, dnf repoquery -l vim-minimal, did not show the /bin/vi path that the command, which vi, lists. Stay tuned! This will be partially explained in the next section of code. 
+#
+# However, we can confirm that vim-enhanced is not installed with this command. Note, I initially chose not to install the package (I answered n = no). In Linux, when you issue a command related to a package that is not installed, the kernel tries to suggest a package that may contain that command.
+#
+¿\tld¿ which vim
+bash: vim: command not found...
+Install package 'vim-enhanced' to provide command 'vim'? [N/y] n
+#
+# Alternatively, we could have said: dnf list installed vim-enhanced.
+#
+# So, let's go ahead and install vim-enhanced.
+#
+¿\tld¿ sudo dnf install vim-enhanced
+¿\tld¿ which vim
+/bin/vim
+#
+# Now, we could add an alias for vim in our ~/.bashrc. Why? We just want to type the vi command when starting vim. One fewer characters to type. Woopee! The alias would be: alias vi=vim
+#
+# Note, take a look at /etc/profile.d/vim.sh. Remember that any scripts in this directory are executed when we logon. So, we really do not need the alias in our .bashrc file.
+#
+¿\tld¿ cat /etc/profile.d/vim.sh | grep alias | grep -v grep
+¿\tbi{\#}¿ for bash and zsh, only if no alias is already set
+alias vi >/dev/null 2>&1 || alias vi=vim
+
+\end{lstlisting}
+
+\subsection{vim-enhanced}
+
+Let's look at a couple of other commands in order to get a more complete picture of vi. We will see from the code below that the \keyword{vim} package is in fact \keyword{Vim-enhanced}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Note, I did add that alias to my .bashrc file.
+#
+¿\tld¿ which vi
+alias vi='vim'
+/bin/vim
+#
+# So, we have an alias defined. This alias could have been defined in both our .bashrc file and/or in the system /etc/profile.d/vim.sh file. Let's override the alias by using the backslash in front of the which command to find the true path of vi.
+#
+¿\tld¿ \which vi
+/bin/vi
+#
+# We found out from the previous section that the package that provided /bin/vi was vim-minimal.
+#
+¿\tld¿ rpm -qf /bin/vi
+vim-minimal-7.4.827-1.fc23.x86_64
+#
+# Let's find out what package provides vim.
+#
+¿\tld¿ which vim
+/bin/vim
+
+¿\tld¿ dnf provides /bin/vim
+Last metadata expiration check performed 21 days, 0:54:23 ago on Thu Dec 24 10:08:26 2015.
+Error: No Matches found
+#
+# What happened here? The readlink command can be used to see if there is a realpath to another file. We can also once again override the which command.
+#
+¿\tld¿ readlink -e /bin/vim
+/usr/bin/vim
+
+¿\tld¿ \which vim
+/usr/bin/vim
+#
+# Ok, let's use that path with 'dnf provides'. We see that the package vim-enhanced provides the vim executable.
+#
+¿\tld¿ dnf provides /usr/bin/vim
+Last metadata expiration check performed 21 days, 1:10:54 ago on Thu Dec 24 10:08:26 2015.
+vim-enhanced-2:7.4.827-1.fc23.x86_64 : A version of the VIM editor which includes recent enhancements
+Repo        : @System
+
+vim-enhanced-2:7.4.827-1.fc23.x86_64 : A version of the VIM editor which includes recent enhancements
+Repo        : fedora
+#
+# Is there a similar realpath for /bin/vi?
+#
+¿\tld¿ readlink -e /bin/vi
+/usr/bin/vi
+#
+# Hey, look at that.There is a reallink from /bin/vi to the executable /usr/bin/vi which is the file that the vim-minimal package actually installed. Mystery solved! You and I both need to readup on the readlink command.
+#
+# As shown in the previous section of code, we can also get path info using the type command.
+#
+# -a = all places that contain the executable
+# -t = type, prints one of: alias, keyword, function, builtin, file
+# -P = the path that gets executed when we type the name of the command
+#
+¿\tld¿ type -a vi
+vi is aliased to 'vim'
+vi is /bin/vi
+vi is /usr/bin/vi
+vi is /bin/vi
+vi is /usr/bin/vi
+vi is /usr/bin/vi
+
+¿\tld¿ type -t vi
+alias
+
+¿\tld¿ type -P vi
+/bin/vi
+#
+# Let's do the same for vim. Note: There is no vim alias.
+#
+¿\tld¿ type -a vim
+vim is /bin/vim
+vim is /usr/bin/vim
+vim is /bin/vim
+vim is /usr/bin/vim
+vim is /usr/bin/vim
+
+¿\tld¿ type -t vim
+file
+
+¿\tld¿ type -P vim
+/bin/vim
+#
+# What about the command type itself? What type of file is it? We see that it is a builtin function. To just display the section of the builtin manpage that covers type, issue my .bashrc function 'mbib type ulimit'. The builtin manpage is a very large document and it is sometimes easier just to grep a section instead of scrolling or searching through information.
+#
+¿\tld¿ type -t type
+builtin
+#
+# Ok, let's take a peak at the builtin description using my mbib function.
+#
+¿\tld¿ mbib type ulimit
+type [-aftpP] name [name ...]
+With no options, indicate how each name would be interpreted if used as a command name. If the -t option is used, type prints a string which is one of alias, keyword, function, builtin, or  file if name  is an alias, shell reserved word, function, builtin, or disk file, respectively. If the name is not found, then nothing is printed, and an exit status of false is returned.  If the -p option is used, type either returns the name of the disk file that would be executed if name were specified as a command name, or nothing if ``type -t name'' would not return file.  The -P option forces  a  PATHsearch  for  each name, even if ``type -t name'' would not return file.	If a command is hashed, -p and -P print the hashed value, which is not necessarily the file that appears first in PATH.  If the -a  option  is  used,  type  prints  all of the places that contain an executable named name.  This includes aliases and functions, if and only if the -p option is not also used.  The table of  hashed commands is  not consulted when using -a.  The -f option suppresses shell function lookup, as with the command builtin.  type returns true if all of the arguments are found,  false if  any  are  not found.
+\end{lstlisting}
+
+\section{Opening files with vi}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ vi  # Just open a new, empty file.
+¿\tld¿ vi +/10 myfile	# Open myfile at line 10.
+¿\tld¿ vi + myfile	# Open myfile at the bottom of the document.
+¿\tld¿ vi -o 1stfile 2ndfile nthfile	# Open multiple files tiled horizontally.
+¿\tld¿ vi -O 1stfile 2ndfile nthfile	# Open multiple files tiled vertically.
+¿\tld¿ vi -p 1stfile 2ndfile nthfile   # Open multiple files in tabbed format.
+#
+# Open myfile at first occurance of searchterm.
+#
+¿\tld¿ vi +/searchterm myfile
+#
+# Open myfile at a searchterm that has special characters which must be escaped with the backslash character, in this case: adduser(arg1).
+#
+¿\tld¿ vi +/adduser\(arg1\) myfile	
+\end{lstlisting}
+
+\section{vi modes}
+\tbi{vi} operates in four modes.
+\begin{itemize}
+	\item \tbi{Command mode (vi mode):} Commands are entered as letters or sequence of letters in order to interact with the document. All commands are case-sensitive.
+	\item \tbi{Insert mode:} After you issue one of the insert commands (from within command mode), as you type, text is inserted into the document.
+	\item \tbi{Command-line mode (ex mode):} This mode is entered by typing : while in command mode. The cursor's focus is now at the bottom of the screen where commands can be entered. One can interact with the document, with vi itself, and with the operating system. \tbi{Tip:} If you make a mistake entering a command, type another : and then hit the up arrow key and correct your command.
+	\item \tbi{Visual mode:} You begin visual mode by pressing the CTRL and the v keys simultaneous. You then use the movement keys (hjkl) or arrow keys on your keyboard to select text. --Visual Block-- will appear at the bottom of the file while you are in visual mode.
+\begin{center}
+	Basic Motion Commands\\
+	k=up\\
+	h=left\qquad l=right\\
+	j=down
+\end{center}			
+\end{itemize}
+
+\subsection{vi mode - movement and deletions}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X}
+\caption{Movement and Deletions}\label{table:movement}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+b & move back one word  \\ % inserting body of the table
+2b & move back two words  \\
+w or nw & move forward one word or forward n(umber) of words\\  
+h or l or k or j & move cursor left or right or up or down\\
+5h & move cursor 5 characters to left\\
+5j & move cursor 5 lines down\\
+H or gg & go to start of file\\
+G or L & go to end of file\\
+M & go to middle line of file\\
+123gg or 123G & go to line 123\\
+\$ & go to end of current line\\
+0 & go to start of current line, that is a zero\\
+d2b & delete previous two words\\
+d2w & delete next two words\\
+d2k & delete above two lines\\
+d2j & delete below two lines\\
+x & delete current character\\
+X & delete character to left\\
+cw & edit current word\\
+r & replace current character\\
+R & replace mode, start replacing characters at current character\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Insert mode}
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X}
+\caption{Insert mode}\label{table:insmode}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+i & start inserting at current character\\[1mm]
+23iRepeat me + enter-key + esc-key & 23 lines of "Repeat me" are inserted before the current line\\[1mm]
+23iRepeat me + esc-key & "Repeat me" is inserted 23 times before the current cursor position\\[1mm]
+I & start inserting at beginning of current line\\[1mm]
+o & start inserting at beginning of new line below, lower-caps o, not zero\\[1mm]
+O & start inserting at beginning of new line above, upper-caps O, not zero\\	
+\bottomrule
+\end{tabularx}
+
+\subsection{ex mode}
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X}
+\caption{ex mode}\label{table:exmode}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:w & save the file  \\[1mm]
+:wq & save the file and exit  \\[1mm]
+:q! & close the file without saving changes\\  [1mm]
+:w !wc & displays three numbers: number of lines, words, characters\\[1mm]
+:sh & switch to command shell, type exit to return to vi\\[1mm]
+:e! & discard all changes and begin editing file again\\[1mm]
+:e newfile & open a second file and CTRL\^{} to switch between files (save 1st file b4 doing this)\\[1mm]
+:ar & show filename\\[1mm]
+:\$ & go to end of file\\[1mm]
+:0 & go to beginning of file, that's a zero\\[1mm]
+:r ! echo \$HOSTNAME & execute a bash command \tqs{echo \$HOSTNAME} and insert the output into the open file after the current line\\[1mm]
+:5r ! echo \$HOSTNAME & as above, but insert it after line 5\\[1mm]
+:! echo \$HOSTNAME & just display the output, switches to command line to display the output, press ENTER to return to vi\\
+\bottomrule
+\end{tabularx}
+
+\section{Substitution}
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Substitution}\label{table:subs}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:\%s/oldtext/newtext/g & s=substitute, \% specifies all lines, the entire file. (\% can also be expressed as 1,\$). g specifies all occurrences of text on the line. Without /g only the first instance of the string on a line is replaced, oldtext is replaced by newtext\\[1mm]
+:\%s/oldtext/newtext/gi & replace all instances of oldtext or any case-variation such as oldTexT with newtext, i=case-insensitive\\[1mm]
+:\%s/oldtext/newtext/gc & replace oldtext with newtext, but ask for confirmation\\[1mm]
+:21 s/soccer/football/g & replace all instances of soccer with football only on line 21\\[1mm]
+:1,10 s/soccer/football/g & substitute only in line 1 to and including line 10\\[1mm]
+:\$ s/soccer/football/g & replace all instances of soccer with football only on the last line\\[1mm]
+:21,\$ s/soccer/football/g & replace all instances of soccer with football from line 21 to the last line\\[1mm]
+:.,\$ s/soccer/football/g & replace all instances of soccer with football from the current line to the last line\\[1mm]
+:.,.+5 s/soccer/football/g & replace all instances of soccer with football on the current line and 5 lines after\\[1mm]
+:s/soccer/football/g 5 & (easier) replace all instances of soccer with football on the current line and 5 lines after\\[1mm]
+:s/\textbackslash{}<his\textbackslash{}>/her & If the line is \emph{This is his car}, the line becomes \emph{This is her car}. The <> characters are used to indicate the exact word \emph{his}, not the string \emph{his} as part of a larger string such as \emph{this}.\\[1mm]
+:s/his/her & The line would become \emph{Ther is his car}. Only the first instance of \emph{his} is replaced.\\[1mm]
+:s/his/her/g & The line would become \emph{Ther is her car}. Since the global switch, \emph{g}, is used, all instances of \emph{his} are replaced on every line.\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Visual-mode substitution}
+
+We can also do substitution (actually, any form of editing) while in visual mode. To begin, CTRL+v and then use the keyboard movement keys (hjkl) to select some text or lines of text. Next, press the colon (:) key. You will then see the following in the ex mode command line:
+
+:\textquotesingle<,\textquotesingle>
+
+Now simply add your substitution commands and hit the enter key.
+
+:\textquotesingle<,\textquotesingle>s/his/her/g
+
+\section{Deleting lines of text}
+\tbi{NOTE:} There is a fast delete, \emph{d\_} that says to put the deleted lines in a blackhole registry and not the default named registry. This makes deleting large chunks of text faster. With modern cores and fast processors this option may not be that useful.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Deleting lines of text}\label{table:dellines}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:24,\$ d & delete from line 24 to end of file\\
+:24,30 d & delete from line 24 to and including line 30\\
+:1,\$d & delete all lines in a file, line 1 to end of file\\
+:.,\$d & delete from current line to end of file\\
+:1,.-1d & delete all lines before current line, but not current line\\
+:g/mystring/d & delete all lines containing "mystring"\\
+:g!/mystring/d & delete all lines not containing "mystring"\\
+:1,10g!/mystring/d & delete all lines in lines 1-10 that do not contain string "mystring"\\
+:v/mystring/d & alternative, delete all lines not containing "mystring"\\
+:v/one\textbackslash{}|two\textbackslash{}|three/d & delete any line not containing "one" or "two" or "three". Note: a line with the string "onetonamera" would also not be deleted, since it contains the search string "one"\\
+:g/\textbackslash{}<seven\textbackslash{}>/d & We need <> for exact matches. Here all lines containing the exact string "seven" will be deleted. Lines containing strings such as "seventeen" and "seventy" will not be deleted.\\
+:g/\textasciicircum{}\textbackslash{}s*\$/d & delete all empty (blank lines), \textbackslash{}s equates to a space. The * indicates repeated spaces. The dollar sign indicates the end of the line.\\
+:g/\textasciicircum{} *\$/d & same as above, but using an actual space character\\
+d\$ or D & vi mode; delete to end of line\\
+dd & vi mode; delete current line\\
+5dd & vi mode; delete 5 lines including current line\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Recovering deletions}
+
+I mentioned in the previous section that when you used the \emph{d\_} ex-mode command, the deleted items were not placed in a named registry. This speeds up the deletion of a large amount of text, but there is a drawback. We cannot recover that deleted text unless we do it right away after that deletion using the undo feature of vi.
+
+What if you mistakenly delete a large amount of text and only later while working on the document you discover that you made a mistake in deleting the text? Fortunately, there is a way to recover your past nine deletions...if you used just the \textbf{d} option to delete the text. The previous deletions are all saved in numbered buffers that you can recall. The last delete is saved in buffer 1, the second-to-last in buffer 2, and so on.
+
+To recover a deletion, type a " (double quotation) followed by the buffer number of the deleted text that you want to recover. This is then followed by the \textbf{p}, the ex-mode \keyword{put} command. For example, in order to recover your third-to-last deletion, you need buffer 3. Type:
+
+"3p\\
+
+The deleted text in buffer 3 is placed after the cursor. If you're not sure which buffer contains the deletion you want to restore, you don't have to keep typing \textbf{u} for undo and then re-type the command for the next buffer. That is you don't have to...
+
+u\\
+"4p \\
+u\\
+"5p etc.\\
+
+Instead you can use vi's repeat character, the period, after the letter u. With this process, the buffer number is automatically incremented. As a result, you can search through the numbered buffers until you find the correct buffer as follows:
+
+"3pu.u.u etc.\\
+
+This procedure puts the contents of each succeeding buffer into the file and then deletes the inserted text until you find the text that you're looking for. You must try to recover your deleted text in the same editing session. As soon as you close vi, all the deletion buffers are gone!
+
+\section{Moving text}
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Moving text}\label{table:movtxt}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:set nu and :set nonu or set nu! & set numbered lines and turn off numbered lines\\
+:g/pattern/m\$ & move all lines containing pattern to end of file\\
+:g/pattern/m0 & move all lines containing pattern to beginning of file\\
+:g/\textasciicircum{}/m0 & reverse order of file\\
+:8,16 m 32 & move lines 8-16 to line 32\\
+:8,16 m 0 & move lines 8-16 to beginning of file\\
+:8,16 m \$ & move lines 8-16 to end of file\\
+:8:16 co 32 & copy lines 8-16 to line 32\\
+:\$m 0 & move last line to first line\\
+:701m 0 & move line 701 to first line\\
+:33m 15|15m 33 & exchange two lines, highest line number goes first in first section, last in 2nd section\\
+
+\bottomrule
+\end{tabularx}
+
+\section{Moving text using buffers}
+There are 26 named buffers, labeled from a to z (lowercase), in addition to the usual clipboard buffer. Letter-named buffers are also accessed using the \textquotedbl{} double quote. 
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Moving text using buffers - vi mode}\label{table:movtxtbuf}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+2yy & copies current line and next line (two lines) into the clipboard buffer, the unnamed buffer\\
+8G & go to line 8\\
+p or P & insert the two lines that are in buffer after line 8 or above line 8\\
+"a2yy & yanks (copies) 2 lines into the named buffer \emph{a}\\
+H & go to first line\\
+"ap & inserts (copies) buffer \emph{a} after first line\\
+"a2dd & yanks (deletes) 2 lines into the named buffer \emph{a}\\
+H & go to first line\\
+"ap & inserts (moves) buffer \emph{a} after first line\\
+"z2dw & yanks (deletes) 2 words from where cursor is and puts them in buffer \emph{z}\\
+G & go to last line, cursor is on first letter\\
+"zP & inserts (moves) two words that are in buffer \emph{z} before first letter of last line\\
+"zp & inserts (moves) two words that are in buffer \emph{z} after first letter of last line\\
+"ay\$ & copy rest of line from cursor position to buffer \emph{a}\\ 
+\bottomrule
+\end{tabularx}
+	
+\section{Searching for text}
+You search for text using vi-mode or ex-mode commands. vi-mode searches are quicker to enter, there is no need to precede search characters with a colon. Note: many of these examples use \keyword{regex expressions}.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Searching for text}\label{table:srchtxt}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+/wally  or :/wally & from the current cursor location, search forward in the document for the first instance of "wally"; note, the search implicitly means \emph{contains}, so the search will find "wallytown". You can continue searching for more instances of "wally" by using the n (next) and N (previous) keys.\\
+?wallly or :?wally & from the current cursor location, search backward in the document for the first instance of "wally"\\
+/\textbackslash{}cwally & the \textbackslash{}c says ignore case, so it will find: wally, WALLY, wAlAy, wallytown, etc.\\
+/\textasciicircum{}wally\$ & search exclusively for exact string "wally"; WALLY, Wally, and wallytown will not be returned\\
+/\textbackslash{}(two\textbackslash{}|three\textbackslash{}) & search for any line containing either of the words "two" \tbi{or} "three"\\[0.2cm]
+/.*two\textbackslash{}|.*three & alternative, search for any line containing either of the words "two" \tbi{or} "three"\\
+/\textbackslash{}(two\textbackslash{}\&three\textbackslash{}) & search for any line containing both the words "two" \tbi{and} "three", in any order\\
+/.*two\textbackslash{}\&.*three & alternative, search for any line containing both the words "two" \tbi{and} "three", in any order\\
+/\textasciicircum{}[a-zA-Z] & search for any line beginning with a letter (upper or lower case), the line "12 dozen eggs" would not be found, nor would the line "\% of white cats"\\[1mm]
+/\textasciicircum{}[a-zA-Z0-9] & search for any line beginning with a letter (upper or lower case) or a number (0-9), the line "\% of white cats" would not be found\\[1mm]
+f5 & search forward for the character "5", a quick way of moving around in a line, note that the f is not preceded by the forward slash character\\
+\bottomrule
+\end{tabularx}
+
+\section{Changing case}
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Changing case}\label{table:srchtxt}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:\%s/.*/\textbackslash{}U\&/ &	change the entire document to upper case\\[1mm]
+:\%s/.*/\textbackslash{}L\&/ &	change the entire document to lower case\\[1mm]
+:\%s/myword/\textbackslash{}U\&/ & change the first occurrence of "myword" on each line to upper-case\\[1mm]
+:\%s/myword/\textbackslash{}U\&/g & change all occurrences of "myword" on each line to upper-case, note "mywordword' would become "MYWORDword"\\[1mm]
+:3,10 \%s/.*/\textbackslash{}U\&/ & change only lines 3-10 to upper case\\[1mm]
+CTRL-v and highlight text using keyboard & then use \ttbb{} to toggle between upper and lower case\\[1mm]
+CTRL-v and 18gg and highlight text using keyboard & \ttbb{} to toggle between upper and lower case from beginning location to line 18\\
+\bottomrule
+\end{tabularx}
+
+\section{Working with files}
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Working with files}\label{table:wrkfiles}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:r otherfile & import (insert) contents of \textsl{otherfile} into the current document after the current line\\
+:5r otherfile  & import (insert) contents of \textsl{otherfile} into current document after line 5\\
+:w newfile & write contents of current file to \textsl{newfile}, in effect, make a backup copy\\
+:w >{}>{}anotherfile & append contents of current file to \textsl{anotherfile}\\
+:.w >{}>{}anotherfile & append contents of current line to \textsl{anotherfile}\\
+:12:35w >{}>{}anotherfile & append contents of lines 12-35 to \textsl{anotherfile}\\
+:w! anotherfile & overwrite/replace content of \textsl{anotherfile} with contents of current file\\
+:2,10w newfile & take lines 2-10 of current file and place that into \textsl{newfile}\\
+\bottomrule
+\end{tabularx}
+
+\section{Complex moves of text from one file to another file.}
+
+\begin{enumerate}
+	\item \tbi{Use visual mode and tabnew} Here we want to move specific lines from file A to file B.
+	\begin{enumerate}
+		\item vi A - open file A
+		\item start visual mode with CTRL-v, highlight text using keyboard and then press y to yank
+		\item :tabnew - to open a new tab 
+		\item p - to paste yanked content into new tabbed document
+		\item :wq B - to save tabbed document as file B, quit and return to file A
+	\end{enumerate}
+	\item \tbi{Use a buffer to copy lines} Here we want to copy lines 20-24 from file A to file B
+	\begin{enumerate}
+		\item vi A - we could also have said vi +/20 A; if we did, line (b) would be unnecessary
+		\item 20G - go to line 20
+		\item "a5yy - copy five lines (20-24) to the buffer named a
+		\item :e! B - switch to editing file B and close file A
+		\item "ap - insert contents of buffer a into file B
+		\item :wq - save and close file B
+	\end{enumerate}
+	\item \tbi{Use a backup copy of source document} Here we make a backup copy of the source document and then use the backup to selectively remove parts of the file that we do not want. We then save the backup and use the backup to insert the contents into a second file. We only want lines 20-39 of the source document. 
+	\begin{enumerate}
+		\item cp B B.backup - this is done from the bash command line
+		\item vi B.backup - open the backup file
+		\item 40G - go to line 40
+		\item dG - delete all lines to end of file including line 40
+		\item 1G - go to line 1, the beginning of the file
+		\item 19dd - delete the first 19 lines of the file including line 1
+		\item :wq - close B.backup
+		\item vi A - open A document and go to where you want to insert B.backup
+		\item :r B.backup - insert B.backup into A document
+		\item :wq - save and close A
+	\end{enumerate}
+	\item \tbi {Alternative to the above method} Here we edit inline, save to an external document, and do not save our edits of the source document.
+	\begin{enumerate}
+		\item vi B - open B
+		\item 40G - go to line 40
+		\item dG - delete all lines to end of file
+		\item 1G - go to line 1
+		\item 19dd - delete the first 19 lines
+		\item :w A - create the new file by saving the contents of the edited source document
+		\item :q! - quit document B without saving the changes
+	\end{enumerate}
+	\item \tbi{Move lines that contain a string to another file}
+	\begin{enumerate}
+		\item vi B
+		\item :g!/\textasciicircum{}mystring\$/d - delete all lines that do not contain "mystring". We need the circumflex and \$ because without it lines that contained something like "anothermystring" would not get deleted. However, lines containing "myString" would get deleted. We only want lines that contain "mystring" in isolation to remain. The exclamation mark says: do not apply the delete command to any line containing the string "mystring".
+		\item :w A - create a new file called A
+		\item :q! - close file B without saving changes
+	\end{enumerate}
+	\item \tbi{Move lines that do not contain a string to another file}
+	\begin{enumerate} 
+	\item vi B
+	\item :g/\textasciicircum{}mystring\$/d - note the difference, here we say delete lines containing "mystring"
+	\item :w A
+	\item q!
+	\end{enumerate}
+\end{enumerate}
+	 
+\section{Working with windows, no not that Windows}
+We can have multiple files open in vi in one of two ways: as multiple windows (horizontal and vertical) or as tabbed windows. The quality of the system resources (memory and CPU mostly) and your tolerance for frustration is what determines how many windows you can have open.
+
+\begin{enumerate}
+	\item \tbi{Working with multiple windows - horizontal split}
+	\begin{enumerate}
+		\item vi myfile - open \textsl{myfile}
+		\item :sp - splits the screen horizontally, you now have two instances of \textsl{myfile} open, CTRL+s also splits the window
+		\item :q - close the last instance of \textsl{myfile}
+		\item :sp my2ndfile - split the screen horizontally, but open a second file in the new window, \textsl{my2ndfile} has focus
+		\item CTRL+w (simultaneously) and then one of the vertical movement keys: j=down, k=up to change which window has focus
+		\item :qa - close both windows		
+	\end{enumerate}
+	
+	\item \tbi{ Working with multiple windows - vertical split} Note: You must have \keyword{vim-enhanced} installed. These commands will not work with \keyword{Vi IMproved}.
+	\begin{enumerate}
+		\item vi myfile - open \textsl{myfile}
+		\item :vsp - splits the screen vertically, you now have two instances of \textsl{myfile} open
+		\item :q - close the last instance of \textsl{myfile}
+		\item :vsp my2ndfile - splits the screen vertically, but open a second file in the new window, \textsl{my2ndfile} has focus
+		\item CTRL+w (simultaneously) and then one of the horizontal movement keys: h=right, l=left to change which window has focus
+		\item :qa - close both windows
+	\end{enumerate}
+	
+	\item \tbi{Working with tabs}
+	\begin{enumerate}
+		\item vi myfile - open \textsl{myfile}
+		\item :tabe my2ndfile - open \textsl{my2ndfile} as a tabbed window
+		\item CTRL+\textasciicircum{} (simulataneously) or CTRL+shift+6 (simultaneously) to switch between tabs
+		\item gt and gT - we can also use vi-mode commands gt=next tab, gT=previous tab
+		\item :tabn and :tabp - alternate method to change tab focus n=next, p=previous
+		\item :ls - show what buffers/tabs are open (in this case there are only two: 1 and 2)
+		\item :b\# - go to buffer number (1 or 2) as listed in the above command, i.e, :b2 - go to tab with buffer number 2
+		\item :tabnew - open a third unnamed tab
+		\item :qa - close all tabs
+	\end{enumerate}
+\end{enumerate}
+
+\section{Working with columns}
+Columns can be tricky to work with. There are many different ways of accomplishing the tasks below. The \emph{switch columns} example below will work with columns that are separated by spaces or tabs. However, after the switch, the columns are separated by a single space.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Switch columns}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+:\%!awk \tqs{{print \$2, \$1}} & starting with a file that has two columns, switch column order using the \emph{awk} command\\
+:\%!awk \tqs{{print \$3, \$2, \$1}}  & starting with a file with three columns, reorder in this order (left to right): columns 3, 2, 1\\
+:w newfile and then q! & write contents to \textsl{newfile}, and discard changes\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Copy/move columns in visual mode}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Copy/move columns to another file}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+Step 1 & Go to end of desired column (last letter of longest word)\\
+Step 2 & CTRL + v to enter visual mode\\
+Step 3 & G to go to bottom of column (use l and r keyboard keys to select entire column\\
+Step 4 & y to yank/copy the column or d to delete the column\\
+Step 5 & :tabnew to open a new tab\\
+Step 6 & p to put the column in the new file\\
+Step 7 & :wq newfile - to save and quit the new file\\
+Step 8 & :wq or q! - to save the changes or discard the changes on the source file\\
+\bottomrule
+\end{tabularx}
+
+\section{Root and non-root user dilemma when working with vi}
+
+You will hear repeatedly that you should not work at the command line as the \emph{root} user. Very dangerous things can happen! You therefore will typically be logged on as a non-root user. But, occasionally, working as a non-root user, you start to edit a system file. When you try to save the changes, you will be told that the file cannot be saved. You would then have to discard the changes and start editing but this time opening the configuration file with \emph{sudo} privileges.  But, there is an easier way.  We can make use of the \keyword{tee} command. For example, let's say you tried to edit the \textsl{/etc/passwd} file as the non-root user, tango.  In the following examples, I want to show clearly who is logged on. Therefore, I will display a different command prompt for each user.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I am currently logged on as suey. I switch to the tango user profile.
+#
+[suey ¿\ttbb¿] su - tango
+#
+# # Let's open the file /etc/passwd. Your organization may have more than one system administrator. Instead of opening /etc/passwd with 'vi /etc/passwd', you would actually open it with 'sudo vipw' to enforce file locking. Similarly, you would open /etc/group with 'sudo vigr' and not 'vi /etc/group'. I am only opening /etc/passwd with vi for illustration purposes only, not as a recommendation.
+#
+[tango ¿\ttbb¿] vi /etc/passwd
+#
+# While in vi, I make changes and try to save the changes. I issue the :wq ex-mode command to write and quit.
+#
+:wq
+E45 'readonly' option is set (add ! to override)
+#
+# So, I try to use the force command, the exclamation mark. I try to override the readonly status, but that also fails.
+#
+:wq!
+"/etc/passwd" E212: Can't open file for writing
+Press ENTER or type command to continue
+# 
+# At this point, I try another command. After issuing the command, I will be prompted for tango's password.
+#
+:w! sudo tee %
+We trust you have received the usual lecture from the local System Administrator. It boils down to these three things:
+¿\tbi{\#}¿1) Respect the privacy of others.
+¿\tbi{\#}¿2) Think before you type.
+¿\tbi{\#}¿3 With great power comes great responsibility.
+[sudo] password for tango: # I type in tango's password
+tango is not in the sudoers file. This incident will be reported.  shell returned 1. Press ENTER or type command to continue
+#
+# I give up and quit the edit.
+#
+:q!
+[tango ¿\ttbb¿]
+\end{lstlisting}
+
+So, the non-root user, \emph{tango}, is not in the sudoers file, that is, she is not a member of the \emph{wheel} group. Anyone who is in the \emph{wheel} group can \emph{sudo} or switch to running commands as the super user, \emph{root}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Log off tango and return to the suey session.
+#
+[tango ¿\ttbb¿] exit
+#
+# Log on as root, the super-user. The suey account is already a member of the sudoers group, the wheel group.
+#
+[suey ¿\ttbb¿] sudo - su
+#
+# Now, as root, I can begin to enter root-privilege commands. I want to add tango to the wheel group. Hey, wait a second, I keep telling you not to work as root! Type exit to get back to suey's prompt.
+#
+[root ¿\ttbb¿] exit
+#
+# Since suey has sudo privilege, I can issue root-privileged commands with the sudo command. The first time suey uses a sudo command, she will be prompted for her password. As long as the terminal session stays active, subsequent sudo commands do not require a password.
+#
+[suey ¿\ttbb¿] sudo usemod -aG wheel tango
+#
+# Let's check by listing tango's group membership. She is a member of two groups: tango and wheel.
+#
+[suey ¿\ttbb¿] groups tango
+tango: tango wheel
+\end{lstlisting}
+
+So, now that \emph{tango} is a member of the \keyword{wheel} group, let's try again to see how the \keyword{tee} command works.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Log on as tango.
+#
+[suey ¿\ttbb¿] su - tango
+#
+# Let's again try editing /etc/passwd, make our changes, and save and quit.
+#
+[tango ¿\ttbb¿] vi /etc/passwd
+:wq
+E45 'readonly' option is set (add ! to override)
+#
+# At this point you realise that you are trying to edit a file using your non-root account. So we have to save the change as sudo using tee.
+#
+:w !sudo tee %
+Press ENTER or type the command to continue, you press enter
+W12: Warning: "/etc/passwd" has changed, the buffer changed in Vim as well
+See: help W12 for more info.
+#
+# Here, I type the letter o for OK.
+#
+[O]K, (L)oad, File: o
+"/etc/passwd"
+WARNING: The file has changed since reading it!!!
+#
+# I type the letter y to confirm that I want to write to the file.
+#
+Do you really want to write to it(y/n)? y
+#
+# And, I quit the file confirming my write.
+#
+:q!
+[tango ¿\ttbb¿]
+\end{lstlisting}
+
+What exactly does \keyword{tee} do? For a detailed explanation visit this webpage: \href{http://stackoverflow.com/questions/2600783/how-does-the-vim-write-with-sudo-trick-work}{tee by stackoverflow}
+
+\section{.vimrc and mapping keys in vim}
+
+We can customize our \emph{vim} environment by placing optional runtime configuration settings in our \textsl{\ttb.vimrc} file. If this file does not exist, create it. For example, we can create a shortcut for the \emph{tee} command used in the previous section. So, place the following code in \ttb.vimrc. Our custom command is an ex-mode command. So, to invoke it, we type :w!! and press enter.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+cmap w!! w !sudo tee %
+\end{lstlisting}
+
+Pay attention to the spacing of the command. \textbf{w! sudo tee \%} is not the same thing as \textbf{w !sudo tee \%}.
+
+\textbf{ w!} is a command, "override and write". \textbf{w !sudo tee \%} says write but execute as \emph{sudo} and \emph{tee} the output. The \tqs{w! sudo tee \%} version of the command would not work.
+
+\begin{enumerate}
+	\item cmap = command-line mode map
+	\item w!! = our shortcut ex-mode command. We could also have used any character that was not reserved by vim such as upper case W.
+	\item w = the actual command, write
+	\item !sudo tee \% = the options to the write command, run the write command as sudo, the tee command says operate on the file (represented by \%) and send to standard output (which is discarded)
+\end{enumerate}
+
+For a more detailed explanation of \keyword{cmap} see \href{http://vim.wikia.com/wiki/Mapping_keys_in_Vim_-_Tutorial_\%28Part_1\%29}{Mapping keys in Vim}. 
+
+\section{Undo and repeating}
+Using \emph{vi} as an editor, you will be constantly editing and revising files. You frequently will want to undo a change or even undo the undo. The following are all vi-mode commands.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Undo and repeating}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+u & undo last keyboard entry\\
+U & restore last changed line (must still be on line)...undo the undo\\
+. & repeat last change, can continue to press . as long as you want\\
+n. & repeat last change n number of times, n is an integer\\
+CTRL+r & redo last undo\\
+\bottomrule
+\end{tabularx}
+
+
+\section{Indenting}
+The following examples are using the default tabstop value of 8 characters. To see all vim environment settings issue this ex-mode command: :set all
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Indenting}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+>{}>{} & indent current line one tab length\\
+<{}<{} & undo indent\\
+5>{}>{} & indent one tab on next five lines (including current line)\\
+5<{}<{} & undo 5 lines of indent or u for undo last command\\
+:4,8>{} & indent lines 4-8 one tab, note in ex-mode you only need one > for each tab\\
+:4,8>{}>{}>{} & indent lines 4-8 three tabs\\
+:0,2 >{}>{} & indent lines 1 and 2 two tabs\\
+CTRL+v >{} & begin visual mode and select a number of lines and then press > to indent all the lines\\
+CTRL+T & while in insert mode, this moves to the right one tabstop\\
+CTRL+D & while in insert mode, this moves to the left one tabstop\\
+\bottomrule
+\end{tabularx}
+
+\section{Marks}
+Marks are very useful especially when editing large documents. You may want to quickly jump to a section of your document. You do this by placing an \tbi{invisible mark} in your document. You can use both lower case [a-z] and upper case [A-Z] letters. Each file can have their own marks [a-z]. When multiple files are opened files at the same time, only one can use a specific upper case [A-Z] mark...however, each can use a different upper case [A-Z]. Pay attention to these commands; some use upright quotes, others use the grace accent.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}l | X} % the X is needed to wrap text
+\caption{Marks}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ma & set mark \tbi{a} at current cursor position\\
+\textquotesingle{}a & jump to first non-blank character on line with mark \tbi{a}\\
+\textasciigrave{}a & jump to exact position of mark \tbi{a} on the line\\
+d\textquotesingle{}a & delete all text between current line and line with mark \tbi{a}\\
+d\textasciigrave{}a & delete all text between current cursor position and exact position of mark \tbi{a}\\
+c\textquotesingle{}a & change text from current line to line with mark \tbi{a}\\
+y\textquotesingle{}a & yank text from current line to line with mark \tbi{a} and place it in unnamed buffer\\
+:marks & list all marks\\
+:delmarks & delete all marks\\
+:marks aA & list marks a and A\\
+:delmarks aA & delete marks a and A\\
+\bottomrule
+\end{tabularx}

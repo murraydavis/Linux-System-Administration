@@ -1,0 +1,442 @@
+\chapter{Finding files}
+\label{ch:findfiles}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Find files with specific file extensions}
+
+You do not have to use file extensions with Linux. However, if you do use extensions, the \keyword{find} command is very useful in locating files according to the file extension component of their name. Note, pay particular attention to spaces in the commands. If a command doesn't work for you, retype it by adding/removing a space between characters. For example, read \textbf{\tbx} as \tbi{space}\{\} \tbi{space}\textbackslash{};
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find files with extensions}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls *.txt & \emph{ls} is a psuedo find command, note: no quotations around the extension attribute. Find all files with the .txt file extension.\\
+\\
+ls *.txt | xargs grep "four" & find all files with the \textsl{.txt}	extension and then pass these files to the \emph{xargs} command which basically translates as: grep four file1.txt, grep four file2.txt, etc., looking for the string "four" inside these files and then list only those files that have both a \textsl{.txt} extension and contain the string "four" inside the body of the document. You will frequently encounter the \keyword{xargs} command. It is used to build and execute commands from standard input. The \keyword{grep} command is a powerful pattern searcher.\\
+\\
+find . -iname "*.txt" | xargs grep "four" & now use the \emph{find} command to find files that contain both the \textsl{.txt} extension and the string "four". Note, the file extension must be enclosed in double quotes. Also, we use the -iname switch, which says to ignore case while looking for the string. The period after \emph{find} says look only in the current directory.\\
+\\
+find . -iname "*.txt" -print0 | xargs -0 -i cp \{\} \{\}.bak & find all files with the \textsl{.txt} extension and make a backup copy of these files with the \textsl{.bak} file extension. So, \textsl{my.txt} will be backed up as \textsl{my.txt.bak}. The \emph{-print0} and \emph{-0} are needed to handle filenames that contain spaces. The \tbi{-i} switch is used by \emph{xargs} in conjunction with \tbi{\{\}} to represent the name of the files that are found by \emph{find} and basically means \emph{replace-string}. Note, there is a space between the two sets of curly brackets. \keyword{cp} is the copy command.\\
+\\
+find . -iname "*.txt" -exec cp \{\} \{\}.bak \textbackslash{}; & Again, find all files with the \textsl{.txt} extension and make a backup copy of these files with the \textsl{.bak} file extension. However, this time we use the \keyword{-exec} command. The \tbi{\textbackslash{};} is mandatory and signifies the end of the command arguments. This command also works on file names containing spaces.\\
+\\
+conf.txt & has \emph{my budget} on line 20\\
+conf1.txt & has \emph{mybudget} on line 5\\
+\\
+find . -iname "*.txt" -exec grep -lx "budget" \tbx & Find all files with the \textsl{.txt} extension in the current directory and list only those files that have a line with exactly the string "budget". Only \textsl{conf.txt} is returned.\\
+\\
+find . -iname "*.txt" -exec grep -l "budget" \tbx & Find all files with the \textsl{.txt} extension in the current directory and list only those files that have a line with the string "budget" somewhere on the line. Both \textsl{conf.txt} and \textsl{conf1.txt} are returned.\\
+\\
+find . -iname "*.txt" -exec grep -l "budget" \tbx -exec grep -n "budget" \tbx & Find all files with the \textsl{.txt} extension in the current directory and list only those files that have a line with the string "budget" somewhere on the line. Both \textsl{conf.txt} and \textsl{conf1.txt} are listed followed by the line containing \emph{budget} preceded by its line number. Note: you need both \emph{-exec} sections. The first one prints the file name. The second, the line number and the line itself. You could run the command with just the second \emph{-exec}, but you would just get a listing of lines in the form: \emph{20:mybudget} with no reference to its file name.\\
+\bottomrule
+\end{tabularx}
+
+\section{Find files in order to delete them}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find files in order to delete them}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+find / -type f -user tango -exec rm -fr \{\} \textbackslash{}; & Find all \emph{files} owned by \emph{tango} and delete them. Find searches recursively from the \tbi{/} (root) directory; that is, searches the entire hard drive. Also, the remove command, \emph{rm} is using the \tbi{-fr} switch to recursively and automatically delete the files without a confirmation prompt.\\
+\\
+find / -type f -group students -exec rm -fr \tbx & Find and delete all files owned by the group \emph{students} recursively from the root directory and delete them.\\
+\\
+find / -group students -exec rm -fr \tbx & Find and delete all files and directories owned by the group \emph{students} recursively from the root directory and delete them.\\
+\\
+find / -user tango -iname "*.c" -exec rm -fr \tbx & Find all \tbi{c} language programs owned by \emph{tango} and delete them\\
+\\
+\textit{\color{red}Search for a string and delete the files containing that string} & four different methods are shown.\\
+\\
+find . -type f -exec grep -lx "debt" \tbx -delete & only this method lists the files deleted\\
+\\
+find . -type f -exec grep -lx "debt" \tbx | xargs rm & using \emph{find}, \emph{grep}, and \emph{xargs}\\
+\\
+grep -lxr "debt" * | xargs rm -fr & Note, we can just use grep and xargs. Also, note the asterisk is equivalent to \emph{find's} dot, begin search in the current directory. The \emph{grep} switches are: l=list, x=exactly, r=recursively.\\
+\\
+for file in \$(grep -lxr "debt" *); do rm -fr \$file; done & simple bash programming\\
+\\
+grep -lrE "budget|\textbackslash{}bdebt\textbackslash{}b" * | xargs rm -fr & Find all files with lines containing either the string "budget" or the exact string "debt" and delete those files. Note: the \emph{grep} \textbf{E} switch says permit the use of \keyword{regex} syntax. Therefore, we can use the \emph{or} indicator (\emph{pipe symbol}) and the block indicator \textbf{\textbackslash{}b} which is equivalent to using \emph{grep's} \textbf{x} switch. So, this command would find and delete any file containing the string "mybudget", but would ignore files containing the string "mydebt" because of the use of the exact block indicator restricting the find to the string "debt".\\
+\bottomrule
+\end{tabularx}	
+
+\section{Find files containing a string}
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find files containing a string}\label{table:fnd_strng}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+grep -lx "budget" * | xargs mv -t \ttbb{}/backup & find all files in the current directory that contain the exact string "budget" and move those files to the \textsl{backup} folder in the home directory, -t=target directory\\[1mm]
+mv \tgr{grep -lrix "budget" /src} /dst & l=list only, r=recursively, i=ignore case, x=exactly, move all files in \textsl{src} directory that contain "budget" into \textsl{dst} directory\\[1mm]
+mv \$(grep -lrix "budget" /src) /dst & alternative to above using \$(command) instead of backticks\\[1mm]
+find . -type f -exec egrep -l "frown" {} \tbx -exec sed \tqs{s/frown/smile/g} \tbx & 1st part: find all files in the current directory that contain lines with the word "frown" (by itself or embedded in a larger string, only lower case). 2nd part: for these files replace this string "frown" with "smile". Note, \emph{sed's} parameters can be enclosed in either single or double parentheses.\\[1mm]
+sed -e "s/mystring//g" -i.bak * & Note: The is no space between the two forward slashes. If you have sub-directories in the current directory, you will get an error message for each sub-directory that says "sed could not edit mydir, not a regular file". So, the command fails to recurse through subdirectories. But, it works on all files in the current working directory.. Inside the double-quotations, it says to substitute a null character for every occurrence of the string "mystring". \tbi{g} = global, i.e., every instance on a line, not just the first instance. the -i.bak says first make a backup of the file adding the extension \textsl{.bak}. So, if the file \textsl{myfile} contains a line with the string "mystring", a backup will be created called \textsl{myfile.bak} and all instances of "mystring" will be deleted from \textsl{myfile}.\\[1mm]
+grep -lrx "mystring" * | xargs sed -i.bak \tqs{s/mystring//g} & Use this command, if you want to search through sub-directories. Before the pipe symbol: search recursively for all files containing the exact phrase "mystring". Pipe this list of files to \emph{xargs sed} which first makes a backup of each file and then deletes all occurrences of "mystring" in the original file.\\[1mm]
+grep -lrx "mystring" * | xargs sed -i.bak \tqs{/mystring/d} & Similar to above, but with a different notation for sed. This notation says delete the \tbi{line} containing the string "mystring".\\[1mm]
+for file in * ; do \$(grep -v "three" \$file > \$file.bu) \&\& mv \$file.bu \$file;done & The \keyword{for} statement loops through every file in the current directory. It does no recursion, it does not go into sub-folders. It does a reverse grep sending all lines without the string "three" to a temporary file  called \textsl{file.bu}. Next, that temporary file is renamed to its original filename overwriting the original file. Note, if you have an alias for mv (alias mv=\tqs{mv -i}), you must re-write the \tbi{mv} statement as \textbf{\textbackslash{}mv}. The entire \emph{for} statement is just deleting all lines that contain the string "three".\\[1mm]
+grep -lr "mystring" . --include "*.txt" & find all files in the current directory that contain the string "mystring" and that have the file extension \textsl{.txt}. Note, the file \textsl{mydoc} which contained the string "mystring" would not be returned since it does not have the file extension \textsl{.txt}.\\[1mm]
+grep -rc "mystring" . --include "*.txt" & find all files in the current directory that contain the string "mystring" and that have the file extension \textsl{.txt} and add the count of the number of times that the string "mystring" occurs in the matching file. Note, this will also list all files with the \textsl{*.txt} file extension which do not contain "mystring", since they have a count of zero. For example, \textbf{./B.txt:0}. Note, we also do not use \emph{grep's -l} switch since it overrides or negates the count switch.\\[1mm]
+grep -rc "mystring" . --include "*.txt" | grep -v ":0" & To address the above issue, since we do not want files listed that have zero occurrences, we do a reverse grep of \tbi{:0}. We do not want any files that have zero occurrences of "mystring", just positive values such as \tbi{./A.txt:1}.\\
+\end{tabularx}
+ 
+\section{Find files of a certain size}
+The following info is taken from \tbi{find's} man page.\\
+-size n[cwbkMG]\\
+
+File uses n units of space.  The following suffixes can be used:\\
+\begin{MyIndentedList}
+\item \tqs{b}    for 512-byte blocks (this is the default if no suffix is used)
+\\
+\item \tqs{c}    for bytes
+\\
+\item \tqs{w}    for two-byte words
+\\
+\item \tqs{k}    for Kilobytes (units of 1024 bytes)
+\\
+\item \tqs{M}    for Megabytes (units of 1048576 bytes)
+\\
+\item \tqs{G}    for Gigabytes (units of 1073741824 bytes)
+\end{MyIndentedList}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find files of a certain size}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+find . -size +248k -exec ls -la \tbx & Recursively find all files in current directory that are larger than 248 kilobytes in size...nothing is returned, but we know we have a large file in this directory.\\
+\\
+ls -la & Reveals: -rw-r--r--. 1 root root 248739 Mar 25 13:34 ./log.tar.bz2, so what gives?\\
+\\
+bc <{}<{}<{} 248739/1024 & Let's calculate the size of the file in kilobytes using the \tbi{bc} programming language; 242 is returned. Note, there are 1024 bytes in a kilobyte.\\
+\\
+find . -size +242k -exec ls -la \tbx & Now, our file log.tar.bz2 is listed.\\
+\label{table:fnd_size} % is used to refer this table in the text
+\end{tabularx}
+
+\section{Find files according to permissions}
+\label{sec:findfilesperms}
+All files and directories have three user-based permission categories and three basic permission actions. This information is displayed in groupings of the three basic actions for each basic permission category. For example, rwx rwx rwx. So the first group of actions is for the user owner, the next for the group owner, and the final for all other users.\\
+
+\tbi{Permission Categories}
+\begin{itemize}
+	\item \tbi{owner - }the owner permissions apply only to the owner of the file or directory, symbolically represented by the letter \textbf{u}
+	\item \tbi{group - }the group permissions apply only to the group that has been assigned ownership to the file or directory, symbolically represented by the letter \textbf{g}
+	\item \tbi{all other users - }the all other users permissions apply to all other users on the system, symbolically represented by the letter \textbf{o}
+\end{itemize}
+
+\tbi{Permission Actions}
+\begin{itemize}
+	\item \tbi{read - }Permission to read contents of file.
+	\item \tbi{write - }Permission to write to or modify a file or directory.
+	\item \tbi{execute - }Permission to execute a file or view contents of a directory.
+\end{itemize}
+
+In order to see the permission categories and actions, issue this command: \textbf{ls -l}. You will see something like the following:
+
+-rw-r-{}-{}r-{}-{}. 1 me mygrp    6 Dec  8 12:55 myfile\\
+
+\tbi{Permission Values}
+\begin{itemize}
+	\item \tbi{permission = } symbolic-value = binary-value
+	\item \tbi{read = }r = 4
+	\item \tbi{write = }w = 2
+	\item \tbi{execute = }x = 1
+	\item \tbi{not set = } - = 0
+\end{itemize}
+
+Notes: A minus sign indicates that no action is set. The three triads of actions are followed by a single character (a period in this situation, this will be explained later in this chapter), the name of the user-owner, followed by the name of the group-owner, followed by the date that the file or directory is last accessed, followed by the name of the file or directory.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find files according to permissions}\label{table:fnd_perms}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls -la & One of the files in current directory is: \tbi{-rwx-{}-{}-{}-{}-{}-{}. 1 me mygroup 0 Dec  8 14:30 myfile}. The permission value is thus: 700.\\[2mm]
+
+find . -perm 700 & Find files with exactly and only permissions of \tbi{700}. Just the filename \textsl{myfile} is returned. \\[2mm]
+
+find . -perm 700 -exec ls \tbx & Alternative syntax, just \textsl{./myfile} is returned.\\[2mm]
+
+find . -perm 700 -ls & The full file listing is returned with this command: \tbi{5787130    0 -rwx-{}-{}-{}-{}-{}-{} 1 me mygroup  0 Dec  8 14:30 ./myfile} is returned.\\[2mm]
+
+find . -perm -444 & Find files with permissions by \tbi{anybody}, where owner, group, and other users \tbi{all} have read privilege. This command can be interpreted as \tbi{at least}, so a file with \tbi{777} would also match. The file \textsl{myfile} would not match because only the \emph{owner} has at least read permission.\\[2mm]
+
+find . -perm -111 -exec cat \tbx & Find files where all three (owner, group, and other) have at least the execute bit set and then display the contents of those files.\\[2mm]
+
+find . -perm -111 -exec file \tbx & As above, but instead of displaying the contents of the file, display the information about the file type. For example, if A.txt has the execute bit set for all three users, the file information may appear as: \textbf{./A.txt: ASCII text}\\[2mm]
+
+find . -perm /222 & Find files with permissions by \tbi{somebody}, where \tbi{any one of} owner, group, and other have write permission set. A file with permission of \tbi{700} would satisfy this requirement (-rwx-{}-{}-{}-{}-{}-{}). So, \textsl{myfile} would be listed.\\[2mm]
+
+find . -perm +222 & Old form of above, which is deprecated.\\[2mm]
+
+find . -readable & Find's \tbi{-perm} option only finds standard Linux permissions. To include ACL's, you use the literal named options, -readable, -writeable, and -executable. Again, \textsl{myfile} would be listed.\\\\[2mm]
+
+find . \textbackslash{}( -perm -7000 -printf \tqs{\%\#m \%u \%p\textbackslash{}n} \textbackslash{}) & Find all files in the current directory that have SUID, GUID, and sticky bit set. Example output: 07777 mgcr ./A.txt. Be careful...there is a space after the ( and before the ). /n = newline, \%p = filename, \%u = user's name, \%\#m = file permission bits in octal c/w leading zeroes.\\[4mm]
+
+find . \textbackslash{}( -perm -7000 -fprintf ./suidy.lst \tqs{\%\#m \%u \%p\textbackslash{}n} \textbackslash{}) & As above, but this time send the output to a file in the current directory\\[4mm]
+
+find . \textbackslash{}( -perm -7000 -fprintf ./suidy.lst \tqs{\%\#m \%u \%p\textbackslash{}n} \textbackslash{}) ,  \textbackslash{}( -size +1M -fprintf ./biggy.lst \tqs{\%-10s \%u \%p\textbackslash{}n} \textbackslash{}) & You can actually combine more than one find command by separating them with a comma. First we search for files with the SUID, GUID, and sticky bits set and send the list to the file: suidy.lst. Next, we search for files bigger than 1MB and send the output to: biggy.lst. The formatting options for the second command are: \%s = file size in bytes (10 digits), \%u = owner of file, \%p = file name. Each line in \tqs{biggy.lst} appears similar to this: 4194304 mgcr ./bigfile.txt\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\section{find -ls and inodes}
+
+In the above section we used the -ls option in the command: find . -perm 700. Let's play around with grep and man.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# First, let's grep for -ls.
+#
+¿\tld¿  man find | col -b | grep -ls
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# Oh yeah, the minus sign is a special character. We need to put it into quotations.
+#
+¿\tld¿  man find | col -b | grep "-ls"
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# Hmm, if you just opened the find's manpage, you would see that the -ls option is indented. There are spaces before the -ls.
+#
+¿\tld¿ man find | col -b | grep -A3 "^\ *-ls"
+¿\qquad¿ -ls¿\qquad¿    True;  list  current file in ls -dils format on standard output.	The block counts are of 1K blocks, unless the environment variable POSIXLY_CORRECT is set, in which case 512-byte blocks are used.  See the UNUSUAL FILENAMES section for information about how unusual characters in filenames are handled.
+¿\qquad¿ -ls, -fls¿\qquad¿
+¿\qquad¿Unusual characters arem always escaped. White space, backslash, and double quote characters are printed using C-style escaping (for example `\f', `\"'). "Other unusual characters are printed using an octal escape. Other printable  characters (for -ls and -fls these are the characters between
+#
+# Hey, notice we also grepped the lines beginning with -ls, -fls. Here is one way to get just the lines beginning with -ls. Note, the extra space.
+#
+¿\tld¿ man find | col -b | grep -A3 "^\ *-ls "
+¿\qquad¿ -ls¿\qquad¿    True;  list  current file in ls -dils format on standard output.	The block counts are of 1K blocks, unless the environment variable POSIXLY_CORRECT is set, in which case 512-byte blocks are used.  See the UNUSUAL FILENAMES section for information about how unusual characters in filenames are handled.
+#
+# So, -ls is equivalent to -dils...
+# d = A synonym for -depth, for compatibility with FreeBSD, NetBSD, MacOS X and OpenBSD.
+# i = inode
+# l = long-listing
+# s = size     
+\end{lstlisting}
+
+\subsection{Examples of using find -ls}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Get a long-listing of a specific file...
+#
+¿\tld¿ ls -l myfile
+-rwx------. 1 me mygrp 0 Jun  3 08:43 myfile
+#
+# Using the find command, search for all files with exactly the permission 700 or rwx------, in this case there is only one file.
+#
+¿\tld¿ find . -perm 700 -exec ls {} \;
+./myfile
+#
+# As above, but get a long-listing of those files...
+#
+¿\tld¿ find . -perm 700 -ls
+   524300      0 -rwx------   1  me mygrp        0 Jun  3 08:43 ./myfile
+#
+# What's inside myfile?
+#   
+¿\tld¿ cat myfile
+echo "zooboodoo"
+#
+# Since, this file is executable by the owner, let's execute it.
+# 
+¿\tld¿ ./myfile
+zooboodoo
+#
+# Let's create another file, yourfile, using a symlink to myfile.
+#
+¿\tld¿ ln -s myfile yourfile
+¿\tld¿ ls -l yourfile
+lrwxrwxrwx. 1 me mygroup 3 Jun 09:34 yourfile -> myfile
+#
+# Ok, let's display the contents of yourfile and then execute it.
+#
+¿\tld¿ cat yourfile
+echo "zooboodoo"
+
+¿\tld¿ ./yourfile
+zooboodoo
+#
+# Ok, do we now have two files that have exact permissions of rwx------? Apparently not! Notice from the above long-listing for yourfile that the permissions show as rwxrwxrwx, everyone has rwx permissions. However, this is not true, the permissions on yourfile will simply be the same as on myfile.
+#
+¿\tld¿ find . -perm 700 -ls
+   524300      0 -rwx------   1  me mygrp        0 Jun  3 08:43 ./myfile
+#
+# So, myfile and yourfile look like they are the same file. How do we distinguish these two files other than by name? By inodes (index number), of course.
+#
+¿\tld¿ ls -il myfile
+524359 -rwx------. 1 me mygrp 17 Jun 3 12:24 myfile
+
+¿\tld¿ ls -il yourfile  
+524300 lrwxrwxrwx. 1 me mygrp 6 Jun 3 12:25 yourfile -> myfile
+
+¿\tld¿ find . -inum 524359
+./myfile
+
+¿\tld¿ find . -inum 524300
+./yourfile   
+\end{lstlisting}
+
+\subsection{the ls long-listing}
+
+\begin{itemize}
+	\item[] \tbi{-rwx-{}-{}-{}-{}-{}-{}. 1 me mygrp 0 Jun  3 08:43 myfile}
+	\item[] \tbi{-} The first character is one of three characters: - (a file), 1 (a symbolic link, i.e., a pointer to another file), or d (a directory). Thus, myfile is a file. Note, if there was a symbolic link, the target of the symlink is also shown.
+	\item[] \tbi{rwx-{}-{}-{}-{}-{}-{}} The permissions/actions triad for user-owner, group-owner, and others.
+	\item[] \tbi{.} The character after the permissions/actions indicates the absence (.) or presence (+) of an ACL. See \hyperref[ch:acl]{Access Control List - ACL}. Thus, myfile does not have an ACL.
+	\item[] \tbi{1} The number of links (soft and hard). What constitutes a link varies. For files, a simple file will show as one link. For directories, there will be one link for the parent directory, one link for the directory itself, and one link for each sub-directory.
+	\item[] \tbi{me} The owner account.
+	\item[] \tbi{mygrp} The group owner account.
+	\item[] \tbi{0} The file size, less than 1 kb will show as 0.
+	\item[] \tbi{Jun 3 08:43} The date and time stamp for creation/modification.
+	\item[] \tbi{myfile} The file name.
+\end{itemize}
+
+\section{Find files whose names contain spaces or special characters}
+
+As previously mentioned, it is best to keep your naming convention very simple.\textit{ A general rule:} No spaces, special characters like the comma or the double quotation in file names. If you want names that are unique, choose separators such as (. - \_): \tbi{my.doc} or \tbi{my-doc} or \tbi{my\_{}doc}. Or, use camel notation: \tbi{MyDoc}. However, recall that \tbi{mydoc} and \tbi{MyDoc} would be two distinct documents because Linux file names are case sensitive. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ touch mydoc "my doc"
+
+¿\tld¿ ls
+mydoc  my doc
+
+¿\tld¿ ls -la
+total 8
+drwxrwxrwx. 2 me mygrp  4096 Jan 15 13:03 .
+drwxr-xr-x. 4 me mygrp  4096 Jan 15 12:30 ..
+-rw-r--r--. 1 me mygrp     0 Jan 15 13:03 mydoc
+-rw-r--r--. 1 me mygrp    0 Jan 15 13:03 my doc
+
+¿\tld¿ cat my doc
+cat: my: No such file or directory
+cat: doc: No such file or directory
+
+¿\tld¿ find . -type f -iname "my*"
+./mydoc
+./my doc
+
+¿\tld¿ find . -type f -iname "my doc"
+./my doc
+
+¿\tld¿ find . -type f -iname my\ doc
+./my doc
+
+¿\tld¿ echo "mystring" > mydoc; echo "mystring" > "my doc"
+¿\tld¿ find . -type f -exec egrep -l "mystring" {} \;
+./mydoc
+./my doc
+
+¿\tld¿ find . -type f -exec egrep -l "string" {} \;
+./mydoc
+./my doc
+#
+# For the command below, nothing is returned since we are searching for the exact string "string".
+#
+¿\tld¿ find . -type f -exec egrep -lx "string" {} \; 
+¿\tld¿
+#
+# But, both documents are returned because each does contain the exact string "mystring".
+#
+¿\tld¿ find . -type f -exec egrep -lx "mystring" {} \;
+./mydoc
+./my doc
+\end{lstlisting}
+
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find specific files that have spaces in their names}\label{table:fnd_specs}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls & Reveals what appears to be three documents: \textsl{mydoc}, \textsl{my} and \textsl{doc}\\[1mm]
+ls -la & Reveals two documents, \textsl{mydoc} and \textsl{my doc}\\[1mm]
+cat my doc & Generates two errors: \emph{cat: my: no such file or directory} and \emph{cat: doc: no such file or directory}\\
+find . -type f -iname my & we know that our file name contains the string "my" but nothing is returned\\[1mm]
+find . -type f -iname "my*" & with this command, \textsl{my doc} is returned, the quotations are mandatory, single quotes will also work, without the quotations you will get \emph{find's} syntax \emph{Usage} message.\\[1mm]
+find . -type f -iname "my doc" & \textsl{my doc} is returned, since the quotation says the contents inside the quotations are considered as a single string\\[1mm]
+find . -type f -iname my\textbackslash{} doc & \textsl{my doc} is returned, the backslash character (escapes) or says that the following character (the space) is a literal, valid character\\[1mm]
+echo "mystring" > mydoc; echo "mystring" > "my doc" & both documents now contain a single line with the string "mystring"\\[2mm]
+find . -type f -exec egrep -l "string" \tbx & both \textsl{mydoc} and \textsl{my doc} are returned since \emph{find} returns all files, but then this list is filtered for any file containing the string "string"\\
+\end{tabularx}
+
+
+\section{-print0 and xargs -0}
+
+You will often encounter examples of find commands that will use the \textbf{-print 0 | xargs -0} syntax (these command segments contain zeros not the letter o). \tbi{-print0} is a find switch. It can be interpreted as (when a file is found), print the full file name to standard output, followed by a null character instead of a newline character that \tbi{-print} uses. This allows file names that contain newlines or other types of white space to be correctly interpreted by programs that process the results of the \keyword{find} command. So, \textbf{-print0 | xargs -0} passes what is found by the \emph{find} command and places it after the command that follows. In the following table, we are searching for files where all three user types have at least execute permissions. Both commands are able to find and process names containing spaces.
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Find all files that have spaces in their names}\label{table:fnd_print0}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+ls -la & only one file in the directory: \tbi{-rwxrwxrwt. 1 me mygrp 10 Dec 11 13:28 A.txt}\\[1mm]
+
+find . -type f -perm -111 -exec file \tbx & We used this command in a previous section and we know that it returns: \textbf{./A.txt: sticky, ASCII text}\\[1mm]
+
+find . -type f -perm -111 -print0 | xargs -0 file & This alternative also returns: \textbf{./A.txt: sticky, ASCII text}. Which one is easier to remember? We just know that the form with \textbf{-print0 | xargs -0} will also catch names of files that meet the \emph{find} requirements and that have a name with non-standard characters.\\[1mm]
+	
+\end{tabularx}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's add a file that contains a space in its name and make it executable. Note the use of the double quotations in each command.
+#
+¿\tld¿ touch "A space.txt"
+¿\tld¿ chmod +x "A space.txt"
+#
+# We already had A.txt in this folder. The long listing shows that all three user categories have execute privilege on both files in our directory. Is this bad?
+#
+¿\tld¿ ls -la A*
+-rwxr-xr-x. 1 mgcr mygrp    4 Mar 11 08:15 A space.txt
+-rwxrwxrwx. 1 mgcr mygrp    4 Jan 15 12:45 A.txt
+#
+# Let's leave off the file type option, -type f,  and sees what happens.
+#
+¿\tld¿ find . -perm -111 -exec file {} \;
+.: directory
+./newerdir: directory
+./New folder: directory
+./testuser: directory
+./A space.txt: ASCII text
+./A.txt: ASCII text
+./mydir: directory
+./mydir/data: directory
+./newdir: directory
+./newdir/dirty: directory
+./newdir/mydir: directory
+#
+# Ok, let's look for files only.
+#
+¿\tld¿ find . -type f -perm -111 -exec file {} \;
+./A space.txt: ASCII text
+./A.txt: ASCII text
+#
+# And, using the alternate command...
+#
+¿\tld¿ find . -type f -perm -111 -print0 | xargs -0 file
+./A space.txt: ASCII text
+./A.txt:       ASCII text	
+\end{lstlisting}

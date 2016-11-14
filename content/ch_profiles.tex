@@ -1,0 +1,760 @@
+\chapter{Profiles}
+\pagestyle{fancy}
+\label{ch:profiles}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+
+\fancyhead[EC]{Linux System Administration} % E = even pages, C = center, rightmark defaults to number of current section
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Bash startup files}
+
+Bash startup files or login scripts are the files that are read by the system at login. \emph{man bash} refers to these startup files and provides descriptions of their roles. Basically, there are two ways to start the shell: \emph{interactive login} and \emph{interactive non-login}. \emph{Interactive} means you can start entering commands and \emph{login} means that you got the shell after authenticating. After you are already logged on, you start an \emph{interactive non-login} session by opening a new shell or terminal window. You do this by simply typing the name of your shell, i.e., \emph{bash}. There are several startup files that the system attempts to load and read when logging on or starting a shell. Error messages are printed if these files are unreadable because of syntax errors. The system always reads the system startup file, but stops reading after a successful read of the first \emph{user} startup file encountered in the user's home directory.\\
+
+Files read:
+
+\begin{itemize}
+	\item /etc/profile	- the system startup file
+	\item \ttb{}.bash\_profile, \ttb{}.bash\_login, \ttb{}.profile, \ttb{}.bashrc - user startup files
+	\item \ttb{}.bash\_logout - user logout file
+\end{itemize}
+
+\textcolor{red}{Linux Trivia:} bash = \href{https://en.wikipedia.org/wiki/Bourne_shell}{Bourne} Again SHell, rc=run control.
+
+Note: As per \textsl{/etc/profile} all system-wide \hyperref[subsec:functions]{functions} and \hyperref[subsec:aliases]{aliases} should go in \textsl{/etc/bashrc}. You should not edit this file, nor should you edit any system file when you have the option to use alternative files. Instead, create custom shell files such as \textsl{custom.sh} and place them in \textsl{/etc/profile.d}. This folder was created by the kernel for this specific purpose.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Invoked as an interactive login shell: the  \ttb{}.bash\_profile file}
+
+You typically login (authenticate) to your system while sitting at the machine. You can also remotely connect over a local network or over the Internet using a remote connection protocol such as \emph{ssh}. The \keyword{\ttb{}.bash\_profile} file is executed in order to configure your shell prior to opening your command prompt window. To simplify things, \keyword{\ttb{}.bash\_profile} typically has lines of code that says go look for \keyword{\ttb{}.bashrc}; and if you find it, execute it. Therefore, I modify just \keyword{\ttb{}.bashrc} since my \keyword{\ttb{}.bash\_profile} file calls \keyword{\ttb{}.bashrc} with these lines of code...
+
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Does the file '.bashrc' exist in your home directory?
+# If yes, run it, otherwise, do nothing, end test.
+#
+if [ -f ¿\ttb¿.bashrc ]; then	
+. ¿\ttb¿.bashrc
+fi
+\end{lstlisting}
+
+
+\subsection{Invoked as an interactive non-login shell: the  \ttb{}.bashrc file}
+
+When you are already logged on, you can open a new terminal window by typing the name of your shell: \tbi{bash}, \tbi{sh}, \tbi{tsh}, etc. Prior to opening the new terminal window, your \ttb{}.bashrc file is executed again when your shell is \tbi{bash}. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{\ttb{}.bashrc}
+
+\subsection{Making changes to \ttb{}.bashrc}
+\label{subsec:makingchangesto-bashrc}
+
+When you edit \ttb{}.bashrc you must re-load it in order for the changes to come into effect. You can logoff, which is very inefficient; or you can issue one of these commands:
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ source .bashrc	# If you are in your home directory.
+¿\tld¿ source ¿\ttb¿ .bashrc	# If you are not in your home directory.
+¿\tld¿ . .bashrc	# That's a period followed by a space followed by .bashrc
+¿\tld¿ . ¿\ttb¿ .bashrc	# If you are not in your home directory.
+¿\tld¿ /bin/bash	# This opens a subshell in your terminal window and re-reads .bashrc. Type exit to close the subshell and return to the root window.
+\end{lstlisting}
+
+NOTE: \keyword{\ttb{}.bashrc} is read per shell window. \hyperref[subsec:terminator]{Terminator} is an app that let's you create a grid of terminal windows. You must refresh \ttb{}.bashrc in each terminal window after you make a change to \ttb{}.bashrc...if you want the change to be active in each window. Even if you just use the OS's builtin terminal program and have several individual windows open, you would have to refresh \ttb{}.bashrc in each window.
+
+However, there is an alternative. You can add the following lines of code to \ttb{}.bashrc. After you do this, you must reload \ttb{}.bashrc in every terminal window for the change to take effect in the currently opened windows.  But, from this point onwards all you need to do is hit the enter key.
+
+Basically, the code takes a time stamp of \ttb{}.bashrc when a new terminal is opened or when you hit enter and stores this time stamp in a variable. Every time you hit enter while in a terminal, the script compares the current time with the current time stamp on \ttb{}.bashrc. If the time stamp comparison is not equal, \ttb{}.bashrc is refreshed/reloaded.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+bashrc_sourced=$(stat -c %Y ¿\ttb¿.bashrc)
+PROMPT_COMMAND='
+test $(stat -c %Y ¿\ttb¿.bashrc) -ne $bashrc_sourced && source ¿\ttb¿.bashrc'
+\end{lstlisting}
+
+\subsection{Defining custom colours in \ttb{}.bashrc}\label{sec:customcolours}
+
+I apologize to the person who wrote these codes lines, but I do not remember where I found them. It may have been from \href{https://help.ubuntu.com/community/CustomizingBashPrompt}{Customizing Bash Prompt.} You can define your own custom colours and then refer to them in your scripts...and in your \textsl{.bashrc} file. You will see in the \emph{Functions} section of my \textsl{.bashrc} file that I use the custom colour definitions when defining my command prompt functions. The following lines of code are in my \textsl{.bashrc} file. One's command prompt is customizable and \keyword{PS1} is an environment variable that defines the format of your command prompt.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+# ANSI color codes
+RS="\[\033[0m\]"    # reset
+HC="\[\033[1m\]"    # hicolor
+UL="\[\033[4m\]"    # underline
+INV="\[\033[7m\]"   # inverse background and foreground
+FBLK="\[\033[30m\]" # foreground black
+FRED="\[\033[31m\]" # foreground red
+FGRN="\[\033[32m\]" # foreground green
+FYEL="\[\033[33m\]" # foreground yellow
+FBLE="\[\033[34m\]" # foreground blue
+FMAG="\[\033[35m\]" # foreground magenta
+FCYN="\[\033[36m\]" # foreground cyan
+FWHT="\[\033[37m\]" # foreground white
+BBLK="\[\033[40m\]" # background black
+BRED="\[\033[41m\]" # background red
+BGRN="\[\033[42m\]" # background green
+BYEL="\[\033[43m\]" # background yellow
+BBLE="\[\033[44m\]" # background blue
+BMAG="\[\033[45m\]" # background magenta
+BCYN="\[\033[46m\]" # background cyan
+BWHT="\[\033[47m\]" # background white
+
+force_color_prompt=yes
+#
+# Please also read the next section: ¿\hyperref[subsec:funkyprompts]{Functions and changing command prompts.}¿ 
+#
+# Simplest with color red.
+#
+PS1="{\h}$FRED[\W]$ $RS"
+#
+# Here is how the command prompt would appear...
+#
+¿\{LIB2015\}\color{red}\tld¿ 
+#
+# Here is another command prompt with time in color blue.
+#
+PS1="\[\033[1;34m\][\$(date +%H%M)][\w]#\[\033[0m\] "
+#
+#
+# Here is how this command prompt would appear...the time is 12:51 p.m.
+#
+¿\color{blue}[1251]\tld\#¿ 
+#
+# Yet another command prompt! Two command lines are needed to define this command prompt. We first define a variable called: TTYNAME. We then use this variable in our second command which actual defines the prompt.
+# 
+# Set variable: TTYNAME=`tty|cut -b 6-`
+#
+TTYNAME=`tty|cut -b 6-`
+# 
+# Define the actual command prompt.
+#
+PS1="\[\033[32m\]\u@\h\[\033[33m\]($TTYNAME)\n\[\033[31m\][\w]#\[\033[0m\] "
+#
+# Two lines: 
+# First is user@host{green} (pts{blue})
+# Second line is [full path to current directory]#{red}
+#
+# And here is how our prompt appear. Note, the command prompt has two lines. 
+#
+¿\color{green}{mgcr@LIB2015}\color{blue}{(pts/1)}¿
+¿\color{red}{[\ttb{}scripts]\#}¿
+#
+# u=user, h=host, n=newline, w=full path to current working directory. When [ and ] are preceded by a backslash, they are interpreted literally for the second line. The rest of the values inside the square brackets are for colors.
+#
+# We could also define our prompt in a single line using commnad substitution.
+#
+PS1="\[\033[32m\]\u@\h\[\033[33m\](`tty | cut -b 6-`)\n\[\033[31m\][\w]#\[\033[0m\] "
+#
+# So, I hope this example illustrates the potential for designing a custom command prompt.
+#
+\end{lstlisting} 
+
+
+\section{Aliases}\label{sec:aliases}
+
+A Bash alias is essentially a keyboard shortcut, an abbreviation, a means of avoiding typing a long command sequence. Pay particular attention to the different types of quotation marks. They can be quite tricky and may generate errors if you use them in the wrong context.
+
+Alias definitions can go in \ttb{}.bashrc or alternatively you can create a \ttb{}.bash\_aliases file and place your aliases in that file. If you do this, include the following lines in your \ttb{}.bashrc file. This code says: check to see if there is a file called \ttb{}.bash\_aliases, if so, then read that file.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Note, there is a space after [ and before ]. As well, in the second line there is a space after the initial period.
+#
+if [ -f ¿\ttb¿.bash_aliases ]; then
+. ¿\ttb¿.bash_aliases
+fi
+\end{lstlisting}
+
+\subsubsection{user specific aliases}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I have many aliases in my ¿\ttb¿.bashrc file, how do I get a list of these aliases? Just grep all lines in ¿\ttb¿.bashrc containing the string" alias. Note: I will get an uncommented list of all aliases. I have added the comments to explain each alias.
+#
+¿\tld¿ grep alias .bashrc
+#
+# My user-specific aliases follow...
+#
+# Prompt for confirmation before removing files.
+#
+alias rm='rm -i'
+#
+# Prompt before overwrite when copying a file.
+#
+alias cp='cp -i'
+#
+# Prompt before overwrite when moving a file.
+#
+alias mv='mv -i'
+#
+# The mount command by itself presents information that is jumbled together and hard to read. By piping to 'column -t', the information is displayed in a tabular format.
+#
+alias mt='mount | column -t'
+#	
+# Clear the screen.
+#
+alias c='clear'
+#	
+# Get the setting for a specific environment variable. For example, the output of the command, pe hostname, will be: HOSTNAME=LIB2015. Without the pipe to grep, the output is simply: LIB2015. The tr command converts lower case to upper case. Environment variables are always in upper case.
+#
+alias pe='echo $1 | tr '[a-z]' '[A-Z]' | xargs printenv | grep -i $1' 
+#
+# Like mount, the fstab output is hard to read. This next alias places the output of fstab in columnar output.
+#
+alias ft='cat /etc/fstab | grep -v "^#" | column -t' 
+#
+# r for repeat, just repeat the last command in command history.
+#
+alias r='fc -s'	
+#
+# The switches for the manpage of cpio are preceeded by either [ or `. Therefore,  my m- function will not work with cpio.
+#
+alias mc-='man cpio | col -b | grep "^\ *.-"' 
+#
+# Go up one directory level.
+#
+alias ..='cd ..'
+#
+# Go up two directory levels.
+#
+alias ...='cd ../..'
+#
+# Go up three levels.
+#
+alias ....='cd ../../..'
+#'
+# I just want the lines with arguments in bash's builtin manpage.
+#
+alias mbi='man builtin | col -b | grep "^\ *.*\ *\["'
+#	
+# Get a long-listing of files with classification symbol at end: /=directory, nothing=normal file, *=executable, @=linked file.
+#
+alias lF='ls -alF'
+#
+# Gracefully reboot the computer, there are two ways.
+#
+alias srn='sudo shutdown -r now'
+alias rbt='sudo reboot'
+#
+# Gracefully shutdown the computer.
+#
+alias shn='sudo shutdown -h now'
+#
+# Simplify the history and 'jobs -l' commands.
+#
+alias hy='history'
+alias j='jobs -l'
+#
+# Temporarily unalias an alias.  Example, to unalias the alias, j = jobs -l, type: u j. In order to re-alias just: source \ttb{}.bashrc.
+# 
+# ¿\textbf{\color{red}Challenge:} If you use the time stamp code listed in \hyperref[subsec:makingchangesto-bashrc]{Section 5.2.1}, what happens after you unalias an alias and hit enter? \hyperlink{oj}{Answer}¿ 
+#
+alias u='unalias $1'
+#
+# Do you want to learn bash? Read the manpages for builtin and bash!
+#
+alias mbn='man builtin'
+alias mb='man bash'
+#
+# Fedora used to use the yum package manager, but then switched to dnf.  I previously had the alias: alias yu='sudo yum update'. I can not use a similar alias called du since du is a builtin command. Therefore, I continue to use yu as the alias to update my system, the underlying definition just reflects the new package manager.
+#
+alias yu='sudo dnf update'.
+#
+# Install a package without interactively confirming the install...you are absolutely sure you want to install the package! I rarely use this alias since I like to see what dependency packages get installed when I install a package.
+#
+alias yy='sudo dnf -y $1'
+
+# List only hidden files.
+alias lf.='ls -A -1 -d -F .* | grep -v '/$''
+
+# List only hidden directories.
+alias ld.='ls -la -d .* | grep '^d''
+
+# List hidden files and hidden directories.
+alias lfd.='ls -la -d .* --color=auto'
+
+# List hidden files and hidden directories with directories listed first.
+alias lfd..=' ls -la -d .*  --group-directories-first'
+
+# List both hidden and non-hidden directories.
+alias ld='ls -la | grep '^d''
+
+# List both hidden and non-hidden files.
+alias lf='ls -la | grep -v '^d''
+#
+# I have two versions of Eclipse, a programming IDE, on my system. This alias just points to my special version.
+#
+alias eclipsee='/usr/bin/eclipsee'
+#
+# Note, in our alias list above, we had aliases for changing directory level by one, two, and three previous levels using two, three, and four periods respectfully. What would happen if we just typed one period?
+#
+¿\tld¿ .
+bash: .: filename argument required
+.: usage: . filename [arguments]
+#
+# Recall from the Programming chapter that the single period is a special character and is used to call a script or program from the current directory.
+#
+\end{lstlisting}
+
+\subsubsection{system and user specific aliases from \ttb{}.bashrc}
+
+A interesting challenge is how to get \emph{system aliases}. If you type just \textsl{alias} at the command line you get a list of the aliases for a currently logged on user and the system aliases. Here is an indirect method of getting just system aliases. Create a user \emph{myuser} who has no aliases in her \ttb{}.bashrc file. Then, issue the command in the next code block.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# You will be prompted for root's password.
+#
+¿\tld¿ su - myuser -c 'getent passwd myuser | cut -d: -f7' -c 'alias -p'
+Password: 
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='grep --color=auto'
+alias vi='vim'
+alias xzegrep='xzegrep --color=auto'
+alias xzfgrep='xzfgrep --color=auto'
+alias xzgrep='xzgrep --color=auto'
+alias yu='sudo dnf update'
+alias zegrep='zegrep --color=auto'
+alias zfgrep='zfgrep --color=auto'
+alias zgrep='zgrep --color=auto'
+\end{lstlisting}
+
+Explanation: 
+
+\begin{itemize}
+	\item \textbf{su - myuser} - run the command as user \emph{myuser}. 
+	\item \textbf{-c \tqs{getent passwd myuser | cut -d: -f7}} - run this command (-c): \tqs{getend passwd myuser} says list the password information for \emph{myuser} but only get the seventh field which happens to be the user's shell such as \textsl{/bin/bash}.
+	\item \textbf{-c \tqs{alias -p:}} - run this command (-c) - print a list of all aliases
+\end{itemize}
+
+For any logged on user, we can also just issue the \keyword{alias} command and we will get aliases defined in our \ttb{}.bashrc file...as well as system aliases. The system aliases are defined in files located in the \textsl{/etc/profile.d} directory. In this directory, there are both \textsl{.csh} and \textsl{.sh} files. The former are for the \keyword{c-shell} and the later for the \keyword{bash-shell}. Examples are: \textsl{/etc/profile.d/colorls.sh} and \textsl{/etc/profile.d/colorgrep.sh}. So to conclude, we can get the aliases for any user account:
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ su - useracct -c 'getent passwd useracct | cut -d: -f7' -c 'alias -p'
+\end{lstlisting}
+
+What is also interesting is that the above \emph{su -} command also works for \tbi{domain users}. If we issue the command \emph{cat /etc/passwd}, we get a list of all local accounts. Domain user accounts are not listed in this file. There are many ways to join a \tbi{domain}. This topic of domains is beyond the scope of this paper. However, the path to the home directory for domain users will typically be: \textsl{/home/domain.com/username}. To use the \emph{su -} command above, you only need the \emph{username}. You do not have to specify the domain.
+
+\subsection{aliases for non-system users}
+
+I found this script on the web script which lists the \href{http://unix.stackexchange.com/questions/237398/how-to-list-all-the-alias-for-all-the-user-have-on-my-linux-box-from-root}{aliases for all non-system users}. You must run this code as \keyword{sudo} or you will be prompted for each user's password. Also, it only lists aliases for local accounts, not domain accounts. I show the output for only two accounts: nfsnobody (there are no aliases) and for mgc.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat useraliases.sh 
+¿\tbi{\#}¿! /bin/bash
+
+for user in $(getent passwd | cut -d: -f1) ; do
+	uid=$(getent passwd "$user" | cut -d: -f3)
+	if [ "$uid" -ge 1000 ] ; then
+		ushell=$(getent passwd "$user" | cut -d: -f7)
+		[ -z "$ushell" ] && ushell='/bin/sh'
+		echo "aliases for $user:"
+		if [[ "$ushell" =~ /s?bin/(true|false|sync|ftponly|nologin) ]] ; then
+			:
+		elif [[ "$ushell" =~ /s?bin/(t?csh|zsh|s?ash) ]] ; then
+			su - "$user" $ushell -c 'alias'
+		elif [[ "$ushell" =~ /s?bin/([bd]ash|m?ksh|sh) ]] ; then 
+			su - "$user" $ushell -c 'alias -p'
+		fi
+		echo ; echo
+	fi
+done
+#
+# Sample output...
+#
+¿\tld¿ sudo ./useraliases.sh
+aliases for nfsnobody:
+
+aliases for mgc:
+Password: 
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='grep --color=auto'
+alias vi='vim'
+alias which='(alias; declare -f) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot'
+alias xzegrep='xzegrep --color=auto'
+alias xzfgrep='xzfgrep --color=auto'
+alias xzgrep='xzgrep --color=auto'
+alias zegrep='zegrep --color=auto'
+alias zfgrep='zfgrep --color=auto'
+alias zgrep='zgrep --color=auto'
+.
+.
+\end{lstlisting}
+ 
+\subsection{Overriding alias definitions}
+ 
+ We can easily override aliases. The \emph{rm=\tqs{rm -i}}  alias uses the interactive -i switch. With this alias, anytime that you issue the \keyword{rm} command, you will be prompted for confirmation that you do wish to delete each file. This is a safety mechanism. It is very easy to kill your system if you by mistake issue the \emph{rm *} command (remove all) in a system directory. But, if you are in your \textsl{Downloads} directory, you may want to avoid the confirmation process for each file. You can override the alias, by preceding the command with a backslash.  So, type \emph{{\textbackslash}rm} instead of \emph{rm}.
+ 
+\section{Functions}\label{sec:functions}
+
+I like simplicity and shortcuts that eliminate the amount of typing I have to do.  Functions are more powerful than simple \emph{alias} commands and they make it easier to invoke commands that have complex syntax and/or require multiple arguments. As well, we can use \emph{bash programming} to create our functions. Functions like aliases can be placed in our \textsl{.bashrc} file or you can create a separate file called \textsl{.bash\_functions} or \textsl{.functions} and call that file from \textsl{.bashrc}.
+
+In the following code, you will encounter several functions related to \keyword{manpages}. I find endless scrolling through manpages hunting for specific information to be very unproductive. I wanted an easy way to get snippets of information. Will you find these functions useful? \textit{Even if you don't use them, study them.} You may learn some \keyword{bash programming}!
+
+\begin{lstlisting}[escapeinside={¿}{¿}, breaklines]{bash}
+
+function h()
+#
+# Type 'h cmd' instead of 'cmd --help'
+#
+{
+echo "--help" | xargs $1
+}
+
+function tu ()
+#
+# tr is the translate command, here we are converting lower-case to upper-case, $1 is the string to convert. Example: tu bob, returns BOB
+{
+echo $1 | tr '[a-z]' '[A-Z]'
+}
+
+function tl ()
+#
+# tr is the translate command, here we are converting upper-case to lower-case, $1 = string to change. Example: tl BOB , returns bob.
+#
+{
+echo $1 | tr '[A-Z]' '[a-z]'
+}
+
+function manh ()
+#
+# Section headers in manpages are in upper case. 
+# This function can be used to display the manpage between two section headers.
+# Task: Display only the section of the sed manpage for between 'DESCRIIPTION' and 'COMMAND SYNOPSIS', that is, only the 'DESCRIPTION' section of the sed manpage.
+# Example: manh sed description "command synopsis"
+# As above, if the section header has spaces, place the section header in double parenthesis.
+# We use the tr command to change section headers to uppercase, so we do not have to type the section header in upper case.
+# $1 = command $2 = first header and $3 = second header
+# sed switches: n=silent, p=print
+# Pipe to less in case the section is quite long.
+# Note: if you get a blank window, you mispelled a header.
+# Piping to, sed '$d', removes the last line which is the second section header.
+# Pay attention! I am using grave accents, command substitution, to define the variables b and e.
+#
+{
+b=`echo $2 | tr '[a-z]' '[A-Z]'`
+e=`echo $3 | tr '[a-z]' '[A-Z]'`
+man $1 | col -b| sed -n "/$b/,/$e/p" | less | sed '$d'
+}
+
+function mana()
+# Here we use 'grep -ix' instead of tr to tell the command to ignore case.
+# Task: Print out a number of lines after the beginning of a manpage section.
+# Example: print out 5 lines of the synopsis header section of the sed manpage.
+# $1 = command, $2 = section header, $3 = number of lines
+# Note: The command did not work unless I first assigned $3 to a variable name. I could not use $3 directly in the command.
+#  Example: mana sed synopsis 5
+#
+{
+n=$3
+man $1 | col -b | grep -ix $2 -A$n
+}
+
+function mans ()
+#
+# Get a list of all section headers of a man file, e.g., mans sed.
+#
+{
+man $1 | grep '^[A-Z]'
+}
+
+function m- ()
+#
+# Get a list of all the command switches in the manpage, those lines beginning with a minus sign. The output is similar to: 'cmd --help' whose output is quite verbose. The output of 'm- cmd' is quite concise. For example, instead of typing 'sed --help', you can type 'm- sed'.
+# 
+# grep's regex explained: ^ means at beginning of line. \ escapes the next character (take this character literally, the space).  * means any number of the preceding character, the space. Then, an actual minus sign. Then, any character, represented by the period.
+#
+# $1 = the command, col -b is used to format the man page. Try the command without the formatting section, | col -b |, especially when sending the output to a file.
+#
+Example: m- sed
+#
+{
+man $1 | col -b | grep "^\ *-."
+}
+
+function m-- ()
+#
+# This function is related to my m- alias. Some man pages do not precede their options with spaces followed by a minus sign. Instead, the spaces are followed  but some other character. So, if the function m- does not work, use m--. Note the placement of the period.
+#
+{
+man $1 | col -b | grep "^\ *.-"
+}
+
+function cm()
+#
+# See ¿\hyperref[sec:topcpu]{Finding top consumers of CPU resources}¿ for alternative.
+# With the ps command, the third column of output is %CPU and the fourth is %MEM.
+# This function takes two switches: sort column (3 or 4 )and number of lines.
+#
+# Example: top four processes sorted on %CPU in descending order.
+# cm 3 4
+#
+# When you pipe the 'ps auxf' command, the headers are removed. 'ps auxf | head -1' just prints the header line.
+#
+{
+p=$1
+n=$2
+echo "Top processes: "; ps auxf | head -1 && ps auxf | sort -nr -k $p | head -$n;
+}
+
+function mang()
+#
+# This is another way of printing a section of a manpage. The function changes section headers to uppercase using the echo and tr commands.
+#
+# Use the -A (# of lines after) and -B (# of lines before) grep switches with large values in order to  ensure we just capture the required section. Think about how the overlap works. Sketch it out.
+#
+# $1 = manpage $2 = first section header and $3 = second section header
+# Remove the last pipe, | sed '$d', and see what happens.
+# Example: mang sed name synopsis
+# 
+{
+b=`echo $2 | tr '[a-z]' '[A-Z]'`
+e=`echo $3 | tr '[a-z]' '[A-Z]'`
+man $1 | col -b| grep -A1000 -x "$b" | grep -B1000 -x "$e" | sed '$d'
+}
+
+function mbib()
+#
+# There are a large number of topics within each manpage header in the 'builtin' manpage. If we know that the bind section is followed by the break section, we can issue the following command:
+#
+# mbib bind break
+#
+# $1 = 1st header and $2 = second header
+# 
+# With this function, I am using the grep block option which is equivalent to the grep -x, exact option.
+#
+{
+man builtin | col -b | grep -A1000 "^\ *\b$1\b" | grep -B1000 "^\ *\b$2\b" | sed '$d'
+}
+#
+# In the next three functions, I illustrate how to create custom command prompts. To invoke them, simply type their name.
+#
+function p3()
+{
+#
+# See ¿\hyperref[sec:customcolours]{Section~ 5.2.5}¿, defining cutsom colours in .bashrc.  This command prompt is simply the cirumflex inside square brackets. FRED=foreground red, RS=reset, PS1=command prompt environment variable.
+#
+PS1="$FRED¿\tld¿ $RS"
+}
+
+function p2()
+#
+# Just type: p2
+# A different command prompt with time of day: hh:mm.
+#
+{
+PS1="\[\033[1;34m\][\$(date +%H:%M)][\w]$\[\033[0m\] "
+}
+
+function p1()
+#
+# Just type: p1
+# This is similar to my default command prompt. The full path of the current working directory is shown followed by the dollar sign. The hostname is not shown. 
+#
+{
+PS1="$FRED[\w]\$ $RS"
+}
+
+function p0()
+#
+# My default prompt.
+#
+{
+PS1="{\h}$FRED[\W]$ $RS"
+}
+
+function cn()
+#
+# This is just a command to open a local .html file on my system. Just type cn and Firefox opens the local .html file. The & at the end of the command returns the command prompt so that it is available again. The process to launch Firefox process remains in the background, but Firefox runs in the foreground.
+#
+{
+firefox /home/mgcr/coursera/uwhpsc/notes/_build/html/index.html &
+}
+\end{lstlisting}
+
+\subsection{Functions and changing command prompts}\label{subsec:funkyprompts}
+
+I will illustrate the different command prompts. I start with my default prompt and end with my default prompt. I call new prompts by issuing one of the prompt functions defined above. Note, the final character of my command prompt is the dollar sign except for the \emph{p3} command prompt. Note, I am also showing actual colours to represent the colours specified in the definition of each command prompt.
+
+\begin{lstlisting}[escapeinside={¿}{¿}, breaklines]{bash}
+#
+# w=full path, W=last level (deepest) of full path, h=hostname. Remember: the tilde is a builtin shortcut for the home directory!
+#
+{LIB2015}¿\textbf{\color{red}[\ttbb{}]\$}¿ pwd
+/home/mgcr
+
+{LIB2015}¿\textbf{\color{red}[\ttbb{}]\$}¿ echo $PS1
+{\h}\[\033[31m\][\W]$ \[\033[0m\]
+#
+# So, I am using my default command prompt. Let's switch to the p1 command prompt.
+#
+{LIB2015}¿\tld¿$ p1
+¿\textbf{\color{red}[\ttbb{}]\$}¿ echo $PS1
+\[\033[31m\][\w]$ \[\033[0m\]
+#
+# Ok, let's switch to the p2 command prompt.
+#
+¿\tld¿$ p2
+¿\textbf{\color{blue}[18:45][\ttbb{}]\$}¿ echo $PS1
+\[\033[34m\][$(date +%H:%M)][\w]$\[\033[0m\]
+#
+# Finally, let's switch to the p3 command prompt.
+#
+¿\textbf{\color{blue}[18:45][\ttbb{}]\$}¿ p3
+¿\textbf{\color{red}[\ttbb{}]}¿ echo $PS1
+\[\033[31m\]¿\tld¿ \[\033[0m\]
+#
+# Change to a different directory and cycle through the different command prompts.
+#
+¿\textbf{\color{red}[\ttbb{}]}¿ cd scripts
+¿\textbf{\color{red}[\ttbb{}]}¿ p1
+¿\textbf{\color{red}[\ttbb{}/scripts]\$}¿ p2
+¿\textbf{\color{blue}[18:48][\ttbb{}/scripts]\$}¿ p3
+¿\textbf{\color{red}[\ttbb{}]}¿
+#
+# Go back to our default command prompt by issuing the p0 function call. Alternative, issue this command: source ~/.bashrc
+#
+¿\textbf{\color{red}[\ttbb{}]\$}¿ p0
+{LIB2015}¿\textbf{\color{red}[scripts]\$}¿ echo $PS1
+{\h}\[\033[31m\][\W]$ \[\033[0m\]
+\end{lstlisting}
+
+\section{History}
+
+ The Bash \keyword{history} command is used to edit and manipulate one's command history in order to simplify re-entering previously-used commands. History parameters or settings are defined in your \textsl{\ttb{}.bashrc} file. All commands that you issue are tracked and recorded in the \textsl{\ttb{}.bash\_history} file.
+ 
+ By default, the bash shell writes its history at the end of each session, overwriting the existing \textsl{\ttb{}.bash\_history} file with an updated version. This means that if you are logged in with multiple bash sessions, only the last one to exit will have its history saved. We can work around this with the \emph{shopt -s histappend} command...which will append to, instead of overwriting, the \textsl{\ttb{}.bash\_history} file.
+ 
+ In the following example, \keyword{ignoreboth} = ignorespace and ignoredupes. \keyword{ignorespace} is a quick way to enter a command that you do not want as part of your history. You type a space, then the command, and then the enter key. The space before the command tells the bash shell not to include the command in command history. \keyword{ignore dupes}, of course, says only store unique commands in history, no duplicates.
+ 
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Set history file length (number of lines) with this command.
+#
+HISTFILESIZE=1000000 
+#
+# This is the number of lines loaded into memory, it can be equal to or less than the HISTFILESIZE metric.
+#
+HISTSIZE=1000000
+#
+# Don't put duplicates in history nor commands that begin with a space.
+#
+HISTCONTROL=ignoreboth
+#
+# Don't add these commands to history.
+#
+HISTIGNORE='ls:bg:fg:history:c:reboot:yu'
+#
+# The following updates history immediately on carraige return, not at end of bash session. A more useful setting is described in ¿\hyperref[subsec:makingchangesto-bashrc]{Section~ 5.2.1}¿?
+#
+PROMPT_COMMAND='history -a'
+#
+# Append to history file, don't overwrite.
+#
+shopt -s histappend 
+\end{lstlisting}
+
+\subsubsection{Calling specifc commands from history}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ history     # Numbered list of all commands stored in ¿\tldi{}¿/.bash_history.
+
+¿\tld¿ history 662 # Execute history command number 662.
+
+¿\tld¿ !662     # A more concise way to execute history command number 662 (no spaces between characters).
+
+¿\tld¿ !-6     # Execute the 6th last command in history (no spaces between characters).
+
+¿\tld¿ mkdir bob marley		# Make two directories bob and marley.
+
+¿\tld¿ cd !^		# Change into directory bob, the first argument of the previous command.
+
+¿\tld¿ mkdir bob marley		# Make two directories bob and marley.
+#
+# Change into directory marley, the last argument of the previous command. Instead of typing !$ you can also type: cd followed by a space and then alt. or esc. which will display marley.
+#
+¿\tld¿ cd !$	
+
+¿\tld¿ mkdir bob marley		# Make two directories bob and marley.
+#
+# List the contents of bob and marley, that is, list all arguments of the previous command.
+#
+¿\tld¿ ls !*	
+#
+# When you are repeatedly testing a command, you may want to override the default behaviour of another command. For example, to test the above history argument shortcuts, I was creating the bob and marley folders and then deleting them in order to test the next command. I did not want to confirm my deletes, so I issued this command instead: '\rm -fr bob marley' instead of 'rm -fr bob marley'. The backslash says override the alias, 'rm -i', and use the system command instead, rm. With the alias version of rm, I would have had to confirm the deletion of the bob folder and the marley folder and each file inside of these folders.
+#
+¿\tld¿ touch file1 file2 file3 # Create three empty files.
+#
+# Echo the string "text" to the 2nd argument of the previous touch command, that is, send the string to and write to file2.
+#
+¿\tld¿ echo "text" > !touch:2 
+¿\tld¿ cat file2 # Let's check, display the contents of file2.
+text
+
+¿\tld¿ locate mini.zip	# Where is the archive mini.zip?
+/home/mgcr/Downloads/mini.zip
+#
+# Unzip this archive into the current directory, note $(!!) translates as the output of the last command so that the full command becomes: 'unzip /home/mgcr/Downloads/mini.zip'.
+#
+¿\tld¿ unzip $(!!)	
+#
+# Note, the locate command uses a database that gets updated on a daily basis (run by the kernel scheduler crond). If you create a new file and issue the command: locate newfile, nothing is returned. You have to first manually update the database by issuing this command: 'sudo /usr/bin/updatedb'. You will then be able to locate the newly created file. The above example assumes that the mini.zip file was created prior to the current day or that the database was manually updated.
+#
+# Execute the last'cat'command. After the command is executed, if you hit the up-arrow, the expanded command is displayed on the command line. The command is now available for editing or executing again.
+#
+¿\tld¿ !cat
+#	
+# Just print the last 'cat command'; up-arrow also displays the last 'cat' command on the command line ready to edit or execute.
+#
+¿\tld¿ !cat:p	
+
+¿\tld¿ !!	# Execute the last command.
+
+¿\tld¿ !!:p	# Just print-out the last command, up-arrow operates as above.
+#
+# !! is a very useful command. Suppose you issue a command that requires super user privilege. That is, you need to precede the command with sudo, but you forgot the sudo. Instead of hitting the up arrow and the home key and typing sudo in front of the command, just type: sudo !!, i.e., run the last command as super user. You have to be a sudo user in order to do this.
+#
+¿\tld¿ sudo !!	
+#
+# Read from history and list the last 10 commands issued (the default # is 10).
+#
+¿\tld¿ fc -l
+
+¿\tld¿ fc -l -20      # Read from history and list the last 20 commands issued.
+#
+# grep (filter or show) only alias commands issued within the last 20 commands issued.
+#
+¿\tld¿ fc -l -20 | grep alias     
+
+¿\tld¿ fc -s mystring     # Execute the last command beginning with string "mystring".
+
+¿\tld¿ fc -l 671 681	# List commands from history numbers 671 to 681.
+#
+# List the most recent commands between last instance of ls and last instance of pwd.
+#
+¿\tld¿ fc -l ls pwd	
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

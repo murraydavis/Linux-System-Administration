@@ -1,0 +1,1346 @@
+\chapter{An Important Chapter}
+\label{ch:impch}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+\textit{Please spend time reading and studying this chapter and the next chapter on programming.} If you do, the rest of the book will be much easier to understand and you will have a firm understanding of the Linux command line. The chapters on the manpage and profiles are also essential reading.
+
+The way that I have ordered the presentation of the material may frustrate some, yet bore others. \textit{But, do continue reading as some of your confusion may be addressed in subsequent chapters.} There may be even the odd pearl for the more advanced users.
+
+I cannot stress (actually, I will continually stress) how important it is to read manpages and other online documentation. \textit{But, don't just read the documentation, test the code and syntax, run the examples, and play with the command options.} As Cole Porter wrote, \tbi{\textcolor{red}{\href{https://www.youtube.com/watch?v=slYExz44k0Q}{Experiment!}}}\footnote{Kevin Klein's version from the movie De-Lovely}
+
+\section{Resources}
+
+If you are bored and totally fed up with reading this book, you can lose hours of your finite time on this planet looking at the following web sites. Some are fairly clean with little annoying flotsam and jetsam. No, not that early 80's Thrash Metal band from Phoenix, I am referring to Internet advertising or web advertising. But, in the end, everyone has to make a living...
+
+\begin{enumerate}
+	\item{\href{http://tldp.org}{The Linux Documentation Project}} 
+		A little dated but still relevant: HOWTOs, Guides, FAQs, manpages, Advanced Bash-Scripting Guide
+	\item{\href{https://www.gnu.org/doc/doc.en.html}{Documentation of the GNU Project - GNU Manuals}}
+	\item{\href{https://www.linux.com/tutorials}{Linux.com - News for the Open Source Professional - Tutorials}}
+	\item{\href{https://www.howtoforge.com/}{Linux Tutorials}} 
+		Trust me, you will often visit this site!
+	\item{\href{http://stackoverflow.com}{Linux documentation and forums}} 
+		Stock Overflow is the largest online community for programmers to learn, share their knowledge, and advance their careers.
+	\item{\href{http://fedoralinuxcommands.blogspot.ca/}{Alphabetical listing of linux commands}} 
+	\item{\href{http://unix.stackexchange.com/}{Unix \& Linux}} 
+		A question and answer site for users of Linux, FreeBSD and other Un*x-like operating systems.
+	\item{\href{https://access.redhat.com/documentation/en/}{Product documentation for redhat}} 
+		And thus besides documentation for RHEL, documentation that is relevant to CentOS and Fedora...and other Linux OS.
+	\item{\href{http://www.linuxquestions.org}{A site for asking and answering questions about Linux}}
+	\item{\href{http://www.unix.com}{unix and linux operating commands}} 
+		A forum for for programmers and operating specific Linux OS.
+	\item{\href{https://debian-handbook.info/}{The Debian Administrator's Handbook}} 
+\end{enumerate}
+
+\section{\color{red}Copy/paste of code...optional to read.}
+
+This section is indeed optional. \textit{If you want to learn a bit about typesetting \latex and the \keyword{lstlisting} package, read this section.}
+
+As I have indicated in the previous chapter, I used the \latex \keyword{lstlisting} package to typeset the \emph{bash} code. However, there was one issue that initially stumped me. The issue was that \latex converted the \keyword{minus} sign to an \keyword{emdash} when it compiled the source code to produce the final \keyword{PDF} document. To create the bash code in the source documents, I simply copied from the command line and pasted into my \latex source documents, the \emph{.tex} files. Why was the \emph{empdash} an issue? Well, when you copied a command from the bash code sections of the PDF book to the command line, the command would fail, \textit{if the command contained minus signs now typeset as an emdash.} The bash terminal would balk at the \emph{emdash}, it did not know how to interpret the \emph{empdash}. I initially devised a work around. You will learn some coding by reading this section. You will also see the process of how this document evolved...as I was addressing both \latex and \keyword{Linux} coding issues.
+
+\lstset{
+	keywords={tar,gzip},
+	rulecolor=,
+	language=bash,
+	basicstyle=\small,
+	upquote=true,
+	aboveskip={1.5\baselineskip},
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=true,
+	prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	frame=single,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\color[rgb]{0,0,1},
+	commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+	stringstyle=\color[rgb]{0.627,0.126,0.941}
+}
+
+In the next section of code, you will see the difference between the \keyword{hyphen} and the \keyword{emdash}. Look carefully! There is only a subtle difference in the length of these two characters. In typsetting there are three basic forms used for hyphenation: hyphen (minus sign), endash(about the width of the letter n), and emdash (about the width of the letter m). So, in terms of length, we work from right to left, with the \emph{hyphen} as the shortest and the \emph{emdash} as the longest. As well, I am going to use the words \emph{hyphen} and \emph{minus sign} interchangeably, but they both are words for the shortest form of hyphenation.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Here is a typical line of code. Copy and paste it into your terminal window from this block of code. The command looks for all files that do not have either a .txt or .cfg file extension. At this point, it is not necessary that you understand each component of the command. Also, please note taht file name expansion works with either the double parentheses or the single paranthesis. I use the former in the following examples.
+#
+¿\tld¿ find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)
+#
+# Did you get the following error message when you tried to execute the command?
+#
+find: paths must precede expression: -name
+Usage: find [-H] [-L] [-P] [-Olevel] [-D help|tree|search|stat|rates|opt|exec] [path...] [expression]
+#
+# What about this command?
+#
+¿\tld¿ ls -la
+ls: cannot access -la: No such file or directory
+\end{lstlisting}
+
+So, the error message will vary depending on what follows the first \emph{emdash}. Well, that would be a pain in the ass to have to edit every command that you wanted to try. You would edit the command inline, deleting the \emph{emdash} and retyping a hypen. \keyword{Linux System Administration} to your rescue! I am going to show you right off the top how knowledge of scripting and troubleshooting can fix some very vexing and strange issues. To solve this issue, I am going to use \keyword{sed}, a Linux command that is used to process strings.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# First of all, we need to replace the emdash with a normal minus sign. You can copy and paste these commands to your command line because I have used the power of ¿\color[rgb]{0.133,0.545,0.133}\latex¿ to properly format them for the command line.  I am sending a string to sed and the string is the complex find command inside the double parentheses.
+#
+¿\tld¿ sed s/-/¿{-}¿/ <<< "find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)"
+find . ¿{-}¿type f ! \( -name *.txt -o -name *.cfg \)
+#
+# Note, look closely, only the first minus sign after find . is a true minus sign. Our command only replaced the first instance. We have to modify it slightly and say replace all instances using sed's global option.
+#
+¿\tld¿ sed s/-/¿{-}¿/g <<< "find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)"
+find . ¿{-}¿type f ! \( ¿{-}¿name *.txt ¿{-}¿o ¿{-}¿name *.cfg \)
+#
+# We now copy the output and type it on a new command line and hit enter. There actually is a much easier way to do this than copy and pasting that I will show in a later section of this book. I only show a truncated list of such files on my system.
+#
+¿\tld¿ find . ¿{-}¿type f ! \( ¿{-}¿name *.txt ¿{-}¿o ¿{-}¿name *.cfg \)
+./my.dbl
+./gl.err
+.
+.
+./statinode.sh.old
+./vic.sh
+#
+# Well, that would be a pain in the ass to have to do each time! Fortunately, we can pass the output immediately to the shell using a process called "here stringing", the three less than symbols; and piping to the shell, |  sh 
+#
+¿\tld¿ sed s/-/¿{-}¿/g <<< "find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)" | sh
+./my.dbl
+./gl.err
+.
+.
+./statinode.sh.old
+./vic.sh
+#
+# That's still a labour intensive process. We need a script to automate the process. $1 represents the command that we are going to pass to our script.
+#
+¿\tld¿ cat emdash.sh
+¿\tbi{\#}¿!/bin/bash
+sed s/-/¿{-}¿/g <<< "$1" | sh
+#
+# We first make our script executable...explained in a later section.
+#
+¿\tld¿ chmod u+x emdash.sh
+#
+# We can now pass the command that we copied from my book to the command line after ./emdash.sh
+#
+¿\tld¿ ./emdash.sh find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)
+./my.dbl
+./gl.err
+.
+.
+./statinode.sh.old
+./vic.sh
+\end{lstlisting}
+
+With my initial solution, if you wanted to run any command taken from a block of code, you needed to convert those \emph{minus signs}. If you want to search this typesetting issue further play around with the \keyword{asterix}. In the \latex code, you will see that the \emph{asterix} is a superscript, but in the PDF document, the \emph{asterix} is a subscript. You could also have an issue with this if you were copying from the PDF document to the command line and then back from the command line to the \latex code.
+
+So, as an author, I had a couple of options. I could change all \emph{emdashes} in my book to true minus signs, so that all copy and pastes worked for the reader. For users who want to compile my \latex code, that would put an unusual amount of strain on their systems because the \latex compiler would have to convert this code {?`}{\{-}\}{?`} to {-}. I would, of course, first have to go through my entire document and replace each emdash -- with {?`}{\{-}\}{?`}. Ugh!
+
+Another alternative was to create a simple table after each code block that would summarise essential commands. Readers could then copy and paste from the table.
+
+\subsection{Solution to \latex \keyword{emdash} and \keyword{minus sign}}
+
+I finally found the \latex \emph{lstlisting} typsetting instruction that resulted in an \emph{hyphen/minus} sign appearing as an \emph{emdash}.  The \emph{basicstyle=small} setting that I had defined for the \keyword{lstlisting} package in the \textsl{settings/package.tex} file had to be changed.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+\lstset{
+	keywords={tar,gzip},
+	rulecolor=,
+	language=bash,
+	basicstyle=small,
+	upquote=true,
+	aboveskip={1.5\baselineskip},
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=true,
+	prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	frame=single,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\color[rgb]{0,0,1},
+	commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+	stringstyle=\color[rgb]{0.627,0.126,0.941},
+}
+\end{lstlisting}
+
+I had to change that line to \emph{basicstyle=ttfamily}. I then recompiled my \latex code and now my \emph{minus signs} appeared as a true \emph{minus sign}. I could now copy from my PDF's bash code sections to the command prompt and the lines would execute properly. 
+
+However, I still had an issue with copying commands that extended beyond the width of the page. I could not copy those lines because the command line would try to interpret the left arrow sign at the page break.
+
+\lstset{
+	keywords={tar,gzip},
+	rulecolor=,
+	language=bash,
+	%basicstyle=\scriptsize,
+	basicstyle=\ttfamily,
+	upquote=true,
+	aboveskip={1.5\baselineskip},
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=true,
+	prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	%prebreak={},
+	frame=single,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\color[rgb]{0,0,1},
+	commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+	stringstyle=\color[rgb]{0.627,0.126,0.941}
+}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Try copying this line to your command prompt. Notice, the left arrow at the end of the first line. The command looks for all files with spaces in their names and replaces the space with an underscore.
+#
+[~] find . -depth -name '* *' -exec sh -c 'D=$(dirname "$0"); F=$(basename "$0"); mv "$0" "$D/${F// /_}"' '{}' \;
+#
+# At the command prompt, you line will appear as...
+#
+find . -depth -name '* *' -exec sh -c 'D=$(dirname "$0"); F=$(basename "$0");¿$\leftarrow$¿-
+> mv "$0" "$D/${F// /_}"' '{}' \;
+#
+# Hit the enter key after the second line and you will get a command not found error. There was one file in the current directory called: a b.txt, the file name has a space between the a and b.
+#
+./a b.txt: ¿$\leftarrow$¿-: command not found
+\end{lstlisting}
+
+\subsection{Solution to visible prebreak symbol}
+
+Fortunately, the solution was also simple. I just needed to change the \keyword{prebreak} setting for the \emph{lstlisting} package to an empty setting.
+
+\lstset{
+	keywords={tar,gzip},
+	rulecolor=,
+	language=bash,
+	basicstyle=\ttfamily,
+	upquote=true,
+	aboveskip={1.5\baselineskip},
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=true,
+	prebreak={},
+	frame=single,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\color[rgb]{0,0,1},
+	commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+	stringstyle=\color[rgb]{0.627,0.126,0.941}
+}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Try copying this line to your command prompt. 
+#
+¿\tld¿ find . -depth -name '* *' -exec sh -c 'D=$(dirname "$0"); F=$(basename "$0"); mv "$0" "$D/${F// /_}"' '{}' \;
+#
+# The command will complete successfully, but you will notice that on the second line after the split there will be a greater than symbol, which the shell will ignore in executing the command. Your command appears as follows with the blinking cursor at the end of the second line. Just hit enter key and the command will execute.
+# 
+¿\tld¿ find . -depth -name '* *' -exec sh -c 'D=$(dirname "$0"); F=$(basename "$0"); 
+> mv "$0" "$D/${F// /_}"' '{}' \;
+#
+# The execution of the command replaces the space in any file name with spaces with an underscore: a b.txt to a_b.txt.
+#
+\end{lstlisting}
+
+\subsection{Final settings for \latex \emph{lstlisting} package.}
+	
+Our final settings for the typsetting of the \emph{lstlisting} package as defined in \textsl{settings/packages.tex}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+\lstset{
+keywords={tar,gzip},
+rulecolor=,
+language=bash,
+¿\color{red}basicstyle=\textbackslash{}ttfamily¿,
+upquote=true,
+aboveskip={1.5\baselineskip},
+showstringspaces=false,
+extendedchars=true,
+breaklines=true,
+¿\color{red}prebreak=\{\}¿,
+frame=single,
+showtabs=false,
+showspaces=false,
+showstringspaces=false,
+identifierstyle=\ttfamily,
+keywordstyle=\color[rgb]{0,0,1},
+commentstyle=\color[rgb]{0.133,0.545,0.133}\fontseries{lc}\selectfont\itshape,columns=fullflexible,
+stringstyle=\color[rgb]{0.627,0.126,0.941}
+}
+#
+# There are 3 more lstlisting settings that are set at the beginning of each block of code throughout the book.
+#
+¿\textbackslash{}begin\{lstlisting\}[escapeinside=\{?`\}\{?`\},frame=single,breaklines]¿
+***
+***Code goes here***
+***
+¿\textbackslash{}end\{lstlisting\}¿
+\end{lstlisting}
+
+The frame setting puts a box around the code. The escape inside character is needed to escape back to \latex, so that \latex commands can typeset within the block of code. The breaklines setting is actually redundant since it is already defined in \textsl{settings/package.tex} \emph{lstset}.
+
+\change{Remove \emph{lstlisting} settings at each block of code and to \textsl{settings/package.tex} \emph{lstset}}.
+
+\subsection{Building an index - a two compile process}
+
+When you complile the \latex document, you need to build an index. As mentioned, I used TeXstudio to write and compile my document. Compiling is a three step process. These steps can also be accomplished at the command line...just search the \latex compile process using Google.
+
+\begin{enumerate}
+	\item{Compile the document. Click the green compile arrow or press F6.}
+	\item{Index the document. Click Tools/User/1. Make Nomenclature or press Alt-Shift-F1.}
+	\item{Compile the document.}
+\end{enumerate}
+
+\keyword{Make Nomenclature} is a User Command. Click Options/Configure TeXstudio and then choose the Build menu on the left-hand side. Scroll to User Command. I called the command: Make Nomenclature. The command is: \textsl{makeindex -t \%.nlg -o \%.nls \%.nlo}. Unfortunately, I cannot reference the source of this command that I found somewhere on the Internet.
+
+\section{How I display the Linux command prompt and comments in code}
+
+I made a design decision for presenting the command prompt. With Linux, the appearance of the command prompt is highly customizable. I chose to display a simple command prompt so that the command line was clearly isolated from command output and error messages and so that it interfered as little as possible with the actual command. However, there are rare cases where I will present a more realistic looking command prompt to clearly indicate which user is logged on. Because I also make extensive use of comments to explain my code, I chose to define a unique color (light green) in the \keyword{lstset} block that defines the \keyword{lstlisting} package...provided in the above subsection. Further, I tried to isolate the comments by beginning with a line that has a single \#. The actual comment whether a line or paragraph also begins with a \#. I end the comment section with a single \#. So, here is a brief illustration of my style. All three components make up what is called the command prompt.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# This is what my default command prompt looks like. The first part is the PC or Server name: LIB2015. This is kind of important. By displaying the server name in the command prompt, it is less likely that you will issue a command on the wrong server. The second part is an indicator of the current working directory. However, what appears inside the square brackets is only the last part of the full path name. The tilde is a Linux short cut that means one's home directory. So, this is an exception to the above rule. The dollar sign means that I am logged on with a non-root or non-administrative account.
+#
+{LIB2015}¿\tld¿$
+#
+# To clearly show that what lies within the square brackets is the last component of the full path, I change to the ¿\tldi¿/texmf/tex directory. pwd = print working directory
+#
+{LIB2015}¿\tld¿$ cd texmf/tex
+{LIB2015}[tex]$  
+{LIB2015}[tex]$ pwd
+/home/mgcr/texmf/tex
+#
+# The command prompt changes when you are logged on as root. The command, su - root, says, logon as the user root and go to her home directory. You are prompted for root's password. Note, the final component of the command prompt changed from a $ to a #. By default, if you see the #, you know that you are logged on as root. However, you can design a custom command prompt for a regular user that uses that symbol...not recommended! /root is root's home directory.
+#
+{LIB2015}[tex]$ su - root
+Password: 
+{LIB2015}¿\tld¿# pwd
+/root
+#
+# As you can see the PC name, path component, and the symbol for the type of user provide useful information. However, is all that info really necessary in order to illustrate commands? I think it adds unnecessary clutter. So, I simplified the command prompt and made it just ¿\tldc¿ for all commands. You can now see which line is a command and which line is output. Output is not preceded by a ¿\tldc¿.
+#
+¿\tld¿ pwd
+/home/mgcr/texmf/tex
+
+¿\tld¿ whoami
+mgcr	
+\end{lstlisting}
+
+I also made another \latex design decision. I wanted the tilde that is inside the square brackets of the command prompt to appear naturally, that is centered. Therefore, my \latex code in the bash sections use a command macro {?`}\textbackslash{}tld{?`} to replace [\textasciitilde{}]. Therefore, [\textasciitilde{}] appears properly as \tld. The macro definition is defined in \textsl{macros.tex} as:
+
+\textbackslash{}newcommand\{\textbackslash{}tld\}\{[\textbackslash{}raisebox\{0.5ex\}\textbackslash{}texttildelow\{\}]\}
+
+If you want to save some compile time, convert the centered tilde back to the default tilde. You would have to search and replace in all your documents. I chose document appearance over slightly slower compile times.
+
+\section{Use of quotations, builtin variables, backticks, parenthesis}
+
+\textbf{{\color{red}Double quotes:}} A string enclosed in "double quotes" is considered as one argument. Variables enclosed in double quotes are evaluated by the shell.\\
+
+\textbf{{\color{red}Single quotes:}}  Variables enclosed in \tqs{single quotes} are not evaluated, they are taken literally by the shell.\\
+
+\textbf{{\color{red}Builtin variables:}}  Unquoted strings preceded by a dollar sign are interpreted as a builtin variable and the shell attempts to return the value of the builtin variable.\\
+
+\textbf{{\color{red}Non-builtin variables:}}  Not all unquoted strings preceded by a dollar sign are builtin variables. You may define any variable using a string. You can then call or refer to that variable by preceding its name with a dollar sign. What happens if you refer to a string that is neither a builtin variable or a user-defined variable? In this case, nothing is returned when an echo request is made for the value of the string. A command followed by such a string is ignored by the command, but the command is executed.\\
+
+\textbf{{\color{red}Backticks (grave accent):}} Do not preserve white spaces. Everything between  a pair of \`{} (backticks) is evaluated (executed) before the command or variable assignment. Backticks are old school and worked with the \emph{sh} shell as well the \emph{bash} shell. To nest backticks, the inner backticks must be preceded by the backslash character \textbackslash.\\
+
+\textbf{{\color{red}Command substitution:}} Two methods are used to enable command substitution. The first method uses the grave accent or backtick \`{} as described above. The second method uses \$(). The purpose of command substitution is to evaluate the command which is placed inside the backtick or \$().  \$() will not work with \emph{sh}, but it will work with the \emph{ksh} shell. Both methods provide the  result of the command inside as an argument to the command that precedes the command substitution.\\
+
+% Future...\todo{create ans ch 1}
+
+\subsection{Examples of command substitution and quotes}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]{bash}
+#
+# What does the echo command do?
+#
+¿\tld¿ whatis echo
+echo (3x)            - curses input options
+echo (1)             - display a line of text
+echo (1p)            - write arguments to standard output
+
+¿\tld¿ test="this is a test"	# Define the variable: test.
+#
+# In order to refer to variables by name, we must precede the variable name with a dollar sign.
+#
+¿\tld¿ echo $test		# Display the value of the variable named: test.
+this is a test
+#
+# Next, surround $test with double-quotations. The double-quotations are effectively ignored. However, the double quotations would be necessary if the variable name contained spaces.
+#
+¿\tld¿ echo "$test"
+this is a test
+#
+# Inside single quotations, $test is not evaluated, instead it is interpreted literally and considered as a string.
+#
+¿\tld¿ echo '$test'
+$test
+#
+# The following command uses command substitution. What is inside the backticks is executed, the shell expands $test. So, the command then becomes: echo this is a test. The commands stops when it encounters the first error, echo this; since 'this' is not a command or a variable.
+#
+¿\tld¿ echo `$test`	
+bash: ¿\color{red}{this}¿: command not found...
+#
+# Let's redifine the variable: test.
+#
+¿\tld¿ test="pwd ."
+#
+# The following command also uses command substitution. The shell first expands what is inside the backticks: $test. So, the command then becomes:  echo 'pwd .' Pay attention to the single upright quotes. The print working directory command, pwd, is a valid builtin command and the argument is the period or the current working directory. 
+#
+¿\tld¿ echo `$test`	
+/home/my.domain.com/mgc
+#
+# This will work with any command. We can issue the command: echo `ls` which is the same as: ls.
+# 
+# ¿\textbf{\color{red}{Challenge:}} What will happen when you issue this command? echo pwd . \hyperlink{echopwd.}{Answer}¿  
+#
+# Let's now explore how we can use double-quotes to eliminate ambiguity in naming files.
+#
+# Create a single file named, my zip, and then issue the 'ls -la' command. I intentionally used the wrong method to create the file. Two files are created, not one file. Why?
+#
+¿\tld¿ touch my zip;ls -la
+total 292
+drwxr-xr-x.   2 mgcr mygrp   4096 Nov  3 13:20 .
+drwx--x---+ 107 mgcr mygrp 286720 Nov  2 14:30 ..
+-rw-r--r--.   1 mgcr mygrp      0 Nov  3 13:20 my
+-rw-r--r--.   1 mgcr mygrp      0 Nov  3 13:20 zip
+#
+# Remove the two files, the * is a wildcard and means 'everything'. ¿\textit{\color{red}{Be very careful in using the \tqs{rm} command with this wildcard!}}¿
+#
+¿\tld¿ rm *
+#
+# Create a single file by enclosing the name with spaces inside double quotes. So now the entire string including the space is considered a single name.
+#
+¿\tld¿ touch "my zip";ls -la	
+total 292
+drwxr-xr-x.   2 mgcr mygrp   4096 Nov  3 13:21 .
+drwx--x---+ 107 mgcr mygrp 286720 Nov  2 14:30 ..
+-rw-r--r--.   1 mgcr mygrp      0 Nov  3 13:21 my zip
+#
+# zip is a command to package and compress (archive) a list of files or directories. Its format is: 'zip nameofpkg.zip filelist'. Note the error! We told zip to archive two files: my and zip. But, those two files do not exist, only the single file 'my zip' exists.
+# 
+¿\tld¿ zip my.zip my zip	
+zip warning: name not matched: my
+zip warning: name not matched: zip
+zip error: Nothing to do! (my.zip)
+#
+# Enclose the name inside the double quotes, telling zip to compress a single file called: 'my zip'. We can put multiple commands on a command line if we separate each command with a semi-colon. The second command asks for a long list of files.
+#
+¿\tld¿ zip my.zip "my zip";ls -la	
+adding: my zip (stored 0%)
+total 296
+drwxr-xr-x.   2 mgcr mygrp   4096 Nov  3 13:17 .
+drwx--x---+ 107 mgcr mygrp 286720 Nov  2 14:30 ..
+-rw-r--r--.   1 mgcr mygrp      0 Nov  3 13:17 my zip
+-rw-r--r--.   1 mgcr mygrp    162 Nov  3 13:17 my.zip
+#
+# Ok, let's take a look at builtin variables. In the following code, my prompt shows what directory I am in. I start off in my home directory ¿\tldc¿ and change to my scripts directory. 
+#
+# What is my home directory?
+#
+¿\tld¿ echo $HOME
+/home/mgcr
+#
+# Even though I am in my home directory, let's try changing to my home directory.
+#
+¿\tld¿ cd HOME
+bash: cd: HOME: No such file or directory
+#
+# To use the builtin variable in a command, you have to precede it with a dollar sign. 
+#
+¿\tld¿ cd $HOME
+¿\tld¿
+#
+Let's now switch to the scripts directory.
+#
+¿\tld¿ cd scripts
+[scripts]
+#
+# What happens if we surround the builtin variable with double quotes? As we see, "$HOME" is the same as $HOME. We return to our home directory. Strings inside double quotes are evaluated, the shell evaulates $HOME which holds the value /home/mgcr, indicated by the ¿\tld¿ command prompt that follows.
+#
+[scripts] cd "$HOME"
+¿\tld¿
+#
+# Let's go back to the scripts directory. This time we use the minus sign instead of the directory name. The minus sign is shorthand for "the last directory".
+#
+¿\tld¿ cd -
+[scripts]
+#
+# What if we surrounded our builtin variable with single quotes? We get an error because there is no such directory called: $HOME. Strings inside single quotes do not get evaluated.
+#
+[scripts] cd '$HOME'
+bash: cd: $HOME: No such file or directory
+#
+# Ok, let's refer to a variable that has not been previously defined and that is not a builtin variable.
+#
+[scripts] cd $GordieHowe
+¿\tld¿
+#
+# So, why are we returned to our home directory? Typing just cd returns one to the home directory. $GordieHowe is just dropped from the command, it is completely ignored. If we try to 'echo $GordieHowe', a blank command prompt is returned, since the variable GordieHowe is undefined.
+#
+¿\tld¿ echo $GordieHowe
+
+¿\tld¿
+\end{lstlisting}
+
+\subsection{Examples of variable evaluation within double and single quotes}
+
+\tbi{Command substitution} can also work within double quotes. In this example, we are using the \keyword{date} command which prints today's date and time. Notice that as above, command substitution occurs prior to \keyword{echo} taking control. I use both methods of invoking command substitution. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]{bash}
+¿\tld¿ date
+Sat Nov  7 13:42:50 PST 2015
+#
+# We can use either `backticks` or $() to print the system time/date.
+#
+¿\tld¿ echo "Today's date is: `date`"
+Today's date is: Sat Nov  7 13:43:13 PST 2015
+
+¿\tld¿ echo "Today's date is: $(date)"
+Today's date is: Sat Nov  7 13:43:13 PST 2015
+#
+# Ok, let's review using a script called: quotes.sh. First, assign a value to the variable: x. Inside double quotes, variables are evaluated, so $x becomes 5. Inside single upright quotes, variables are not evaluated, so $x is printed as as $x. Let's see what's inside the script.
+#
+¿\tld¿ cat quotes.sh
+¿\#¿!/bin/bash
+x=5 # initialize x to 5
+# use double quotes
+echo "Using double quotes, the value of x is: $x"
+# use single quote
+echo 'Using single upright quotes, the value of x is: $x'
+#
+# Let's execute the script. I will explain this command in detail in the Programming chapter.
+#
+¿\tld¿ ./quotes.sh
+Using double quotes, the value of x is: 5
+Using single upright quotes, the value of x is: $x
+#
+# How about if we add the following line to quotes.sh? 
+echo "Using single quotes inside double quotes, I can execute a command, x = $x, x = '$x'"
+#
+# ¿\textbf{\color{red}Challenge:} What is the output of running \tqs{quotes.sh} with this change? \hyperlink{quotes.sh}{Answer}¿ 
+#
+# Like I did, you may have opened quotes.sh with vi and manually added the extra line. The alternative is to add the line using file redirection. 
+#
+# First, let's delete the last line in quotes.sh that we added manually.
+#
+¿\tld¿ sed -i '$d' quotes.sh
+#
+# I will now add the new line using file redirection. I need to escape the dollar signs as well as the internal double quotations. Note, I am echoing my entire echo statement and sending it to quotes.sh. After I add the line, I will cat the file so that you can see its contents and then run my script.
+#
+¿\tld¿ echo "echo \"Using single quotes inside double quotes, I can execute a command, x = \$x, x = '\$x'\"" >>quotes.sh
+
+¿\tld¿ cat quotes.sh
+¿\#¿!/bin/bash
+x=5 # initialize x to 5
+# use double quotes
+echo "Using double quotes, the value of x is: $x"
+# use single quote
+echo 'Using single upright quotes, the value of x is: $x'
+echo "Using single quotes inside double quotes, I can execute a command, x = $x, x = '$x'"
+
+¿\tld¿ ./quotes.sh
+Using double quotes, the value of x is: 5
+Using single upright quotes, the value of x is: $x
+Using single quotes inside double quotes, I can execute a command, x = 5, x = '5'
+#
+# Let's experiment and echo our echo statement at the command line using command redirect. We first have to set x=5, since x is only defined within quotes.sh.
+#
+¿\tld¿ x=5
+¿\tld¿ echo `echo "Using single quotes inside double quotes, I can execute a command, x = $x, x = '$x'"`
+Using single quotes inside double quotes, I can execute a command, x = 5, x = '5'
+#
+# So, it seems that echoing a command redirect that contains an ehco statement has no affect as this is the same result as provided in the solutions. Let's verify my conjecture.
+#
+¿\tld¿ echo `echo "How are you doing?"`
+How are you doing?
+#
+# Let's add another command redirect. As we see we can nest command redirects, but echo just echos the next statement in line. So, my conjecture is slightly off.
+#
+¿\tld¿ echo `echo `echo "How are you doing?"``
+echo How are you doing?
+#
+# Would it make any sense to do the following?
+#
+¿\tld¿ echo `echo "`echo "How are you doing?"`"`
+bash: command substitution: line 1: unexpected EOF while looking for matching `"'
+bash: command substitution: line 2: syntax error: unexpected end of file
+bash: command substitution: line 1: unexpected EOF while looking for matching `"'
+bash: command substitution: line 2: syntax error: unexpected end of file
+echo How are you doing?
+#
+# Hmm, the command shell did not like the extra pair of double quotes.
+#
+¿\tld¿ echo `echo `echo "How are you doing?"``
+echo How are you doing?
+
+¿\tld¿ echo ` echo `echo `echo "How are you doing?"```
+echo How are you doing?
+#
+# Time to move on?
+#
+\end{lstlisting}
+
+\section{Spaces in file names}
+
+We have three ways of telling the Linux system how to create a file name from a string that contains spaces. We can use single and double quotes. We can also use the escape character before the actual space. The latter is used to say the that the next character is literal. In the following example, we create three files which all contain a space in their names. \textit{I recommend that you never create file names with spaces.} These examples are for illustration only.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ touch "one two"
+¿\tld¿ touch 'three four'
+¿\tld¿ touch five\ six
+#
+# Using a long-listing, it is clear that we have only 3 files.
+#
+¿\tld¿ ls -la
+total 292
+drwxr-xr-x.   2 mgcr mygrp   4096 Nov  7 13:31 .
+drwx--x---+ 107 mgcr mygrp 286720 Nov  2 14:30 ..
+-rw-r--r--.   1 mgcr mygrp      0 Nov  7 13:31 five six
+-rw-r--r--.   1 mgcr mygrp      0 Nov  7 13:30 one two
+-rw-r--r--.   1 mgcr mygrp      0 Nov  7 13:31 three four
+#
+# Using a short-listing below, it is not clear how many files we have.¿\footnote{\href{http://www.newyorker.com/magazine/2015/03/09/rapt}{Unless you have the vision of a goshawk...H is for Hawk by Helen MacDonald reviewed in The New Yorker.}}¿ There is only one space between the strings that make up the file names and there are two spaces between the individual file names.
+#
+¿\tld¿ ls
+five six¿\enspace¿  one two¿\enspace¿  three four
+
+\end{lstlisting}
+
+\subsection{Alternatives to using spaces in file names}
+
+We see that it is clear how many files we have when using a long listing (ls -la). We see that when using the command for a short file listing, ls, it is rather hard to quickly determine how many files we have. So, its best to use a file naming convention that removes the ambiguity. For example, use any of: underscore, hyphen, or camel notation. Remember: LiNuX is CaSe SeNsItIvE, that is why we like CaMeL nOtAtIoN.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ touch one-two
+¿\tld¿ touch three_four
+¿\tld¿ touch FiveSix
+¿\tld¿ ls
+FiveSix¿\enspace¿  one-two¿\enspace¿  three_four
+\end{lstlisting}
+
+\subsection{Bulk rename of files containing spaces}
+
+If you end up with a directory with lots of files with names that contain spaces, you can use this command to change the spaces in the file names to underscores. So, \textsl{my file} would become \textsl{my\_file}. Code can be found on:  
+\href{http://www.thegeekstuff.com/2009/06/15-practical-unix-linux-find-command-examples-part-2/}{The Geek Stuff}. A good challenge for you is to break this command down into its component pieces so that you understand what it does.
+
+\todo[inline]{Provide breakdown of bulk rename command in the Solutions chapter.}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ find . -depth -name '* *' -exec sh -c 'D=$(dirname "$0"); F=$(basename "$0"); mv "$0" "$D/${F// /_}"' '{}' \;
+\end{lstlisting}
+
+	
+\section{File name expansion}
+
+The concept of \keyword{file name expansion} is very important. Suppose we have a file called \textsl{notes.txt} in the current directory and also a directory called \textsl{data}. Inside this directory are two more files: \textsl{one.txt} and \textsl{two.txt}. Let's search for those files by their extension: \textsl{.txt}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ find . -name *.txt
+./notes.txt  # Only notes.txt is returned.
+
+¿\tld¿ find . -name '*.txt'
+./notes.txt 
+./data/one.txt
+./data/two.txt	# All .txt files all returned.
+
+¿\tld¿ find . -name "*.txt"
+./notes.txt
+./data/two.txt
+./data/one.txt  # All .txt files are returned.
+\end{lstlisting}
+
+Why? The shell always expands \href{http://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm}{wildcards} before a command is run. The \textsl{*.txt} becomes \textsl{notes.txt}. So the command is now \emph{find . -name notes.txt}. In the second command, the single quotes prevent the shell from expanding the wildcard. So, \emph{find} now searches for the pattern \textsl{*.txt} and since the \emph{find} command searches recursively by default, \textsl{data/one.txt} and \textsl{data/two.txt} are returned as well as \textsl{notes.txt}. Note, double-quotes also prevents the shell from expanding the wildcard prior to running the \emph{find} command.
+
+\section{so sudo me}\label{sec:sudo}
+
+There are two basic types of users: \emph{root} and \emph{everybody else}. \emph{root} is the master of all, the supreme leader. She can do everything and thus she is very, very dangerous. All other accounts have restricted privileges. However, some accounts can be given \keyword{su}, super user privileges. These accounts can then issue \emph{root-privilege} commands by preceding each command with the command \keyword{sudo}.
+
+This then brings us to a very interesting issue when issuing commands as \keyword{sudo}. The problem arises because of root's \emph{\$PATH} variable. In the following section of code, I am logged on as the non-root user \emph{mgcr} who has the \keyword{sudo} privilege. Each user has a \emph{\$PATH}  variable that lists folder paths that are always available. At the command prompt, any command, function, or script that lies in a folder described in the \emph{\$PATH}  variable will be accessible from any directory location. If you try to issue a command that is in a path not listed in \emph{\$PATH}, you will get a file not found error message.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Here is mgcr's $PATH environment variable
+#
+¿\tld¿ echo 'echo $PATH' | sh
+/mybin/mycprogs:/home/mgcr/githubrepos/astronomy-notebooks:
+/home/mgcr/sage69:/home/mgcr/anaconda/bin:/sbin:/bin:/usr/sbin:
+/usr/bin:/usr/NX/bin::/usr/lib64/qt-3.3/bin:/usr/local/bin:
+/usr/local/sbin:/home/mgcr/.local/bin:/home/mgcr/bin
+#
+# Ok, but what is the $PATH variable for sudo?
+#
+¿\tld¿ echo 'echo $PATH' | sudo sh
+/sbin:/bin:/usr/sbin:/usr/bin
+#
+# As we can see, this could be a bit of a problem. For example, what if mgcr created a folder called: /mybins/mycprogs in order to store all his compiled c programs? To have access to these programs, we would have to add that path /mybin/mycprogs to his .bashrc $PATH variable. In the /mybin/mycprogs folder, mgcr has one compiled c program called: superduper. Even though the code prints a simple message, let's assume that this c program has to be run as root, i.e., it makes a system call requiring root privilege.
+#
+¿\tld¿ ls -la /mybin/myprogs
+-rwxr-xr-x. 1 mgcr mygrp 13256 Jan 27 13:25 superduper
+#
+# mgcr manually edits his .bashrc file and adds the path to the c programs to his $PATH variable.
+#
+¿\tld¿ grep mycprogs .bashrc	# Display the line containing mycprogs.
+export PATH="/mybin/mycprogs:$PATH"
+#
+# Ok, let's try and run our superduper program using sudo.
+#
+¿\tld¿ sudo superduper
+env: superduper: No such file or directory
+#
+# We could not run superduper because  the sudo $PATH environment variable does not contain the path to /mybin/mycprogs. At this point, only mgcr has this path in his $PATH environment variable. What to do? What to do? The fix is to create an alias for sudo that says "Set my $PATH equal to the current user's $PATH". Add this alias to mgcr's .bashrc file.
+#
+¿\tld¿ grep "alias sudo" .bashrc	# Display the line containing 'alias sudo'.
+alias sudo='sudo env PATH=$PATH'
+#
+# Close all terminal windows in order to re-read sudo's $PATH, don't just 'source .bashrc'. Let's run our program again.
+#
+¿\tld¿ sudo superduper
+Hey, hey, you ran this command as the super duper user, you are super!
+#
+# The topic of c programming is way beyond the scope of this book, but here is an hangnail overview. You start with source code, compile the source code with a c compiler, and the result is an executable, a compiled c program. superduper is a compiled c program.  The program ran so the path to /mybin/mycprogs must now be in the $PATH variable for sudo. Let's check this! As we can see, sudo is now using the $PATH variable for user mgcr. That is why sudo knows about the path to /mybin/mycprogs.
+#
+# mgcr's $PATH environment variable
+#
+¿\tld¿ echo 'echo $PATH' | sh
+/mybin/mycprogs:/home/mgcr/githubrepos/astronomy-notebooks:
+/home/mgcr/sage69:/home/mgcr/anaconda/bin:/sbin:/bin:/usr/sbin:
+/usr/bin:/usr/NX/bin::/usr/lib64/qt-3.3/bin:/usr/local/bin:
+/usr/local/sbin:/home/mgcr/.local/bin:/home/mgcr/bin
+#
+# sudo's $PATH environment variable
+#
+¿\tld¿ echo 'echo $PATH' | sudo sh
+/mybin/mycprogs:/home/mgcr/githubrepos/astronomy-notebooks:
+/home/mgcr/sage69:/home/mgcr/anaconda/bin:/sbin:/bin:/usr/sbin:
+/usr/bin:/usr/NX/bin::/usr/lib64/qt-3.3/bin:/usr/local/bin:
+/usr/local/sbin:/home/mgcr/.local/bin:/home/mgcr/bin
+\end{lstlisting}
+
+\section{bc - British Columbia?}
+
+In the code below, I introduce a new command: \href{https://www.gnu.org/software/bc/manual/html_mono/bc.html}{bc - an arbitrary precision calculator language}. \keyword{bc} allows one to perform calculations at the command line. One can mathematically manipulate a command redirect and then echo the result to \keyword{bc}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# How many lines in the file: bigfile? 
+#
+¿\tld¿ wc -l bigfile
+16432 bigfile
+#
+# I just want the number of lines, not the number of lines and filename.
+#
+¿\tld¿ wc -l bigfile | awk '{print $1}'
+16432
+#
+# We can also use this command to find the number of lines.
+#
+¿\tld¿ cat bigfile | wc -l
+16432
+#
+#  Which command do you like? It really does come down to which command is easier to remember: the command with awk or the command with cat? The cat command piped to another command is often overused. Online, you will see many examples of using cat when it is not required. Here is one example. I want to know what ¿\href{https://fedoraproject.org/wiki/Ext4_in_Fedora_11}{ext}¿ file systems are possible to use on my system.
+#
+¿\tld¿ cat /proc/filesystems | grep ext
+ext3
+ext2
+ext4
+#
+# We can just use grep. We don't need cat.
+#
+¿\tld¿ grep ext /proc/filesystems
+ext3
+ext2
+ext4
+#
+# But, in my examples, I do want to use cat. It is not optional, unless I switched to the awk example. Ok, so my file has 16,432 lines. Let's do some math. Multiple the number of lines by 2.
+#
+¿\tld¿ echo "`cat bigfile | wc -l`*2" | bc
+32864
+#
+# What's the square root of 16342? 128 * 128 = 16384, close but no cookie.
+#
+¿\tld¿ echo "sqrt(`cat bigfile | wc -l`)" | bc
+128
+#
+# I want my answer to three decimal places.
+#
+¿\tld¿ echo "scale=3;sqrt(`cat bigfile | wc -l`)" | bc
+128.187
+#
+# Ah, that's better. 128.87 * 128.87 = 16431.906
+\end{lstlisting}
+
+\section{Regular Expressions}
+
+In order to master the tasks of Linux System Administration, you must become familiar with the basics of pattern matching, the process of matching defined (by you) patterns of information. A \keyword{regular expression} is a pattern that describes a prescribed set of strings. Regular expressions are used in Linux and other operating systems and are composed of literal characters, the actual characters that you want to find and meta characters, the special characters that define the pattern to match. Regular expressions are used by many Linux languages and tools such as: awk, grep, perl, and sed. We can also use regular expressions when searching \emph{bash's} manpages. Regular expressions are quite often referred to as \keyword{regex}.
+
+Here are some resources that explore the topic in some detail:
+
+\begin{enumerate}
+	\item{\href{http://tldp.org/LDP/abs/html/x17129.html}{A Brief Introduction to Regular Expressions}}
+	\item{\href{http://tldp.org/LDP/Bash-Beginners-Guide/html/chap\_04.html}{Bash Guide for Beginners - Chapter 4. Regular Expressions}}
+	\item{\href{http://regexr.com/}{RegExr - Online tool to learn, build, \& test Regular Expressions}}
+	\item{\href{https://www.gnu.org/software/bash/manual/bashref.html}{Bash Reference Manual}}	
+\end{enumerate}
+	
+\tbi{General features of regex.}\\
+
+\begin{enumerate}
+	\item{The . is the fundamental building block of regular expressions and it matches a single character.}
+	\item{A bracket expression [ and ] defines a list of characters.}
+	\item{A range of characters, within a bracket expression, is separated by a hypen.}
+	\item{Named classes of characters are predefined withing bracket expressions, e.g., [ :alnum: ], [ :apha: ], [ :digit: ], etc.}
+	\item{Two regular expressions may be concatenated, the resulting string matches a string formed by concatenating the two substrings derived from the two subexpressions.}
+	\item{Two regular expressions may be joined by boolean OR, |, the resulting expression matches any string matching either subexpression.}
+	\item{In basic regular expressions the metacharacters: ?, +, \{, |, (, and ) lose their special meaning. Instead, use the backslashed versions \textbackslash{}?, \textbackslash{}+, \textbackslash{}\{, \textbackslash{}|, \textbackslash{}(, and \textbackslash{}).} In following sections of code, I will often refer to this feature as Regex 7.
+\end{enumerate}
+
+\tbi{Useful regex operators.}\\
+
+\begin{itemize}
+	\item[] \textbf{.}    matches any single character
+	\item[] \textbf{?}    matches for zero or one of the preceding expression
+	\item[] \textbf{*}    matches for zero or more of the preceding expression
+	\item[] \textbf{+}    matches for one or more of the preceding expression
+	\item[] \textbf{\{n\}}  matches for exactly n instances of the preceding expression
+	\item[] \textbf{\{n,\}}  matches for at least n instances of the preceding expression	
+	\item[] \textbf{\{n,m\}}  matches for between n and m instances of the preceding expression
+	\item[] \textbf{\textasciicircum{}} matches expression at beginning of line
+	\item[] \textbf{\$}  matches expression at end of line
+	\item[] \textbf{[...]} matches characters in the range of a list		
+	\item[] \textbf{[\textasciicircum{}...]} matches characters not in the range of a list	
+	\item[] \textbf{[!...]} same as above, matches characters not in the range of a list
+	\item[] \textbf{\textbackslash{}} the backslash is used to escape regex operators, the character following gets interpreted literally, i.e., it looses its special meaning
+	\item[] \textbf{\textbackslash{}<word\textbackslash{}>} matches exact "word", not "wordy", etc.
+	\item[] \textbf{()} parentheses help segment or separate a group of regular expressions
+\end{itemize}
+
+The circumflex can act both as an anchor, i.e., designate the beginning of a line; and it can also act as a logic modifier, i.e., everything but.
+
+\subsection{Regex and minus signs}
+
+In the following sections of code, the minus sign appears rather unnatural, a bit too wide. I began exploring some options, but the topic was also a bit too wide and I was spending a too much time trying to resolve the issue. For now, finding the best way of displaying the dash or minus sign is on my todo list.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# A couple of examples using a 'here string' and regex.
+#
+¿\tld¿ mynewvar="He puked after the puce-coloured puck hit him in the head."
+¿\tld¿ grep -E 'pu(c|k)e' <<< $mynewvar
+He ¿\textbf{\color{red}{puke}}¿d after the ¿\textbf{\color{red}{puce}}¿-coloured puck hit him in the head.
+
+¿\tld¿ sed 's/Headtrauma/Hockey/' <<< "This is the National Headtrauma League."
+This is the National Hockey League.
+#
+# An example using the man page for the command: stat. Here we grep first for any line beginning with any number of spaces and then followed by two minus signs and then any letter. In the second example, we grep for the percent symbol after the spaces. The output does not display the beginning empty spaces, that is, the output lines are not indented as they are in the man pages. Note, there is a space after the \.
+#
+¿\tld¿ man stat | grep '^\ *--[a-z]'
+--printf=FORMAT
+--help display this help and exit
+--version
+
+¿\tld¿ man stat | grep '^\ *%[a-z]'
+%a     access rights in octal
+%b     number of blocks allocated (see %B)
+.
+.
+%s     block size (for faster transfers)
+%t     file system type in hex
+¿\tld¿ 
+#
+# Interestingly, we have to escape for the spaces when searching for lines beginning with spaces and then two minus signs. The second search works without having to specify the spaces before the percentage sign.
+#
+¿\tld¿ man stat | grep '%[a-z]'
+%a     access rights in octal
+%b     number of blocks allocated (see %B)
+.
+.
+%s     block size (for faster transfers)
+%t     file system type in hex
+
+¿\textbf{\color{red}Challenge:} What would happen if you searched with the following command? There is a single space after the first single quote. \hyperlink{searchspaceminus}{Answer}¿
+	
+¿\tld¿ man stat | grep ' --[a-z]'
+#
+# If you try to search with, man stat | grep '--[a-z]', you will get an error. Why? It turns out that -- is a special string. We will discuss this in a following section. As well, - is a special character and represents --. We can use the above command, but we have to escape each -, as well as escaping the  backslash. Note, any line with a -- is displayed.
+#
+¿\tld¿ man stat | grep \\-\\-
+-L, --dereference
+-f, --file-system
+-c  --format=FORMAT
+--printf=FORMAT
+like  --format,  but interpret backslash escapes, and do not output a mandatory trailing newline; if
+-t, --terse
+--help display this help and exit
+--version
+The valid format sequences for files (without --file-system):
+#
+# In order to understand --, let's start with a simple file containing four lines. I purposely include the plus sign in this file. This will force you to think a bit more deeply since one of the regex metacharacters is also a plus sign. Note, there are two lines with --help me, one at the beginning of the line and then one which has a space before.
+#
+¿\tld¿ cat my.file
+--help me
+ --help me
++-help me
+-+help me
+#
+# Why does the following command produce an error?
+#
+¿\tld¿ grep '--[a-z]' my.file
+grep: unrecognized option '--[a-z]'
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# Let's try another command?
+#
+¿\tld¿ grep '^(--)[a-z]' my.file
+¿\tld¿
+#
+# Nothing was returned. Why? General Features of Regex 7. says metacharacters loose their special meaning in regular expressions. Therefore, in the above command, the () brackets were interpreted literally. There is no line beginning with these brackets. We need to escape the brackets with the backslash.
+#
+¿\tld¿ grep '^\(--\)[a-z]' my.file
+--help me
+#
+# As we see below, the () brackets are optional.
+#
+¿\tld¿ grep '^--[a-z]' my.file
+--help me
+#
+# Search for lines beginning with a minus sign followed by any character followed by letters.
+#
+¿\tld¿ grep '^-.[a-z]' my.file
+--help me
+-+help me
+#
+# As previously stated, Regex 7 says metacharacters loose their special meaning in regular expressions. So, the next command searches for a line that begins with a minus followed by a ? then any letter. There is no such line.
+#
+¿\tld¿ grep '^-?[a-z]' my.file
+¿\tld¿
+#
+# Lines beginning with any number of minus signs followed by a letter.
+#
+¿\tld¿ grep '^-*[a-z]' my.file
+--help me
+#
+# Add a couple more lines to my.file using the command: echo.
+#
+¿\tld¿ echo "help me" >> my.file
+¿\tld¿ echo "?help me" >> my.file
+#
+# Ok, let's search for patterns...
+#
+¿\tld¿ grep '^?[a-z]' my.file
+?help me
+#
+# An exact match. As per the command below, there is only one line beginning with the minus and plus signs followed by letters.
+#
+¿\tld¿ grep '^-+[a-z]' my.file
+-+help me
+#
+# In the next two lines, we escape the meta character to make them active. So, \? now means zero or one of the preceding character and \+ means one or more of the preceding character.
+#
+¿\tld¿ grep '^-\?[a-z]' my.file
+-help me
+help me
+
+¿\tld¿ grep '^-\+[a-z]' my.file
+--help me
+-help me
+#
+# Let's find lines that have a string beginning with the letter h followed by any lower case letter.
+#
+¿\tld¿ grep 'h[a-z]' my.file
+--help me
+ --help me
++-help me
+-+help me
+-help me
+help me
+?help me
+#
+# Let's find lines beginning with the letter h followed by any lower case letter.
+#
+¿\tld¿ grep '^h[a-z]' my.file
+help me
+#
+# Let's try to find any string beginning with a - followed by a lower case leter...it fails.
+#
+¿\tld¿ grep '-[a-z]' my.file
+grep: invalid option -- '['
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# How about if we say find lines that begin with a - followed by any lower case leter. This does work.
+#
+¿\tld¿ grep '^-[a-z]' my.file
+-help me
+#
+# It appears that the single minus sign is also some sort of metacharacter. Let's escape this character so that we search for the literal -. Note, how many lines we find.
+#
+¿\tld¿ grep '\-[a-z]' my.file
+--help me
+ --help me
++-help me
+-help me
+#
+# It turns out that -- is used in bash builtin commands (and other commands) to signify the end of command options, after which only positional parameters are accepted. Is the single minus in our expression interpreted as the beginning of an option? Is that why the the grep '-[a-z]' command fails? Using the -- says, no options follow just positional parameters.
+#
+¿\tld¿ grep -- '-[a-z]' my.file
+--help me
+ --help me
++-help me
+-help me
+#
+# Ok, let's add the line, help-, to my.file.
+#
+¿\tld¿ echo "help-" my.file
+help- my.file
+
+¿\tld¿ grep '[a-z]-$' my.file
+¿\tld¿
+#
+# Hey, grep didn't find the line that I added. Were you paying attention when I issued the echo command? What did I tell echo to do?
+#
+¿\tld¿ echo "help-" >> my.file
+#
+# Ok, now look for a string that has any lower case letter and then a - at the end of the line. There is only one such line.
+#
+¿\tld¿ grep '[a-z]-$' my.file
+help-
+#
+# Do we need the listing of alpha characters, [a-z], befor the -$?
+#
+¿\tld¿ grep '-$' my.file
+grep: invalid option -- '$'
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# Ok, so we need to tell the shell that we are at the end of command options.
+#
+¿\tld¿ grep -- '-$' my.file
+help-
+\end{lstlisting}
+
+I need to clarify one of my comments. I said, "It turns out that -{}-{} is used in bash builtin commands (and other commands) to signify the end of command options, after which only positional parameters are accepted. Is the single minus in our expression interpreted as the beginning of an option? Is that why the \emph{grep \tqs{-[a-z]}} command fails? Using the -{}-{} says, no options follow just positional parameters. Well, it turns out our bash manpage holds the answer.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ man bash | grep '^\ *--\ .' | sed '$d'
+--        A  -- signals the end of options and disables further option processing.  Any arguments after the -- are treated as filenames and arguments.  An argument of - is equivalent to --.
+#
+# Now, this makes sense. Take a look at the first line after our command. What is flagged as an invalid option? -- is flagged since the  - is equivalent to --.
+#
+¿\tld¿ grep '-[a-z]' my.file
+grep: invalid option ¿\textbf{\color{red}{-{}-{}}}¿ '['
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+#
+# Can you improve on my command to grep the -- lines in the bash manpage? Remove the pipe to sed. Notice, there is another line that begins with --. Can we use grep alone to get the lines that I want?
+#
+\end{lstlisting}
+
+\section{Gripping about grep, you can quote me on that!}
+
+At this point you may be very confused, so let's ramp up the level of detail.
+
+\subsection{Literal searches with grep}
+
+Ok, let's search the \keyword{stat} manpage, not for patterns, but for literals. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# We saw that we can search for patterns within manpages. Here we search for lines that begin with spaces followed by two dashes, then letters.
+#
+¿\tld¿ man stat | grep '^\ *--[a-z]'
+--printf=FORMAT
+--help display this help and exit
+--version
+#
+# Ok, let's use -- which indicates the end of pattern search. What follows is what we are searching for, the literals. Note, we get lines containing --, not just beginning with --. We can't specify beginning with -- because then we would be using a pattern search and the -- option says "end of pattern".
+#
+¿\tld¿ man stat | grep -- '--'
+-L, --dereference
+-f, --file-system
+-c  --format=FORMAT
+--printf=FORMAT
+like  --format, but interpret backslash escapes, and do not out‐
+-t, --terse
+--help display this help and exit
+--version
+The valid format sequences for files (without --file-system):
+#
+# How about a literal search for a singe -?
+#
+~] man stat | grep -- '-'
+stat - display file or file system status
+-L, --dereference
+-f, --file-system
+-c  --format=FORMAT
+--printf=FORMAT
+like  --format, but interpret backslash escapes, and do not out‐
+-t, --terse
+--help display this help and exit
+--version
+The valid format sequences for files (without --file-system):
+%w     time of file birth, human-readable; - if unknown
+%x     time of last access, human-readable
+%y     time of last data modification, human-readable
+%z     time of last status change, human-readable
+%a     free blocks available to non-superuser
+#
+# Instead of using -- to end a search with patterns, we can override use two forward slashes. The first says that the next character is special and then the following slash says the following characters are not special. We have to use extended regex expression with grep, the -E option.
+#
+¿\tld¿ man stat | grep -E \\--
+-L, --dereference
+-f, --file-system
+-c  --format=FORMAT
+--printf=FORMAT
+like  --format, but interpret backslash escapes, and do not out‐
+-t, --terse
+--help display this help and exit
+--version
+The valid format sequences for files (without --file-system):
+#
+# In the following code, I am switching to a shorter display for the minus sign. This is part of my initial exploration of how to present the minus sign using ¿\color[rgb]{0.133,0.545,0.133}\latex¿.
+# 
+#Let's use a file with literal characters that are also regex pattern search characters. Note, the second echo includes a space before ^¿\minusc\minusc¿.
+#
+¿\tld¿ echo "^^¿\minus\minus¿" > reggie.txt
+¿\tld¿ echo " ^^¿\minus\minus¿" >> reggie.txt
+¿\tld¿ cat reggie.txt
+^¿\minus\minus¿
+ ^¿\minus\minus¿
+¿\tld¿ grep ¿\minus¿E \\^¿\minus\minus¿ reggie.txt
+^^¿\minus\minus¿
+ ^¿\minus\minus¿
+\end{lstlisting}
+
+\subsection{grep vs egrep}
+
+Let's take a look at \keyword{grep} and \keyword{egrep}. Both of these commands are used to find strings according to a pattern. Both of these commands have an -e option that says "search for the following pattern". However, \keyword{grep} is used for \keyword{Basic Regex Expression} and \keyword{egrep} is used for \keyword{Extended Regex Expressions}. In addition, \keyword{grep} also has an -E option that says "use extended regex extensions". 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's get some info from the manpages...
+#
+¿\tld¿ man grep | grep -wi '\ *-e'
+grep [OPTIONS] [-e PATTERN | -f FILE] [FILE...]
+grep -E  and grep -F, respectively.  These variants are deprecated, but
+-E, --extended-regexp
+-e PATTERN, --regexp=PATTERN
+
+¿\tld¿ man egrep | grep -wi '\ *-e'
+grep [OPTIONS] [-e PATTERN | -f FILE] [FILE...]
+grep -E  and grep -F, respectively.  These variants are deprecated, but
+-E, --extended-regexp
+-e PATTERN, --regexp=PATTERN
+
+¿\tld¿ apropos egrep
+bzegrep (1)          - search possibly bzip2 compressed files for a regular e...
+egrep (1)            - print lines matching a pattern
+lzegrep (1)          - search compressed files for a regular expression
+pcregrep (1)         - a grep with Perl-compatible regular expressions.
+xzegrep (1)          - search compressed files for a regular expression
+
+¿\tld¿ apropos grep
+bzegrep (1)          - search possibly bzip2 compressed files for a regular e...
+bzfgrep (1)          - search possibly bzip2 compressed files for a regular e...
+bzgrep (1)           - search possibly bzip2 compressed files for a regular e...
+egrep (1)            - print lines matching a pattern
+fgrep (1)            - print lines matching a pattern
+git-grep (1)         - Print lines matching a pattern
+grep (1)             - print lines matching a pattern
+grep (1p)            - search a file for a pattern
+grep-changelog (1)   - print ChangeLog entries matching criteria
+grepdiff (1)         - show files modified by a diff containing a regex
+lv (1)               - a Powerful Multilingual File Viewer / Grep
+lzegrep (1)          - search compressed files for a regular expression
+lzfgrep (1)          - search compressed files for a regular expression
+lzgrep (1)           - search compressed files for a regular expression
+Mail::Box::Search::Grep (3pm) - select messages within a mail box like grep does
+msggrep (1)          - pattern matching on message catalog
+mtx-grep (1)         - (unknown subject)
+pcregrep (1)         - a grep with Perl-compatible regular expressions.
+pgrep (1)            - look up or signal processes based on name and other at...
+pm-utils-bugreport-info.sh (8) - Print pm-utils bug report
+ptargrep (1)         - Apply pattern matching to the contents of files in a t...
+ssgrep (1)           - search spreadsheets for strings
+Tcl_InvalidateStringRep (3) - manipulate Tcl values
+xml_grep (1)         - grep XML files looking for specific elements
+xzegrep (1)          - search compressed files for a regular expression
+xzfgrep (1)          - search compressed files for a regular expression
+xzgrep (1)           - search compressed files for a regular expression
+zgrep (1)            - search possibly compressed files for a regular expression
+zipgrep (1)          - search files in a ZIP archive for lines matching a pat...
+¿\tld¿ 
+#
+# Ok, let's use extended pattern search with grep and pattern search with egrep.
+#
+¿\tld¿ man stat | grep -Ee "^\ *--."
+--printf=FORMAT
+--help display this help and exit
+--version
+
+¿\tld¿ man stat | egrep -e "^\ *--."
+--printf=FORMAT
+--help display this help and exit
+--version
+
+\end{lstlisting}
+
+\subsection{grep and quotes}
+
+Are you confused? Well, let's dig even deeper. Do quotes really matter when we define our pattern?
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Again, we will search for lines with -- in our stat manpage.
+#
+¿\tld¿ man stat | grep -Ee ^\ *--
+--printf=FORMAT
+--help display this help and exit
+--version
+
+¿\tld¿ man stat | grep -Ee '^\ *--'
+--printf=FORMAT
+--help display this help and exit
+--version
+
+¿\tld¿ man stat | grep -Ee "^\ *--"
+--printf=FORMAT
+--help display this help and exit
+--version
+#
+# Well, it doesn't seem to matter...let's try again.
+#
+¿\tld¿ echo "hello bernie" > my .txt
+
+¿\tld¿ grep hello my.txt
+¿\color{red}{hello}¿ bernie
+
+¿\tld¿ grep 'hello' my.txt
+¿\color{red}{hello}¿ bernie
+
+¿\tld¿ grep "hello" my.txt
+¿\color{red}{hello}¿ bernie
+#
+# Ok, let's search for the string "hello bernie".
+#
+~] grep hello bernie my.txt
+grep: bernie: No such file or directory
+my.txt:¿\color{red}{hello}¿ bernie
+#
+# So, without quotations, grep thinks that both bernie and my.txt are files in which we are searching for the string "hello". So, obviously we need quotations to surround a string that contains spaces. Both single and double work.
+#
+¿\tld¿ grep 'hello bernie' my.txt
+¿\color{red}{hello bernie}¿
+
+¿\tld¿ grep "hello bernie" my.txt
+¿\color{red}{hello bernie}¿
+\end{lstlisting}
+
+Ok, so both quotations allow us deal with spaces in our search string. We also know that strings inside double quotations are expanded, but not so inside single quotations.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's add a few lines to my.txt.
+#
+¿\tld¿ echo $yourvar >> my.txt
+¿\tld¿ echo "$hervar" >> my.txt
+¿\tld¿ echo '$hisvar' >> my.txt
+¿\tld¿ cat my.txt
+hello bernie
+
+
+$hisvar
+#
+# Ok, what happened? The first blank line was due to the fact that we did not surround $yourvar with quotations. So, the shell looked for a variable called yourvar, but this variable has not been defined. Therefore, a null value is returned which results in the first blank line. The next blank line is due to echoing "$hervar" in order to append it to my.txt. Strings inside double quotes are expanded, the shell looks for a variable called hervar. Again, we have not defined that variable and hence the next blank line. Finally, we get the line with the string $hisvar because we echoed using single quotes, strings inside single quotes are taken literally so that string is appended to our file.
+#
+# Let's grep for $hisvar in my.file.
+#
+¿\tld¿ grep $hisvar my.txt
+^C
+¿\tld¿ 
+#
+# Hey, weren't you paying attention? I had to CTRL-c to end the command...which hung. I was grepping for $hisvar and the hisvar variable is not defined.
+#
+¿\tld¿ grep '$hisvar' my.txt
+$hisvar
+#
+# Well that's better, we grepped for the literal string $hisvar. What if we used double quotations?
+#
+¿\tld¿ grep "$hisvar" my.txt
+hello bernie
+
+
+$hisvar
+#
+# The whole file was returned since there is no hisvar, we just grepped for everything, any character. Let's define hisvar.
+#
+¿\tld¿ hisvar=compassion
+¿\tld¿ echo $hisvar
+compassion
+
+¿\tld¿ grep "$hisvar" my.txt
+¿\tld¿
+#
+# How come nothing was returned? We were grepping for "$hisvar". What is inside double quotes is expanded. So, the command becomes: grep compassion my.txt. There is no line containing the string: compassion. Let's substitue the string $hisvar with the string compassion and run our command again.
+#
+¿\tld¿ sed -i 's/$hisvar/compassion/' my.txt
+¿\tld¿ cat my.txt
+hello bernie
+
+
+compassion
+
+¿\tld¿ grep "$hisvar" my.txt
+¿\color{red}{compassion}¿
+
+\end{lstlisting}
+
+The concept of \emph{expansion} when using double quotations is quite complex. That is, there are several different types of expansion: filename, brace, history, parameter, tilde, arithmetic, pathname, etc. One of the first places to find information on the different types of expansion is in the \emph{bash} manpage.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's add a string that contains a single quote with a dollar sign inside the single quotes. We have to use the backslash so that the dollar sign is taken literally.
+#
+¿\tld¿ echo "'\$MARS' is a planet" > ur.txt
+¿\tld¿ cat ur.txt
+'$MARS' is a planet
+#
+# We can grep the string as follows...
+#
+¿\tld¿ grep "'\$MARS' is a planet" ur.txt
+'$MARS' is a planet
+
+¿\textbf{\color{red}Challenge:} How would you grep this string without escaping the dollar sign? Hint: using only single and double quotes? \hyperlink{singlequote}{Answer}¿ 
+\end{lstlisting}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

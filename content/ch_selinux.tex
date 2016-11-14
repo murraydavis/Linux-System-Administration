@@ -1,0 +1,408 @@
+\chapter{SELinux}
+\label{ch:selinux}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{What is SELinux?}
+
+Please visit the following site: \href{https://fedoraproject.org/wiki/SELinux_FAQ}{SELinux FAQ}.\\
+
+\keyword{Selinux}, SE (Security Enhanced) Linux is a security feature for the Linux kernel and enabled by default in Fedora. It provides more finer grained access control compared to traditional file permissions. It provides a centralized policy that determines which software can access what resources. Network services can be confined to use a particular port; for example, the Apache web server can be restricted to connections on port 443 only.
+
+\section{SELinux's manpage}
+
+Below, I show SELinux's manpage. Note, there are no SELinux commands per se. Instead, you configure SELinux using commands that are part of the SELinux package. See below the output of the \tqs{man -k selinux} command. Is configuring SELinux a complex task? Does the fact that there are 363 different commands that can be used to configure SELinux answer that question?
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,language={}]
+¿\tld¿ man selinux
+selinux(8)				SELinux Command Line documentation				selinux(8)
+
+NAME
+SELinux - NSA Security-Enhanced Linux (SELinux)
+
+DESCRIPTION
+NSA Security-Enhanced Linux (SELinux) is an implementation of a flexible mandatory access control architecture in the Linux operating system.  The SELinux architecture provides general support for the  enforcement of  many kinds of mandatory access control policies, including those based on the concepts of Type Enforcement®, Role- Based Access Control, and Multi-Level Security.  Background information and technical documentation about SELinux can be found at http://www.nsa.gov/research/selinux.
+
+The /etc/selinux/config configuration file controls whether SELinux is enabled or disabled, and if enabled, whether SELinux operates in permissive mode or enforcing mode.  The SELINUX variable may be set to any  one of  disabled, permissive, or enforcing to select one of these options.  The disabled option completely disables the SELinux kernel and application code, leaving the system running without any  SELinux  protection. The  permissive option	enables	 the  SELinux code, but causes it to operate in a mode where accesses that would be denied by policy are permitted but audited.  The enforcing option enables  the SELinux code  and causes it to enforce access denials as well as auditing them.  Permissive mode may yield a different set of denials than enforcing mode, both because enforcing mode will prevent an operation from proceeding past the first  denial  and  because  some application code will fall back to a less privileged mode of operation if denied access.
+
+The /etc/selinux/config configuration file also controls what policy is	active	on  the	 system.   SELinux allows  for multiple policies to be installed on the system, but only one policy may be active at any given time.  At present, multiple kinds of SELinux policy exist: targeted, mls for example.  The targeted  policy is  designed as a policy where most user processes operate without restrictions, and only specific services are placed into distinct security domains that are confined by the policy.  For example, the user would run in  a  completely  unconfined domain while the named daemon or apache daemon would run in a specific domain tailored to its operation.  The MLS (Multi-Level Security) policy is designed as a policy  where	 all  processes  are  partitioned into fine-grained security domains and confined by policy.  MLS also supports the Bell And LaPadula model, where processes are not only confined by the type but also the level of the data.
+
+You can define  which  policy  you  will run  by  setting  the	SELINUXTYPE  environment  variable  within /etc/selinux/config. You  must	reboot and possibly relabel if you change the policy type to have it take effect on the system.  The corresponding policy configuration for each such policy must be installed in the /etc/selinux/{SELINUXTYPE}/ directories.
+
+A  given SELinux policy can be customized further based on a set of compile-time tunable options and a set of runtime policy booleans.  system-config-selinux allows customization of these booleans and tunables.
+
+Many domains that are protected by SELinux also include SELinux man pages explaining how to customize their policy.
+
+FILE LABELING
+All  files, directories, devices ... have a security context/label associated with them.	 These context are stored in the extended attributes of the file system.  Problems with SELinux often arise from the file system  being  mislabeled. This can be caused by booting the machine with a non SELinux kernel.  If you see an error message containing file_t, that is usually a good indicator that you have a serious problem with file system labeling.
+
+The  best  way to relabel the file system is to create the flag file /.autorelabel and reboot.  system-config-selinux, also has this capability.  The restorecon/fixfiles commands are also available for relabeling files.
+
+AUTHOR
+This manual page was written by Dan Walsh <dwalsh@redhat.com>.
+
+FILES
+/etc/selinux/config
+
+SEE ALSO
+booleans(8), setsebool(8), sepolicy(8), system-config-selinux(8), togglesebool(8), fixfiles(8),
+restorecon(8), setfiles(8), semanage(8), sepolicy(8), seinfo(8), sesearch(8)
+
+Every confined service on the system has a man page in the following format:
+
+<servicename>_selinux(8)
+
+For example, httpd has the httpd_selinux(8) man page.
+
+man -k selinux
+
+Will list all SELinux man pages.
+
+dwalsh@redhat.com				    29 Apr 2005						selinux(8)
+
+¿\tld¿ ¿\textbf{\color{red}man -k selinux}¿
+selinux (8)    - NSA Security-Enhanced Linux (SELinux)
+audit2allow (1)- generate SELinux policy allow/dontaudit rules from logs of denied operations
+audit2why (1)  - generate SELinux policy allow/dontaudit rules from logs of denied operations
+avc_add_callback (3) - additional event notification for SELinux userspace object managers
+.
+.
+xcb_selinux_set_selection_use_context_checked (3) - (unknown subject)
+xcb_selinux_set_window_create_context (3) - (unknown subject)
+xcb_selinux_set_window_create_context_checked (3) - (unknown subject)
+
+¿\tld¿ ¿\textbf{\color{red}man -k selinux | wc -l}¿
+363
+\end{lstlisting}	
+
+\section{What is the current enforcing context?}
+	
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# First let's get an overview of the SELinux status.
+#
+¿\tld¿ sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      30
+
+¿\tld¿ man getenforce | grep -A1 NAME
+NAME
+getenforce - get the current mode of SELinux
+
+¿\tld¿ getenforce
+Enforcing
+#
+# Let's get a bit more info on getenforce.
+#
+¿\tld¿ man getenforce | grep -A2 DESCRIPTION
+DESCRIPTION
+getenforce reports whether SELinux is enforcing, permissive, or disabled.
+#
+# If there is a getenforce, there must be a setenforce.
+#
+¿\tld¿ man -k selinux | grep enforce
+getenforce (8)       - get the current mode of SELinux
+pam_sepermit (8)     - PAM module to allow/deny login depending on SELinux enforcement state
+security_getenforce (3) - get or set the enforcing state of SELinux
+security_setenforce (3) - get or set the enforcing state of SELinux
+selinux_getenforcemode (3) - get the enforcing state of SELinux
+selinux_status_getenforce (3) - reference the SELinux kernel status without invocation of system calls
+setenforce (8)       - modify the mode SELinux is running in
+#
+# We could read the entire getenforce man page, but let's make use of the grep command.
+#
+¿\tld¿ man getenforce | grep -i -A2 "see also"
+SEE ALSO
+selinux(8), setenforce(8), selinuxenabled(8)
+#
+# Let's get similar info for setenforce.
+#
+¿\tld¿ man setenforce | grep -A1 NAME
+NAME
+setenforce - modify the mode SELinux is running in
+
+¿\tld¿ man Setenforce | grep -A2 DESCRIPTION
+DESCRIPTION
+Use Enforcing or 1 to put SELinux in enforcing mode.
+Use Permissive or 0 to put SELinux in permissive mode.
+
+¿\tld¿ man setenforce | grep -i -A2 "see also"
+SEE ALSO
+selinux(8), getenforce(8), selinuxenabled(8)
+#
+# Let's disable SELinux, but before we do that, we will look at the selinuxenabled man page. Hmm, it can be used in scripts to determine if SELinux is enabled. I am using my manh function. q to quit
+#
+¿\tld¿ manh selinuxenabled name author
+NAME
+selinuxenabled - tool to be used within shell scripts to determine if selinux is enabled
+
+SYNOPSIS
+selinuxenabled
+
+DESCRIPTION
+Indicates whether SELinux is enabled or disabled.
+
+EXIT STATUS
+It exits with status 0 if SELinux is enabled and 1 if it is not enabled.
+
+(END)
+# 
+# Ok, is SELinux enabled or disabled?
+#
+¿\tld¿ selinuxenabled && echo enabled || echo disabled
+enabled
+#
+# Let's use setenforce.
+#
+¿\tld¿ setenforce 0
+setenforce:  setenforce() failed
+#
+# We are trying to change a kernel setting, we probably need sudo.
+#
+¿\tld¿ sudo setenforce
+usage:  setenforce [ Enforcing | Permissive | 1 | 0 ]
+#
+# Oops, we have to provide a value.
+#
+¿\tld¿ sudo setenforce 0
+#
+# Let's check again if SELinux is enabled or disabled.
+#
+¿\tld¿ selinuxenabled && echo enabled || echo disabled
+enabled
+#
+# Hey, we didn't disable SELinux. Instead, we just changed its current mode from enforcing to permissive.
+#
+¿\tld¿ sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+¿\color{red}{Current mode:    permissive}¿
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      30
+#
+# Let's change it back to enforcing.
+#
+¿\tld¿ sudo setenforce 1
+
+¿\tld¿ sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+¿\color{red}{Current mode:      enforcing}¿
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      30
+#
+# So, how do we go about disabling SELinux. Let's go back to the selinux manpage.
+#
+¿\tld¿ man selinux | grep -A1 -x FILES
+FILES
+/etc/selinux/config
+#
+# Let's cat that file.
+#
+¿\tld¿ cat /etc/selinux/config
+
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these three values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected. 
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted 
+#
+# So, it appears that the only way to disable SELinux is to change the SELINUX=enforcing line to SELINUX=disabled and reboot. I am not going to do that, but you should...just to see that it actually works!
+#
+\end{lstlisting}
+
+\section{The kernel and SELinux}
+
+We should also look at some of the boot files that the kernel uses.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# What's my kernel?
+#
+¿\tld¿ uname -a
+Linux pc2348lnx 4.4.3-300.fc23.x86_64 ¿\#1¿ SMP Fri Feb 26 18:45:40 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
+#
+# Hey, way too much info! Let's trim it down with sed. We delete the pound symbol and everything after it.
+#
+¿\tld¿ uname -a | sed 's/\#.*//'
+Linux pc2348lnx 4.4.3-300.fc23.x86_64 
+#
+# Come on, there must be an easier way! Let's look at the options for uname...using my m- function.
+#
+¿\tld¿ m- uname
+-a, --all
+-s, --kernel-name
+-n, --nodename
+-r, --kernel-release
+-v, --kernel-version
+-m, --machine
+-p, --processor
+-i, --hardware-platform
+-o, --operating-system
+--help display this help and exit
+--version
+#
+# Or, using bash's own help facility.
+#
+¿\tld¿ uname --help
+Usage: uname [OPTION]...
+Print certain system information.  With no OPTION, same as -s.
+
+-a, --all                print all information, in the following order,
+except omit -p and -i if unknown:
+-s, --kernel-name        print the kernel name
+-n, --nodename           print the network node hostname
+-r, --kernel-release     print the kernel release
+-v, --kernel-version     print the kernel version
+-m, --machine            print the machine hardware name
+-p, --processor          print the processor type or "unknown"
+-i, --hardware-platform  print the hardware platform or "unknown"
+-o, --operating-system   print the operating system
+--help     display this help and exit
+--version  output version information and exit
+
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+Full documentation at: <http://www.gnu.org/software/coreutils/uname>
+or available locally via: info '(coreutils) uname invocation'
+#
+# Alrighty then...
+#
+¿\tld¿ uname -sr
+Linux 4.4.3-300.fc23.x86_64
+#
+# Let's go to the /boot directory.
+#
+¿\tld¿ ls -la | grep x86_64
+-rw-r--r--.  1 root root   161946 Jan 25 05:52 config-4.3.4-300.fc23.x86_64
+-rw-r--r--.  1 root root   161946 Jan 31 19:32 config-4.3.5-300.fc23.x86_64
+-rw-r--r--.  1 root root   169281 Feb 26 10:55 config-4.4.3-300.fc23.x86_64
+.
+.
+-rw-r--r--.  1 root root      166 Jan 31 19:28 .vmlinuz.hmac-4.3.5-300.fc23.x86_64
+-rw-r--r--.  1 root root      166 Feb 26 10:52 .vmlinuz.hmac-4.4.3-300.fc23.x86_64
+#
+# I know that 4.4.3-300 is my kernel...so, let's see if there is any reference to SELinux in its configuration file. I use grep's ignore case option. Lots of interesting information!
+#
+¿\tld¿ grep -i selinux /boot/config-4.4.3-300.fc23.x86_64
+CONFIG_SECURITY_SELINUX=y
+CONFIG_SECURITY_SELINUX_BOOTPARAM=y
+CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE=1
+CONFIG_SECURITY_SELINUX_DISABLE=y
+CONFIG_SECURITY_SELINUX_DEVELOP=y
+CONFIG_SECURITY_SELINUX_AVC_STATS=y
+CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=1
+¿\#1¿ CONFIG_SECURITY_SELINUX_POLICYDB_VERSION_MAX is not set
+CONFIG_DEFAULT_SECURITY_SELINUX=y
+CONFIG_DEFAULT_SECURITY="selinux"
+#
+# What about the actual grub configuration file? That's interesting, nothing there! Remember, my system is a Fedora box. Your SELinux configuration and boot files may be different.
+#
+¿\tld¿ grep -i selinux /boot/grub2/grub.cfg
+¿\tld¿ 
+\end{lstlisting}
+
+\section{SELinux and /etc/sysconfig/selinux}
+
+\textsl{/etc/sysconfig/selinux} is a symbolic link to \textsl{/etc/selinux/config}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+
+# What SELinux' packages are installed on my system? You sometimes have to use wildcards to list packages because you may not know the packages full name.
+#
+¿\tld¿ dnf list installed *selinux*
+Last metadata expiration check: 1:12:39 ago on Tue Mar 15 13:21:59 2016.
+Installed Packages
+libselinux.i686                                          2.4-4.fc23                                     @@commandline
+libselinux.x86_64                                        2.4-4.fc23                                     @@commandline
+libselinux-devel.x86_64                                  2.4-4.fc23                                     @@commandline
+libselinux-python.x86_64                                 2.4-4.fc23                                     @@commandline
+libselinux-python3.x86_64                                2.4-4.fc23                                     @@commandline
+libselinux-utils.x86_64                                  2.4-4.fc23                                     @@commandline
+rpm-plugin-selinux.x86_64                                4.13.0-0.rc1.12.fc23                           @updates     
+selinux-policy.noarch                                    3.13.1-158.9.fc23                              @updates     
+selinux-policy-targeted.noarch                           3.13.1-158.9.fc23                              @updates     
+#
+# From the dnf chapter, we know that we can use either the rpm -qf command or the dnf provides command to find what package installed a file. So, it looks like the main package is selinux-policy.
+#
+¿\tld¿ rpm -qf /etc/selinux/config
+selinux-policy-3.13.1-158.9.fc23.noarch
+
+¿\tld¿ dnf provides /etc/sysconfig/selinux
+Last metadata expiration check: 1:17:31 ago on Tue Mar 15 13:21:59 2016.
+selinux-policy-3.13.1-158.9.fc23.noarch : SELinux policy configuration
+Repo        : @System
+
+selinux-policy-3.13.1-152.fc23.noarch : SELinux policy configuration
+Repo        : fedora
+
+selinux-policy-3.13.1-158.9.fc23.noarch : SELinux policy configuration
+Repo        : updates
+#
+# Let's display /etc/sysconfig/selinux.
+#
+¿\tld¿ cat /etc/sysconfig/selinux
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these three values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are protected. 
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted 
+
+#
+# Hey, we've seen that file before...
+#
+¿\tld¿ diff /etc/selinux/config /etc/sysconfig/selinux
+¿\tld¿ 
+#
+# Ok, there is no difference, so one must be a symbolic link to the other. It turns out that /etc/sysconfig/selinux points to /etc/selinux/config.
+#
+¿\tld¿ ls -la /etc/selinux/config
+-rw-r--r--. 1 root root 549 Dec  3  2014 /etc/selinux/config
+
+¿\tld¿ ls -la /etc/sysconfig/selinux
+lrwxrwxrwx. 1 root root 17 Dec  3  2014 ¿\textbf{\color{Aquamarine}/etc/sysconfig/selinux}¿ -> ¿\textbf{\color{green}../selinux/config}¿
+\end{lstlisting}

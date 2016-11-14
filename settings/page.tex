@@ -1,0 +1,15 @@
+%% page settings
+%%
+% The geometry package is used to set the margins of our document. Note: be careful, the left/right margins applies to even/odd combinations, so you may have to experiment to get things right.
+%% 
+
+\usepackage[top=2cm, bottom=1.8cm,left=2.5cm,right=2.5cm]{geometry} % needed for page border settings
+\parindent=0cm % for space of first line of new text block
+\sloppy % for writing with hyphenless justification (tries to)...it avoids you having to make decisions about where to split a word if it ends at the end of a line.
+%%
+% The next commands kind of force LaTeX to never hyphenate a word at the end of a line so it is possible that lines may have only a few words.
+%%
+%\hyphenation{} % use hyphenation of tolerance parameters, http://www.jr-x.de/publikationen/latex/tipps/zeilenumbruch.html
+%\hyphenpenalty=10000
+%\exhyphenpenalty=10000
+\usepackage{fancyhdr} % needed for head and foot options

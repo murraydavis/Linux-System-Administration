@@ -1,0 +1,849 @@
+\chapter{Simple file tricks}
+\label{ch:filetricks}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Miscellaneous}
+
+The following are in no particular order. These are time savers and quick how tos.
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{File Tricks 1}\label{table:file_tricks1}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+touch \{one,two,three\}.cfg & create three files: one.cfg, two.cfg, three.cfg\\[1mm]
+	cp myconfig.cfg\{,.bak\} & create a backup of \textsl{myconfig.cfg} called \textsl{myconfig.cfg.bak}\\[1mm]
+> ./mylogfile & empty \textsl{mylogfile}, i.e., erase its contents\\[1mm]
+dd if=/dev/urandom of=somefile bs=1024 count=1024 & create a 1MB file called s\textsl{omefile}; note if quotas are set, this command will be constrained by the quota\\[1mm]
+du -sh somefile & get the size of the file \textsl{somefile}\\[1mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{Examples}
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ dd if=/dev/urandom of=somefile bs=1024 count=1024
+1024+0 records in
+1024+0 records out
+1048576 bytes (1.0 MB) copied, 0.0693917 s, 15.1 MB/s
+¿\tld¿ du -sh somefile
+1.0M	somefile
+¿\tld¿ >./somefile
+¿\tld¿ du -sh somefile
+0	somefile
+\end{lstlisting}
+
+\section{Quickly insert line of text into a file}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# We have a file called suid.txt that contains a single line, something novel.
+#
+¿\tld¿ cat suid.txt
+something novel
+#
+# Recall that the greater than symbol in the next command says to overwrite the following filename.
+#
+¿\tld¿ echo "something interesting" > suid.txt
+¿\tld¿ cat suid.txt
+something interesting
+#
+# Recall that two greater than symbols means append, not overwrite.
+#
+¿\tld¿ echo "something novel" >> suid.txt
+¿\tld¿ cat suid.txt
+something interesting
+something novel
+#
+# -i=inline editing, 1i=insert before 1st line
+#
+¿\tld¿ sed -i '1i Really, really interesting!' suid.txt
+¿\tld¿ cat suid.txt
+Really, really interesting!
+something interesting
+something novel
+
+¿\tld¿ sed -i '3i Boring!' suid.txt
+¿\tld¿ cat suid.txt
+Really, really interesting!
+something interesting
+Boring!
+something novel
+#
+# By simply adding a file extension to the -i option, we create a backup.
+#
+¿\tld¿ sed -i.bak '2i Boring!' suid.txt
+¿\tld¿ cat suid.txt
+Really, really interesting!
+Boring!
+something interesting
+Boring!
+something novel
+
+¿\tld¿ cat suid.txt.bak
+Really, really interesting!
+something interesting
+Boring!
+something novel
+¿\tld¿ 	
+\end{lstlisting}
+
+\section{Quickly removing duplicate lines from files}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I will work with my.file. Here is the content...
+#
+¿\tld¿ cat my.file
+one sock
+two sock
+three sock
+one sock
+sock one
+three socks
+three sock
+#
+# Let's get rid of duplicate lines. Note, awk is very precise and sends the output to stadin. The file, my.file, is not modified.
+#
+¿\tld¿ awk '!seen[$0]++' my.file
+one sock
+two sock
+three sock
+sock one
+three socks
+#
+# What are the duplicate lines?
+#
+¿\tld¿ awk 'seen[$0]++' my.file
+one sock
+three sock
+#
+# Ok, instead of sending the output to stdin, let's send the output to a new file.
+#
+¿\tld¿ awk '!seen[$0]++' my.file > nodups.file
+¿\tld¿ cat nodups.file
+one sock
+two sock
+three sock
+sock one
+three socks
+#
+# awk does not have an easy-to-use in-place option like 'sed -i', but there is a workaround.
+#
+¿\tld¿ awk '!seen[$0]++' my.file > tmp && mv tmp my.file
+mv: overwrite 'my.file'? y
+
+¿\tld¿ cat my.file
+one sock
+two sock
+three sock
+sock one
+three socks
+#
+# You can also take a look at GNU awk or gawk, which does have an in-place option.
+#
+\end{lstlisting}
+
+\subsection{Quickly removing duplicate lines - input redirection}
+
+We can actually use the notation to send \textsl{my.file} to a function using what is called \keyword{input redirection} which allows us to open \textsl{my.file} for reading or processing. In the case below, the file is processed by two commands. \textsl{my.file} is redirected to the two commands because of the \keyword{logical and operator} \&\&. Step 1: We remove the file. Step 2: If step 1 was successful (which it would be unless the file didn't exist or if we didn't have permission to delete it), \emph{awk} takes the contents of \textsl{my.file} and edits the file and sends the output to a new file with the same name \textsl{my.file}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# The are two duplicate lines: one sock and two sock.
+#
+¿\tld¿ cat my.file
+one sock
+two sock
+three sock
+one sock
+sock one
+three socks
+two sock
+#
+# Note, the curly braces and the spaces before and after the curly braces.
+#
+¿\tld¿ { rm my.file && awk '!seen[$0]++' > my.file; } < my.file
+#
+# And, here is our new file with no duplicate lines.
+#
+¿\tld¿ cat my.file
+one sock
+two sock
+three sock
+sock one
+three socks
+\end{lstlisting}
+
+\section{Quickly delete lines that have certain charateristics}
+
+All my examples, use the \emph{sed} command. A good resource for \keyword{sed} is \href{http://www.catonmat.net/blog/sed-one-liners-explained-part-one/}{Famous Sed One-Liners}. Peteris Krumins, the site's author, also has \href{http://www.catonmat.net/blog/awk-one-liners-explained-part-one/}{Famous Awk One-Liners}. Typically,  \emph{sed} and \emph{awk} are used for processing, filtering, and transforming text. \textit{I suggest you try and find \textbf{awk} equivalents for each command}. I guarantee that you will learn some important features for both commands. Note, in the code below I switch back and forth from using \emph{sed's} inline option \textbf{-i} when I want to edit and change the file and not using this option when I just want to send the output to the command line. You should experiment without the \textbf{-i} option until you have successfully found your solution.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ whatis sed
+sed (1)              - stream editor for filtering and transforming text
+sed (1p)             - stream editor
+
+¿\tld¿ whatis awk
+awk (1)              - pattern scanning and processing language
+awk (1p)             - pattern scanning and processing language
+
+¿\tld¿ man sed | grep -A5 -x DESCRIPTION
+DESCRIPTION
+	Sed  is  a stream editor.  A stream editor is used to perform basic text transformations on an input stream (a file or input from a pipeline). While in some ways similar to an editor which  permits  scripted  edits (such as ed), sed works by making only one pass over the input(s), and is consequently more efficient.  But it is sed's ability to filter text in a pipeline which particularly distinguishes it from  other  types  of editors.
+#
+# On my system, awk has a symbolic link pointing to gawk. The DESCRIPTION section of the manpage does not really provide a nice summary. Interestingly, even the gawk info document provides no description. Therefore, I turned to the 'dnf info gawk' command to grep the description.
+#
+¿\tld¿ type awk
+awk is /usr/bin/awk
+
+¿\tld¿ ls -la /usr/bin/awk
+lrwxrwxrwx. 1 root root 4 Jun 17  2015 /usr/bin/awk -> gawk
+
+¿\tld¿ dnf info gawk | grep -A10  Description
+¿\begin{verbatim}
+Description : The gawk package contains the GNU version of awk, a text
+            : processing utility. Awk interprets a special-purpose programming
+            : language to do quick and easy text pattern matching and
+            : reformatting jobs.
+            : 
+            : Install the gawk package if you need a text processing utility.
+            : Gawk is considered to be a standard Linux tool for processing
+            : text.
+\end{verbatim}¿
+\end{lstlisting}
+
+\subsection{Inserting tabs and deleting lines containing tabs and other special characters}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Delete blank lines.
+#
+¿\tld¿ cat notes.txt
+1line
+
+
+
+2line
+
+3line
+4line
+
+¿\tld¿ sed -i '/^$/d' notes.txt
+
+¿\tld¿ cat notes.txt
+1line
+2line
+3line
+4line
+#
+# Let's insert a tab before each line in notes.txt. Note, I dropped the -i inline switch so that we can play with an unmodified notes.txt.
+#
+¿\tld¿ sed  's/^/\t/' notes.txt
+¿\tld¿ cat notes.txt
+	1line
+	2line
+	3line
+	4line
+#
+# Instead, let's insert the tab in lines 1 and 2
+#
+¿\tld¿ sed  '1,2s/^/\t/' notes.txt
+	1line
+	2line
+3line
+4line
+#
+# Insert tab every second line.
+#
+¿\tld¿ sed  '1¿\ttbb{}¿2s/^/\t/' notes.txt
+	1line
+2line
+	3line
+4line
+#
+# Insert tab every third line.
+#
+¿\tld¿ sed  '1¿\ttbb{}¿3s/^/\t/' notes.txt
+	1line
+2line
+3line
+	4line
+#
+# Of course, we can insert anything at the beginning of the line, how about a comment and a space?
+#
+¿\tld¿ sed  '1~3s/^/# /' notes.txt
+# 1line
+2line
+3line
+# 4line
+
+#
+# Ok, repeat the command to insert tabs into the first two lines, but this time we will do it inline, changing the file.
+#
+¿\tld¿ sed -i '1,2s/^/\t/' notes.txt
+¿\tld¿ cat notes.txt
+	1line
+	2line
+3line
+4line
+#
+# Let's remove the tabs from any line beginning with a tab, again doing it line.
+#
+¿\tld¿ sed -i 's/^\t//' notes.txt
+#
+# Was it successful?
+#
+¿\tld¿ cat notes.txt
+1line
+2line
+3line
+4line
+#
+# Alright, let's return to our previous example of inserting tabs. Suppose we wanted to insert a tab into the beginning of specific lines. Let's do it to lines 1 and 4. We need sed's -e option.
+#
+¿\tld¿ sed -e '1s/^/\t/' -e '4s/^/\t/' notes.txt
+	1line
+2line
+3line
+	4line
+#
+# Ok, let's insert (inline) '# ' before line 1, '% ' before line 3, 'A ' before line 4.
+#
+¿\tld¿ sed -i -e '1s/^/¿\#¿ /' -e '3s/^/% /' -e '4s/^/A /' notes.txt
+¿\tld¿ cat notes.txt
+¿\tbi{\#}¿ 1line
+2line
+% 3line
+A 4line
+#
+# Ok, let's selectively delete lines. I want to delete any line beginning with a letter (upper or lower case), the comment character #, and the % symbol. I will not do this inline. Special characters like %, >, <, etc. have to be escaped.
+#
+¿\tld¿ sed  '/^[a-zA-Z¿\#¿\%]/d' notes.txt
+2line
+#
+# How do we do the converse of this, delete all lines not beginning with any of these?
+#
+¿\tld¿ sed  '/^[a-zA-Z¿\#¿\%]/!d' notes.txt
+¿\tbi{\#}¿ 1line
+% 3line
+A 4line
+\end{lstlisting}
+
+\section{Quickly inserting blank lines}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# How do we insert a blank line after each line, i.e., create a file that is double-spaced?
+#
+¿\tld¿ cat my.file
+one sock
+two sock
+three sock
+sock one
+three socks
+
+¿\tld¿ awk '{print;} NR % 1 == 0 { print ""; }' my.file > my.dblspc.file
+
+¿\tld¿ cat my.dblspc.file 
+one sock
+
+two sock
+
+three sock
+
+sock one
+
+three socks
+
+
+#
+# Let's get rid of those empty lines.
+#
+¿\tld¿ sed -i 's/^$//' my.dblspc.file
+
+¿\tld¿ cat my.dblspc.file 
+one sock
+
+two sock
+
+three sock
+
+sock one
+
+three socks
+#
+# Hey, why didn't that work? We said replace empty lines (^ = beginning of line, $ = end of line; so nothing in bewteen) with nothing, the null character. In effect, we said 'do nothing'. Here is how you have to delete those lines, using sed's d, delete option.
+#
+¿\tld¿ sed -i '/^$/d' my.dblspc.file
+
+¿\tld¿ cat my.dblspc.file 
+one sock
+two sock
+three sock
+sock one
+three socks
+#
+# Is there a way to insert blank lines using sed?
+#
+¿\tld¿ sed -i '0¿\ttbb¿1 a\\' my.dblspc.file 
+¿\tld¿ cat my.dblspc.file 
+one sock
+
+two sock
+
+three sock
+
+sock one
+
+three socks
+#
+# And, let's get rid of the lines again.
+#
+¿\tld¿ sed -i '/^$/d' my.dblspc.file
+
+¿\tld¿ cat my.dblspc.file 
+one sock
+two sock
+three sock
+sock one
+three socks
+
+¿\textbf{\color{red}Challenge:} How would you insert empty lines after \tqs{n} number of lines? How would you insert more than one empty line? \hyperlink{insertlines}{Answer}¿ 
+\end{lstlisting}
+
+\section{For Loops - renaming and removing files}
+
+\begin{table}[!h]
+\caption{For Loops - renaming and removing files}
+\begin{tabular}{|>{\bfseries}l p{5cm}|}
+\hline
+\normalfont{Command} & Action \\\hline% inserts table heading, unbolds 1st column heading
+\hline
+for file in *; do cp \$file \$file.bak;done\\
+& use a simple \emph{for} loop to create a backup file of every file in the current directory. \textsl{myfile.bak} from \textsl{myfile} and \textsl{myfile.cfg.bak} from \textsl{myfile.cfg}\\[1mm]
+for f in *.cfg;do mv \$f \$(echo "\$\{f\%.*\}.config");done\\
+&  for every file in the current directory with a file extension \textsl{.cfg} rename each file so that its file extension is now \textsl{.config}, so \textsl{apache.cfg} becomes \textsl{apache.config}.\\[1mm]
+for f in *.bak;do a="\$(echo \$f | sed s/bak/org/)";mv \$f \$a;done\\
+& similar to above, but here we are piping to \emph{sed} and using its substitution feature to change the file extension from \textsl{.bak} to \textsl{.org}. Using \textsl{test.bak} as an example, we use the \emph{mv} command which explicitly says: mv test.bak test.org\\[1mm]
+for f in *; do [ -f \$f ] \&\& [ -w \$f ] \&\& rm \$f; done\\
+& Using the test concept that is discussed below, find all files with any writeable permission and remove them. Note the spaces after [ and before ].\\ [1mm]
+\hline
+\end{tabular}
+\end{table}
+
+\section{Test Command}
+
+The \emph{test} command is often used to test the existence of some parameter or state.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ ls -la B.txt
+-rw-r--r--. 1 me mygp 6 Dec  8 12:55 B.txt
+#
+# Using the test command, is B.txt a file? If so, echo its name. Next, echo the test value: 0=true, 1=false. The execution of the command 'echo B.txt' is dependent on the result of whether or not B.txt is a file (true or false). The command 'echo $?' is not dependent on the result of the previous statements. It is an independent statement and is always printed. Independent commands are separated by semi-colons. && is a test condition. Consider it as a 'if then' operation. $? is a bash builtin code for the success (0) or failure (1) of the previous command.
+#
+¿\tld¿ test -f B.txt && echo B.txt; echo $?
+B.txt
+0
+#
+# Using the test command, is BB.txt a file? Does it exist and is it a file? If true, echo its name; and then echo the test value: 0=true, 1=false. In this case, BB.txt does not exist and so its name is not echoed. The test value is therefore 1=false.
+#
+¿\tld¿ test -f BB.txt && echo BB.txt; echo $?
+1
+#
+# Is B.txt writable? Yes, it is, the owner's permissions are: rw-
+#
+¿\tld¿ test -w B.txt && echo B.txt; echo $?
+B.txt
+0
+#
+# Use a 'for loop' to test for the existence of files (and only files, not directories) that have writable permission. Note, we are using a shorthand form of the test command. [ -f $f ] is the same as: test -f $f. The space after [ and $f are mandatory. So, search for a file, if true, then also test if anyone has write permission; if this is also true, then echo its name.
+#
+¿\tld¿ for f in *; do [ -f $f ] && [ -w $f ] && echo $f; done
+A.txt
+B.txt
+.
+.
+one.cfg
+somefile
+#
+# Let's get a long-listing of the contents of the current directory to verify that the output of the for loop is true.
+#
+¿\tld¿ ls -la
+total 320
+drwxr-xr-x.   4 me mygrp   4096 Dec 16 09:55 .
+drwx--x---+ 115 me mygrp 286720 Dec 16 08:05 ..
+-rwxrwxrwt.   1 me mygrp     10 Dec 11 13:28 A.txt
+-rw-r--r--.   1 me mygrp      6 Dec  8 12:55 B.txt
+.
+.
+-rw-r--r--.   1 me mygrp      0 Dec 15 15:51 one.cfg
+-rw-r--r--.   1 me mygrp      0 Dec 16 08:26 somefile
+#
+# For more inforation, see the 'man bash' section on 'conditional expressions'. If you use my alias function, mang(), issue this command: mang bash "conditional expressions" "simple command expansion".
+#
+# For more information on testing expressions use my 'man builtin' alias and issue this command: mbib "test expr" times
+\end{lstlisting}
+
+\section{exglob and globignore}
+
+To use extended pattern matching operators when working with file names, you need to use the \emph{extglob} shell option using the \emph{shopt} builtin command:
+
+\begin{itemize}
+	\item[] \tbi{?(pattern-list)} - Matches zero or one occurrence of the given patterns.
+	\item[] \tbi{*(pattern-list)} - Matches zero or more occurrences of the given patterns.
+	\item[] \tbi{+(pattern-list)} - Matches one or more occurrences of the given patterns.
+	\item[] \tbi{@(pattern-list)} - Matches one of the given patterns.
+	\item[] \tbi{!(pattern-list)} - Matches anything except one of the given patterns.
+\end{itemize}
+
+\emph{Be very careful when using \keyword{shopt} and \keyword{globeignore}.} Dangerous things can happen like blowing away your entire system!
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Get the section of the manpage dealing with shopt. The output is quite long, so I have not displayed it. Also, play with the last pipe to see what it does. You could also have piped three 'sed $d' after "suspend". You, of course, can simply open the builtin manpage and scroll to the shopt section. :)
+#
+¿\tld¿ man builtin | col -b| grep -A1000 "^\ *shopt " | grep -B1000 suspend | head -n -2
+#
+# Get a listing of the current directory with flags. Note: mydir and one are both directories...which is indicated by the trailing slash.
+#
+¿\tld¿ ls -F
+A.txt  B.txt  C.txt  d.txt  mydir/  one/  one.cfg  somefile
+#
+# Enable extglob.
+#
+¿\tld¿ shopt -s extglob
+#
+# Delete anything that does not have a *.txt or *.cfg extension.
+#
+¿\tld¿ rm !(*.txt|*.cfg)
+#
+# Note: The command will not remove directories...fortunately.
+#
+rm: cannot remove 'mydir': Is a directory
+rm: cannot remove 'one': Is a directory
+#
+# Get a listing again, note the file, somefile, was deleted.
+#
+¿\tld¿ ls -F
+A.txt  B.txt  C.txt  d.txt  mydir/  one/  one.cfg
+#
+# Unset extglob after you are finished.
+#
+¿\tld¿ shopt -u extglob
+\end{lstlisting}
+
+Ok, so the \keyword{rm} command balked about the directories when \keyword{extglob} was set. Let's try again, but this time we will use the special variable, \emph{GLOBIGNORE}, which is described as:
+
+\begin{addmargin}[1em]{2em}
+A colon-separated list of patterns defining the set of filenames
+to be ignored by \emph{pathname expansion}.  If a filename matched by a
+\emph{pathname expansion}  pattern also matches one of the patterns in
+\emph{GLOBIGNORE}, it is removed from the list of matches.
+\end{addmargin}
+
+For a quick reference, visit this URL: \href{http://wiki.bash-hackers.org/syntax/shellvars}{Special parameters and shell variables.}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# So, we use GLOBIGNORE and pathname expansion to say ignore files with extensions .cfg and .txt. Note, very case-sensitive!
+#
+¿\tld¿ GLOBIGNORE=*.cfg:*.txt
+#
+# Ok, first, we recreat the file: somefile. We then ask for a listing of all files. But, the file, somefile, is listed?
+#
+¿\tld¿ touch somefile
+¿\tld¿ ls
+A.txt  B.txt  C.txt  d.txt  mydir  one  one.cfg  somefile
+#
+# Re-read the descripition of GLOBGINORE. It only works with pathname expansion, so let's try : ls *. There are six files in the current directory: A.txt, B.txt, C.txt, d.txt, and somefile. mydir and one are directories. File name expansion with the GLOBIGNORE setting works since only somefile is listed. However, as we can see, the GLOBEIGNORE setting does not recurse down through the mydir and one directories because A.txt, a copy of which is in each directory, is listed...where it should not be listed if GLOBEIGNORE recursed down through the directories.
+#
+¿\tld¿ ls *
+somefile
+
+mydir:
+A.txt  myfile
+
+one:
+A.txt
+#
+# Ok, so GLOBIGNORE doesn't seem to work in sub-folders. A.txt is listed in both the mydir and one directories. Even though this is true, let's try to remove those without the .txt and .cfg extensions, which in this case is only 'somefile'. I am prompted to remove 'somefile' and I answer 'yes'.
+#
+¿\tld¿ rm *
+rm: cannot remove 'mydir': Is a directory
+rm: cannot remove 'one': Is a directory
+rm: remove regular empty file 'somefile'? y
+#
+# So, like shopt, GLOBIGNORE has problems with subfolders, but it helped in removing 'somefile' in the current working directory.
+#
+¿\tld¿ ls
+A.txt  B.txt  C.txt  d.txt  mydir  one  one.cfg
+#
+# We can use the 'ls -F' command to see clearly which of these items are folders. A trailing / means the item is a folder. A * means the file is executable. All others are regular files.
+#
+¿\tld¿ ls -F
+A.txt*  B.txt  C.txt  d.txt  mydir/  one/  one.cfg
+#
+# Ok, so 'somefile' was removed, what about mydir/myfile? I am using a 'ls * */*' notation that says look inside directories. This command uses pathname expansion notation. Note, the first line of output, so the GLOBIGNORE setting is applied within the directories. However, it is not applied within the detailed listing of each directory since A.txt still appears.
+#
+¿\tld¿ ls * */*
+mydir/myfile
+
+mydir:
+A.txt  myfile
+
+one:
+A.txt
+#
+# So, GLOBIGNORE just doesn't recurse down through the directories. This is evident since A.txt is listed in the mydir and one directories.
+#
+# Like shopt, we have to unset or stop using GLOBIGNORE after we have finished our task.
+#
+¿\tld¿ unset GLOBIGNORE
+\end{lstlisting}
+
+I will not explore this topic any further, but \textit{I suggest you explore the topic a bit further}. Here are some things to try when either \emph{shopt} or \emph{GLOBIGNORE} are set:
+
+\begin{itemize}
+	\item[] What happens if you have subfolders within folders and there are \textsl{*.txt} and \textsl{*.cfg} files in those subfolders?
+	\item[] What happens when you issue this command? ls */*
+\end{itemize}
+	
+So, in summary both \emph{shopt} and \emph{GLOBIGNORE} can be effectively used if our current directory contains no sub-folders. We have to switch to using the \emph{find} command to look inside sub-folders.
+
+\section{Find with directory recursion and file extensions}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Find all files that do not have the extensions .txt or .cfg. There are only two files: 'somefile' in the current directory and 'myfile' in the subdirectory mydir that do not have extensions .txt or .cfg. 
+#
+# -type f = files only; ! = negation, only files that do not have the following properties; -o = or; -name = have the following string in their names; the brackets () must be escaped 
+#
+¿\tld¿ find . -type f ! \( -name "*.txt" -o -name "*.cfg" \)
+./somefile
+./mydir/myfile
+#
+# Let's get a recursive directory listing to see this.
+#
+¿\tld¿ ls -lR
+.:
+total 8
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 A.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 B.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 C.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 d.txt
+drwxr-xr-x. 2 me mygrp 4096 Dec 16 14:33 mydir
+drwxr-xr-x. 2 me mygrp 4096 Dec 16 14:12 one
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 one.cfg
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:33 somefile
+
+./mydir:
+total 0
+-rw-r--r--. 1 me mygrp 0 Dec 16 14:33 A.txt
+-rw-r--r--. 1 me mygrp 0 Dec 16 14:33 myfile
+
+./one:
+total 0
+-rw-r--r--. 1 me mygrp 0 Dec 16 14:12 A.txt
+#
+# Another way to recursively look inside directories is to use the wildcard * with the 'ls' directory switch (-d).
+#
+¿\tld¿ ls -d * */*
+A.txt  B.txt  C.txt  d.txt  mydir  mydir/A.txt  mydir/myfile  one  one/A.txt  one.cfg  somefile
+#
+# Ok, now that we know that we can find files within directories, let's then perform an operation on the files such as removing or deleting the files. The following command also uses the negation symbol, the exclamation point. So the command says: find all files that don't have a .txt or a .cfg extension and remove them.
+#
+# The {} represents all files found by the find command, \; terminates the command, -exec is a bash builtin command...see two pages on...
+#
+¿\tld¿ find . -type f ! \( -name "*.txt" -o -name "*.cfg" \) -exec rm {} \;
+#
+# Let's check that somefile and myfile have been deleted. Poof, they're gonzo!
+#
+¿\tld¿ ls -d * */*
+A.txt  B.txt  C.txt  d.txt  mydir  mydir/A.txt  one  one/A.txt  one.cfg
+#
+# We can also see this when using the recursive long-listing.
+#
+¿\tld¿ ls -lR
+.:
+total 8
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 A.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 B.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 C.txt
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 d.txt
+drwxr-xr-x. 2 me mygrp 4096 Dec 16 14:44 mydir
+drwxr-xr-x. 2 me mygrp 4096 Dec 16 14:12 one
+-rw-r--r--. 1 me mygrp    0 Dec 16 14:13 one.cfg
+
+./mydir:
+total 0
+-rw-r--r--. 1 me mygrp 0 Dec 16 14:33 A.txt
+
+./one:
+total 0
+-rw-r--r--. 1 me mygrp 0 Dec 16 14:12 A.txt
+#
+# Instead of using the '-exec' find option, we can use a find option called: -delete. So, the following would also delete the files: somefile and mydir/myfile.
+#
+¿\tld¿find . -type f ! \( -name "*.txt" -o -name "*.cfg" \) -delete
+#
+# We can also use use the find command in conjunction with the grep command. In this case we use the inverse grep option 'grep -v', becauase we want only files that don't have extensions: .txt and .cfg. Also, -e = use regex patterns, -e does not mean extension.
+#
+# Ok, let's see all the files that have these two extensions. Note, in this command the curly braces are used to denote a list expansion.
+#
+¿\tld¿ find . -type f | grep -e=*.{txt,cfg}
+./B.txt
+./C.txt
+./d.txt
+./one/A.txt
+./A.txt
+./mydir/A.txt
+./one.cfg
+#
+# We restored our files, but let's confirm by finding all files with extensions: .txt and .cfg.
+#
+¿\tld¿ find . -type f | grep -v -e=*.{txt,cfg}
+./somefile
+./mydir/myfile
+#
+#Let's remove those files using the 'exec' command.
+#
+¿\tld¿ find . -type f | grep -v -e=*.{txt,cfg} -exec rm {} \;
+grep: rm: No such file or directory
+grep: {}: No such file or directory
+grep: ;: No such file or directory
+#
+# Well, that didn't work! The reason is that we cannot pass grep to -exec since grep still thinks it is in charge and it tries to interpret each item after -exec.  Instead, we need to pipe the output of grep to the xargs command.
+#
+¿\tld¿ find . -type f | grep -v -e=*.{txt,cfg} | xargs rm
+#
+# Did we delete the files? Yes!
+#
+¿\tld¿ ls * */*
+A.txt  B.txt  C.txt  d.txt  mydir/A.txt  one/A.txt  one.cfg
+
+mydir:
+A.txt
+
+one:
+A.txt
+#
+# I can hear the rumbling. If piping to xargs works, why not pipe to -exec? Go ahead make my day! What happens?
+#
+¿\tld¿ find . -type f | grep -v -e=*.{txt,cfg} | -exec rm {} \;
+bash: -exec: command not found...
+#
+# What follows the pipe symbol must be another command. -exec is not a command. In this case, it is a 'find' option that works similar to xargs. grep can be a real pain in the ass to use with other commands. One easy rule to remember: If you grep find, xargs grep! Yeah, right, easy peasy!
+#
+# Ok, let's remove the grep statement. Note, I can now use the -exec option. Unfortunately, this recursively removed all my files. Oops!
+#
+¿\tld¿ find . -type f -exec rm {} \;
+#
+# Piping to xargs would also remove all files.
+#
+¿\tld¿ find . -type f | xargs rm
+#
+# Conclusion: When using find, pipe to xargs, pass to -exec.
+#
+\end{lstlisting}
+
+\section{Applying permissions from one file to another}
+
+In a previous section, I mentioned that I don't like files that are world executable, that is, executable by everyone. It would be very time consuming to search one-by-one for these files and then change the permissions on each. Thankfully, there is an easy way to find and change the permissions on such files. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's start by making the changes manually. Find all files where the execute bit is set for all users: owner, group, others. As you saw in  ¿\chapref{ch:findfiles} \secref{sec:findfilesperms}¿, -111 = at least execute permission for all three user types.
+#
+¿\tld¿ find . -perm -111
+.
+./exits.sh
+
+¿\tld¿ ls -la exits.sh
+-rwxr-xr-x. 1 mgcr mygrp 437 Jul 27  2015 exits.sh
+#
+# Let's find a file where only the owner of the file has the execute bit set. Note, this command also lists the file exits.sh which does have the execute bit set for the owner as well as the group owner and 'all other users'.
+#
+¿\tld¿ find . -perm -100
+.
+./gas.sh
+./exits.sh
+.
+.
+./vic.sh
+#
+# There is a problem with this command. We used '-100' which means at least execute for users. It would be helpful if we saw a full fill listing that showed the permissions. We would like to see the permissions for the other user types: group and other.
+#
+¿\tld¿ find . -perm -100 -ls
+6422649      8 drwxr-xr-x   2  mgcr mygrp     4096 Mar 29 17:52 .
+6437469      8 -rwxr--r--   1  mgcr mygrp       33 Feb 23 13:35 ./gas.sh
+6422653      8 -rwxr-xr-x   1  mgcr mygrp      437 Jul 27  2015 ./exits.sh
+.
+.
+6427264      4 -rwxr--r--   1  mgcr mygrp       77 Mar 10 11:28 ./vic.sh
+#
+# Could we have used the '-perm 100' option which says find those file with ¿\color{red}{exactly and only}¿ execute permission for users and no permissions for group and other users? Yes and no. In our directory, there are no files with these permissions.
+#
+¿\tld¿ find . -perm 100
+¿\tld¿ 
+#
+# So, it looks like 'find . -perm -100 -ls' is a better option. And, it looks like the file gas.sh is a good candidate to use a base file. We will use its permissions and apply them to the file exits.sh.
+#
+¿\tld¿ chmod --reference=gas.sh exits.sh
+
+¿\tld¿ ls -la exits.sh
+-rwxr--r--. 1 mgcr mygrp 437 Jul 27  2015 exits.sh
+#
+# Well, that would be tedious to do for each file. Let's use the power of the find command. First, let's just show that we have two files that are world executable. I am also specifying that I only want to find files.
+#
+¿\tld¿ find . -type f -perm -111 -exec ls -la {} \;
+-rwxr-xr-x. 1 mgcr mygrp 437 Jul 27  2015 ./exits.sh
+-rwxr-xr-x. 1 mgcr mygrp 56 Mar  9 12:58 ./my.sh
+#
+# Alright, we replace the, ls -la, with the chmod command. Easy, peasy!
+#
+¿\tld¿ find . -type f -perm -111 -exec chmod --reference=gas.sh {} \;
+
+¿\tld¿ ls -la exits.sh my.sh
+-rwxr--r--. 1 mgcr mygrp 437 Jul 27  2015 exits.sh
+-rwxr--r--. 1 mgcr mygrp  56 Mar  9 12:58 my.sh
+#
+# Ok, let's put them back to world writeable and use another technique. This time we will use xargs with its: -I = replace-str and -0 = --null options...yes, that is a zero!
+#
+¿\tld¿ chmod +x my.sh exits.sh
+#
+# Let's list the files...
+#
+¿\tld¿ ls -la exits.sh my.sh
+-rwxr-xr-x. 1 mgcr mygrp 437 Jul 27  2015 exits.sh
+-rwxr-xr-x. 1 mgcr mygrp  56 Mar  9 12:58 my.sh
+#
+# Change their permissions...
+#
+¿\tld¿ find . -type f -perm -111 -print0 | xargs -0 -I {} chmod --reference=gas.sh {}
+#
+# And, finally, check their permissions again.
+#
+¿\tld¿ ls -la exits.sh my.sh
+-rwxr--r--. 1 mgcr mygrp 437 Jul 27  2015 exits.sh
+-rwxr--r--. 1 mgcr mygrp  56 Mar  9 12:58 my.sh
+#
+# Hey, I thought this chapter was called "Simple File Tricks"? You want me to remember the command that uses awk? Break me a give!
+#
+\end{lstlisting}

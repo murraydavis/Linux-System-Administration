@@ -1,0 +1,1899 @@
+\chapter{Programming}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[EC]{Linux System Administration}
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+%\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.99pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+In this chapter, I try cover some basic features used in constructing bash scripts and programs.  \textit{With a smile, I strongly recommend that you read, study, and memorise the contents of the \emph{bash} and \emph{builtin} manpages.} You will find just about everything you need to know about \emph{bash} scripting in these two documents.
+
+\section{Best practices in writing code}
+
+Take a look at the code below. After looking at the code, can you answer these questions? What shell interpreter should be used? What the heck does the script do? What's the script's name? In what directory did I store it? How do I quickly find all my shell scripts? Should I use a naming convention in addition to the file extension?
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Run a simple script...
+#
+¿\tld¿ ./EchoPwd.sh
+/home/mgcr/scripts
+#
+# Display contents of the script.
+#
+¿\tld¿ cat EchoPwd.sh 
+#!/bin/bash
+# /home/mgcr/scripts/EchoPwd.sh
+# This script just echos the current working directory.
+echo `pwd`
+¿\tld¿
+#
+# How to find all the shell scripts in the current directory?
+#
+¿\tld¿ find . -iname "*.sh"
+./exits.sh
+./EchoPwd.sh
+./quotes.sh	
+\end{lstlisting}
+
+Here are my recommendations:
+
+\begin{itemize}
+	\item \textit{Use camel notation for file names, or use underscores or hyphens. Do not use spaces in file names.}
+	\item \textit{Develop a file/folder hierarchy that aids in storing and quickly retrieving your scripts.}
+	\item \textit{Standardize on a file naming convention for the extension that reflects the type of code or script.}
+	\item \textit{On the first line of all scripts, state the shell interpreter to use. }
+	\item \textit{On the second line, state the full path to the script.}
+	\item \textit{Beginning on the third line, state a short explanation of the purpose of the code.}
+\end{itemize}
+
+\subsection{Removing comments from a file}
+
+\textit{One other item that I suggest you think about is to have two copies of a script.} One could be your development version heavily embedded with comments explaining variable assignment, function calls,  complex syntax, etc. Once the code is up and running, you could remove the comments. How would you do this with 1000 lines of code and maybe 100 lines of comments? Note, for bash shell scripts any line, except the \keyword{shebang} are comments. Other programming languages may use a different marker for the comment, so you would have to modify the code below to match your language syntax.
+
+Our goal is to delete comment lines and not to leave an empty line in its place. We also want to remove comments that may be at the end of a line. I combined code from two websites for this solution. This is often how you have to work. You may find partial solutions on different websites. You then combine the information intelligently to arrive at a solution. You need to dissect the code to understand what each part does. Here are the source URLs that I used to arrive at my solution:
+
+\href{http://unix.stackexchange.com/questions/157328/how-to-remove-all-comments-from-a-file}{How to remove all comments from a file.}
+
+\href{http://stackoverflow.com/questions/6869449/skipping-the-first-n-lines-when-using-regex-with-sed}{Skipping the first n lines when using regex with sed?}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Here is my test script, srvs.sh. Note: I do not want to remove the first line that defines the shell interpreter. I want to remove the lines that begin with a # even if there are spaces before the comment character. I also want to remove comments that begin after coding, at the end of a line.
+#
+¿\tld¿ cat srvs.sh
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+# Test for service
+ # Test for service
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" # service is active
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+# One solution provided was to use the cut command. Note: It removed the comments, but left blank lines. It also removed the first line...which I did not want to do. However, the beauty of this solution is that it provided a way to interact with the file without altering the file...until I found a working solution. cat to the rescue!
+#
+¿\tld¿ cat srvs.sh | cut -d'#' -f1
+
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+
+
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+# Let's try another solution.
+#
+¿\tld¿ cat srvs.sh | sed 's/#.*$//g'
+
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+
+
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+# Ok, same result. Let's try Joseph R's solution...woopee, no blank lines, but it removed the first line.
+#
+¿\tld¿ cat srvs.sh | sed '/^[[:blank:]]*#/d;s/#.*//'
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+# This is where the second link came in handy. How do you exempt the first line?
+#
+¿\tld¿ cat srvs.sh | sed -e '2,${/^[[:blank:]]*#/d;s/#.*//}'
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+# Alrighty then, but we want a working copy of srvs.sh without the comments. Here are two ways to achieve that goal... 
+#
+¿\textit{\color{red}Method 1.}¿ Use the sed inline option to first create a backup copy of the file. I chose the extension .cmt for comment.
+#
+¿\tld¿ sed -i.cmt -e '2,${/^[[:blank:]]*#/d;s/#.*//}' srvs.sh
+
+¿\tld¿ cat srvs.sh
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+
+¿\tld¿ cat srvs.sh.cmt
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+# Test for service
+# Test for service
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" # service is active
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+#
+¿\textit{\color{red}Method 2.}¿ Just redirect editing to another file. I first have to revert the end results of the above command. That is, srvs.sh now has no comments and srvs.sh.com is the file with the comments.
+#
+¿\tld¿ rm srvs.sh
+¿\tld¿ mv srvs.sh.com srvs.sh
+#
+# For the next command, I am using 'sed -e' not 'sed -i'. I am also sending the edits to the file srvs.prod.sh.
+#
+¿\tld¿ sed -e '2,${/^[[:blank:]]*#/d;s/#.*//}' srvs.sh > srvs.prod.sh
+
+¿\tld¿ cat srvs.sh
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+# Test for service
+# Test for service
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" # service is active
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+
+¿\tld¿ cat srvs.prod.sh
+#!/bin/bash
+for service in $(cat myservices.txt); do   
+service $service status | grep --quiet "running"
+if [ $? -eq 0 ]; then
+echo $service "is [ACTIVE]" 
+else
+echo $service "is [INACTIVE or NOT INSTALLED]"
+fi
+done
+\end{lstlisting}
+
+Below are the details of Joseph R.'s solution. His code lies within the curly braces in my final solution.
+
+\begin{itemize}
+\item \keyword{sed} will by default look at your file line by line and print each line after possibly applying the transformations in the quotes. (sed \tqs{} your\_file will just print all the lines unchanged).
+
+\item Here we're giving \keyword{sed} two commands to perform on each line (they're separated by a semicolon).
+
+\item The first command says: /\textasciicircum{}[[:blank:]]*\#/d. In English, that means if the line matches a hash at its beginning (preceded by any number of leading blanks), delete that line (it will not be printed).
+
+\item The second command is: s/\#.*//. In English, substitute a hash mark followed by as many things as you can find (till the end of the line, that is) with nothing (nothing is the empty space between the final two //). Note, this is what deletes any comments at the end of a line.
+
+\item In summary, this will run through your file deleting lines that consist entirely of comments and any lines left after that will have the comments stricken out of them.
+\end{itemize}
+
+And, what I added to improve his solution is taken from the second website. I simply tell \keyword{sed} to apply the editing on lines 2 to the end. Notice the format, you have to use the \emph{-e} option and say edit only lines 2 to the end of the file and then enclose the editing code inside the curly braces.
+
+\section{I don't smoke, but I like using a pipe}
+
+\textit{You absolutely must master the \keyword{pipe} symbol if you want to work with bash scripts and programs.} The symbol for the \keyword{pipe} is | which is the shift-backslash key below the backspace key. Pipe lets you take the output from one command as input for another command. However, you must understand each \emph{command} in order to use the \keyword{pipe} correctly. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# myfiles.txt is a simple file with one column of information, a list of file path/names.
+#
+¿\tld¿ cat myfiles.txt
+./asdm.jnlp
+./one.msg
+./two.bak
+#
+# Ok, I want to send the first line to a file called: myredirect.txt. I use the awk command, a pattern scanning and processing language. I intentionally make two mistakes.
+#
+¿\tld¿ cat myfiles.txt | awk '{print $1}' | > myredirect.txt
+#
+# Hey, what happens? When I cat myredirect.txt, nothing is returned.
+#
+¿\tld¿ cat myredirect.txt
+¿\tld¿
+#
+# Oh yeah, I didn't need that second pipe. I wanted to redirect the output to a file, not pipe the output to the redirect. Using the two together simply sends the output to a black hole, although the file was created.
+#
+¿\tld¿ cat myfiles.txt | awk '{print $1}' > myredirect.txt
+
+¿\tld¿ cat myredirect.txt
+./asdm.jnlp
+./one.msg
+./two.bak
+#
+# Damn, all lines were sent to myredirect.txt. What is awk doing?
+#
+¿\tld¿ cat myfiles.txt | awk '{print $1}'
+./asdm.jnlp
+./one.msg
+./two.bak
+#
+# After a bit of reading of the awk manpage, you realise that the '{print $1}' option means "get just the first column of information on each line". Since there is only one column of information on each line, you get the entire contents of the file.
+#
+¿\tld¿ cat myfiles.txt | awk 'NR==1'
+./asdm.jnlp
+#
+# That's better. I use NR==1 to tell awk to retrieve line 1.
+#
+¿\tld¿ cat myfiles.txt | awk 'NR==1' > myredirect.txt
+
+¿\tld¿ cat myredirect.txt
+./asdm.jnlp
+\end{lstlisting}
+
+\section{Script file extensions and shebang}
+
+You often will encounter this command \emph{chmod +x filename} in order to make a file executable. You will also encounter a script header called a \keyword{shebang}. The \emph{\#} is the she and the \emph{!} is the bang. \textsl{\#!/bin/bash}. The \emph{shebang} is not necessary, it is just common practice to place the path to your interpreter at the beginning of the script so that the Linux shell knows for certain what interpreter to use to run your script. By default, Fedora uses \emph{bash}. However, it is best practice to put the \emph{shebang} header in your code. This helps with code portability when running the code on other Linux OSs.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I created a simple script or program to echo a statement.
+#
+¿\tld¿ cat mybad
+echo "It works, it works!"
+#
+# I created a file called mybad using the vi text editor. It contains only that one line: 'echo "It works, it works!" Let's try running the script. In another section, I will discuss the topic of shell types. In the following, I chose to run my program using three different types of shell command interpreters: bash, zsh, and sh.
+#
+¿\tld¿ bash mybad
+echo "It works, it works!"
+
+¿\tld¿ zsh mybad
+It works, it works!
+
+¿\tld¿ sh mybad
+It works, it works!
+#
+# So, when I preceed my script with a shell, the command executes. Note, mybad does not have a file type extension.
+#
+# You have already seen that you can execute a file without preceeding the file name with an interpreter name. Let's try!
+#
+¿\tld¿ ./mybad
+bash: ./mybad: Permission denied
+
+¿\tld¿ sudo ./mybad
+env: ./mybad: Permission denied
+#
+# Oh yeah, if you want to use this method to run a script, you need to make the file executable. We will modify this command in a few steps.
+#
+¿\tld¿ chmod +x mybad
+
+¿\tld¿ ls -la mybad
+-rwxr-xr-x. 1 mgcr mygrp 27 Feb 18 10:19 mybad
+
+¿\tld¿ ./mybad
+It works, it works!
+#
+# I don't like the command 'chmod +x'. Notice the permissions on the file mybad. Do you really want all users in the default group and all other users to have execute permission? I will remove the execute permission for these two user types. g=group, o=other, -x, remove execute. Instead of chmod +x, I use the following: chmod u+x filename, where u=owner=me, in order to make a file executable only by me. I use the next command to remove the executable setting from group and others.
+#
+¿\tld¿ chmod go-x mybad
+
+¿\tld¿ ./mybad
+It works, it works!
+
+¿\tld¿ ls -la mybad
+-rwxr--r--. 1 mgcr domain users 27 Feb 18 10:19 mybad
+#
+# How about specifying the interpreter in our file.
+# sed is a stream editor. ¿\textit{\color[rgb]{0.133,0.545,0.133}I recommend that you master the basics of the sed command!}¿ 
+# I am just using sed's -i inline option and saying insert this string before line 1.
+# For clarity, I left a space after the 1i. You do not need this space. Also, if you left 100 spaces, sed would ignore these spaces.
+#
+¿\tld¿ sed -i '1i ¿\tbi{\#}¿!/bin/bash' mybad
+
+¿\tld¿ cat mybad
+#!/bin/bash
+echo "It works, it works!"
+#
+# Does the shebang really matter? Apparently, not!
+#
+¿\tld¿ bash mybad
+It works, it works!
+
+¿\tld¿ sh mybad
+It works, it works!
+
+¿\tld¿ zsh mybad
+It works, it works!
+
+¿\tld¿ ./mybad
+It works, it works!
+#
+# You may encounter scripts that have file extensions. Do these filename extensions matter? Not really, but it is helpful to have a script extension because it helps sorting and finding your scripts. The mv command is used to rename files.
+#
+¿\tld¿ mv mybad mybad.sh
+
+¿\tld¿ ./mybad.sh
+It works, it works!
+
+¿\tld¿ bash mybad.sh
+It works, it works!
+#
+# Not convinced that the extension doesn't matter?
+#
+¿\tld¿ mv mybad.sh mybad.bobbyclobber
+
+¿\tld¿ bash mybad.bobbyclobber 
+It works, it works!
+\end{lstlisting}
+
+\section{The test command}
+
+The following is from the \emph{builtin} manpage. It is an example of the useful information that you can find in the manpage.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I am going to use the mbib function from my .bashrc file.
+#
+¿\tld¿ mbib "test expr" times
+test expr
+[ expr ]
+Return  a status of  0 (true) or 1 (false) depending on the evaluation of the conditional expression expr.  Each operator and operand must be a separate argument. Expressions are composed of the primaries described above under CONDITIONAL  EXPRESSIONS. test does  not accept any options, nor does it accept and ignore an argument of -- as signifying the end of options.
+
+Expressions may be combined using the following operators, listed in decreasing order of precedence. The evaluation depends on the number of arguments; see below.  Operator precedence is used when there are five or more arguments.
+
+! expr 
+True if expr is false.
+
+( expr )
+Returns the value of expr. This may be used to override the normal precedence of operators.
+
+expr1 -a expr2
+True if both expr1 and expr2 are true.
+
+expr1 -o expr2
+True if either expr1 or expr2 is true.
+
+test and [ evaluate conditional expressions using a set of rules based on the number of arguments.
+
+0 arguments
+The expression is false.
+
+1 argument
+The expression is true if and only if the argument is not null.
+
+2 arguments
+If the first argument is !, the expression is true if and only if the second  argument is	 null. If  the first  argument  is  one of the unary conditional operators listed above under CONDITIONAL EXPRESSIONS, the expression is true if the unary test is true.  If the first argument is not a valid unary conditional operator, the expression is false.
+
+3 arguments
+The following conditions are applied in the order listed.	If the second argument is one of the binary conditional operators listed above under CONDITIONAL EXPRESSIONS, the result of the expression is  the  result of the binary test using the first and third arguments as operands.  The -a and -o operators are considered binary operators when there are three arguments.  If the first argument is !, the value is the negation  of the two-argument test  using  the second and third arguments.  If the first argument is exactly ( and the third argument is exactly ), the result is the one-argument test of the second  argument. Otherwise, the expression is false.
+
+4 arguments
+If the  first argument is !, the result is the negation of the three-argument expression composed of the remaining arguments. Otherwise, the expression is parsed and evaluated according to precedence using the rules listed above.
+
+5 or more arguments
+The expression is parsed and evaluated according to precedence using the rules listed above.
+
+When used with test or [, the < and > operators sort lexicographically using ASCII ordering.
+
+\end{lstlisting}
+
+\section{Exit codes}
+
+Please see The Linux Documentation Project's discussion of \href{http://www.tldp.org/LDP/abs/html/exitcodes.html}{error codes}. 
+
+\begin{itemize}
+	\item[] \tbi{0} success
+	\item[] \tbi{1} Failure, catchall
+	\item[] \tbi{2} Misuse of shell builtins and (pass non-existent item to command - my conclusion)
+	\item[] \tbi{126} Not an executable
+	\item[] \tbi{127} Command not found
+\end{itemize}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# The user, billy, does not exist. After issuing the command, getent passwd billy, an empty command prompt is returned. This tells us that there is no such user. If we then issue the command, echo $?, the error code 2 is returned which indicates that we misused a shell builtin. However, we just passed a non-existent user to the command, we really didn't misuse it!
+#
+¿\tld¿ getent passwd billy
+
+¿\tld¿ echo $?
+2
+#
+# The user mgc does exist. The error code is 0 indicating success.
+#
+¿\tld¿ getent passwd mgc
+mgc:x:1000:1000:mgc:/home/mgc:/bin/sh
+
+¿\tld¿ echo $?
+0
+#
+# Just list files in the current directory, no directories.
+#
+¿\tld¿ ls -la | grep -v '^d'
+total 12
+-rw-r--r--. 1 mgcr mygrp    0 Feb 18 11:39 my.msg
+-rwxr--r--. 1 mgcr mygrp  146 Feb 18 11:29 testuser.sh
+#
+# Try to execute my.msg, a file that does not have execute permissions. The error code is 126, not an executable...even though the error output is kind of misleading: permission denied.
+#
+¿\tld¿ ./my.msg
+bash: ./my.msg: Permission denied
+
+¿\tld¿ echo $?
+126
+#
+# I fat fingered and issued the 'catt' command when I meant to type 'cat'. Again, $? provides fairly accurate info on what happened. 127 = command not found.
+#
+¿\tld¿ catt my.msg
+bash: catt: command not found...
+
+¿\tld¿ echo $?
+127
+\end{lstlisting}
+
+\section{Redirecting stdout and errors}
+
+Be careful when redirecting output and errors. For example, if you redirect your errors to \textsl{/dev/null}, how will you troubleshoot your script? It may be better to wait until you have successfully written your code before adding the redirection. Note, when we redirect output and errors, a space after the > symbol is optional. However, a misplaced space will lead to an error in the other commands. When redirecting both output and errors, there is no space between the greater than symbol and the ampersand.  Notice also that it does not seem to matter whether you write \&> or >\&. The file descriptors 0 and 1 are default and are assumed in commands, but you always have to use 2 for \keyword{STDERR}.
+
+\begin{itemize}
+	\item[] \tbi{\textit{\color{red}Redirect ouput only (the number 1 is optional)}} 
+	\item[] \tbi{cmd 1>filename} Redirects output to: filename.
+	\item[] \tbi{cmd 1>/dev/null} Redirects output to a black hole.
+	\item[] \tbi{\textit{\color{red}Redirect errors only (the number 2 is mandatory)}}
+	\item[] \tbi{cmd 2>filename} Redirects errors to: filename.
+	\item[] \tbi{cmd 2>/dev/null} Redirects errors to a black hole.
+	\item[] \tbi{\textit{\color{red}Redirect both output and errors}}
+	\item[] \tbi{cmd >filename 2>\&1} Redirects both output and errors to: filename.	
+	\item[] \tbi{cmd >/dev/null 2>\&1} Redirects both output and errors to a black hole.
+	\item[] \tbi{\textit{\color{red}Alternate syntax for redirect both}}
+	\item[] \tbi{cmd \&> filename} Redirects both output and errors to: filename.
+	\item[] \tbi{cmd >\& filename} Redirects both output and errors to: filename.
+	\item[] \tbi{cmd \&> /dev/null} Redirects both output and errors to a black hole.
+	\item[] \tbi{cmd >\& /dev/null} Redirects both output and errors to a black hole.
+	\item[] \tbi{\textit{\color{red}Send output one way, errors another way}} 
+	\item[] \tbi{cmd 1>filename 2>errorsname} Redirect output to: filename; and errors to: errorsname.	
+\end{itemize}
+
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# For the following, we are working with an actual file: my.msg.
+#
+¿\tld¿ cat my.msg
+LoL
+¿\tld¿ cat my.msg 1>message.msg
+¿\tld¿ cat message.msg 
+LoL
+¿\tld¿ cat my.msg 1> /dev/null	# It really makes no sense to do this.
+#
+# Note, my.msg is displayed to stdout and errors go to errors.msg.
+#
+¿\tld¿ cat my.msg 2>errors.msg
+LoL
+¿\tld¿ cat errors.msg	# There are no errors since my.msg is a file.
+¿\tld¿ 
+¿\tld¿ cat my.msg > /dev/null 2>&1 # Again, there is really no point in doing this.
+¿\tld¿
+#
+# For the following, we are working with the file mymy.msg...which does not exist.
+#
+¿\tld¿ cat mymy.msg
+cat: mymy.msg: No such file or directory
+#
+# Nothing is sent to message.msg since there is nothing to send to output.
+#
+¿\tld¿ cat mymy.msg 1>message.msg
+¿\tld¿ cat message.msg
+¿\tld¿ 
+¿\tld¿ cat mymy.msg 2>error.msg # Errors are redirected to error.msg.
+¿\tld¿ cat error.msg
+cat: mymy.msg: No such file or directory
+¿\tld¿ cat mymy.msg > /dev/null 2>&1	# What's the point, eh?
+¿\tld¿
+#
+# Ok, let's send output to one file and errors to another file. I have both *.sh and *.doc files in my directory, but I make a typo when entering the following command, typing *.dc instead of *.doc.
+#
+¿\tld¿ ls *.sh *.dc 1>myfiles.txt 2>myerrs.txt
+
+¿\tld¿ cat myfiles.txt
+EchoPWD.sh
+exits.sh
+myservices.sh
+quotes.sh
+
+¿\tld¿ cat myerrs.txt
+ls: cannot access *.dc: No such file or directory
+#
+# Ok, we know that we can send both the output and errors to the same file.
+#
+¿\tld¿ ls *.sh *.dc >myfile.lst 2>&1
+
+¿\tld¿ cat myfile.lst
+ls: cannot access *.dc: No such file or directory
+EchoPWD.sh
+exits.sh
+myservices.sh
+quotes.sh
+#
+# But, what would happen if we left out the ampersand? First, we will empty our file and then issue the wrong command. Do we need to do this? What does the > indicate?
+#
+¿\tld¿ >myfile.lst
+
+¿\tld¿ ls *.sh *.dc >myfile.lst 2>1
+#
+# Well, this part worked, our successful listing of *.sh files went to myfile.lst.
+#
+¿\tld¿ cat myfile.lst
+EchoPWD.sh
+exits.sh
+myservices.sh
+quotes.sh
+#
+# Where did the errors go? The errors were sent to the file we specified and named: 1.
+#
+¿\tld¿ cat 1
+ls: cannot access *.dc: No such file or directory
+
+¿\tld¿ ls -la
+total 336
+drwxr-xr-x.   2 mgcr mygrp   4096 Feb 22 11:41 .
+drwx--x---+ 120 mgcr mygrp 286720 Feb 22 09:15 ..
+-rw-r--r--.   1 mgcr mygrp     50 Feb 22 11:41 1
+-rwxr--r--.   1 mgcr mygrp    109 Feb 19 15:10 EchoPWD.sh
+.
+.
+-rwxr--r--.   1 mgcr mygrp    257 Feb 19 12:47 quotes.sh
+-rw-r--r--.   1 mgcr mygrp     37 Feb 22 09:56 success.doc
+#
+# Ok, let's send both errors and output to myfile.lst. Since there are no errors, myfile.lst just contains a list of files that match our listing conditions. 
+#
+¿\tld¿ ls *.sh *.doc > myfile.lst 2>&1
+¿\tld¿ cat myfile.lst
+EchoPWD.sh
+errors.doc
+.
+.
+quotes.sh
+success.doc
+# ¿\textbf{\color{red}Challenge:} How would you modify the last command in order to list the files alphabetically sorted by file extension? \hyperlink{sortbyfileext}{Answer}¿ 
+\end{lstlisting}
+
+\section{test construct with if and []}
+
+Comparison statements with \keyword{if} use either two sets of \textbf{[[ ... ]]} brackets or one set \textbf{[ .. ]} depending on what is being evaluated and what comparison operators are used. Regardless, the inner-most brackets have spaces after \textbf{[} and before \textbf{]}. Note, I am redirecting both output and input to \textsl{/dev/null}. I don't need to see the results or the error codes since my code catches the error. I just want to know if the user exists or does not exist. Please see \href{http://www.tldp.org/LDP/abs/html/comparison-ops.html}{Other Comparison Operators} before proceeding.
+
+\subsection{using kernel exit codes in our test statement}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# The if statement is followed by a single square bracket. It is testing for whether or not the user exists. If 'getent passwd username' has an error code of 0, the user exists; otherwise the user does not exist. With 'integer comparison', we can use single square brackets.
+#
+¿\tld¿ cat testuser.sh
+¿\tbi{\#}¿!/bin/bash
+getent passwd $1 > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+echo "Yes, the user exists."
+else
+echo "No, the user does not exist."
+fi
+¿\tld¿ bash testuser.sh billy
+No, the user does not exist.
+
+¿\tld¿ bash testuser.sh mgc
+Yes the user exists.
+#
+# Let's run the code at the command line to see what is taking place.
+#
+¿\tld¿ getent passwd billy > /dev/null 2>&1
+¿\tld¿ echo $?
+2
+
+¿\tld¿ getent passwd mgc > /dev/null 2>&1
+¿\tld¿ echo $?
+0
+#
+# So, when we are testing for billy, the error code is 2.
+# [ 2 -eq 0] is false, so the else statement gets executed, not the statement following the test construct: then.
+#
+\end{lstlisting}
+
+\subsection{using our own exit codes in our test statement}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# We don't have to use the builtin exit codes, we can use our own.
+#
+¿\tld¿ cat testuser1.sh
+¿\tbi{\#}¿!/bin/bash
+#
+# We begin by setting the variable ret to false.
+#
+ret=false
+#
+# If the first part of the next statement up to the && is true, ret is set to true.
+getent passwd $1 >/dev/null 2>&1 && ret=true
+#
+# 'if $ret' is short for 'if $ret is true'
+#
+if $ret; then
+echo "Yes, the user exists."
+#
+# ret is still false because 'getent passwd $1 >/dev/null 2>&1' was false
+#
+else
+echo "No, the user does not exist."
+fi
+\end{lstlisting}
+
+\section{Running two independent tests}
+
+Our test condition can use any \keyword{builtin} kernel command or Linux command. In the following code, I first test for the presence of the correct number of arguments. I am only accepting one argument. Note, this code also says I can supply either a \emph{username} or an \emph{UID}. If you supply the wrong number of arguments, you get a simple message explaining how to use the script. In these examples, I use the shortcut \textsl{./tu.sh} to execute my script.
+
+Step 1 - Test for correct number of arguments.\\
+Step 2 - Test whether or not the user exists.
+
+I snagged this code from \href{http://stackoverflow.com/questions/14810684/check-whether-a-user-exists}{Check Whether a User Exists}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat tu.sh
+¿\tbi{\#}¿!/bin/bash
+#
+# Note: test for correct number of arguments, $#=number of arguments, $0=name of script, -n=do not output the trailing newline.
+#
+if [[ $# != 1 ]]; then
+	echo "$#: wrong number of arguments, only one argument required"
+	echo -n "Usage: "
+	echo "$0 {username | UID}"
+#
+# Now that we have tested for the correct number of arguments, I check whether the account exists or not.
+#
+else
+	getent passwd $1 > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "Yes, the user exists."
+	else
+		echo "No, the user does not exist."
+	fi
+fi
+#
+# Let's run the command without an argument. 
+#
+¿\tld¿ ./tu.sh
+0: wrong number of arguments, only one argument required
+Usage: ./tu.sh {username | UID}
+#
+# Let's run the command with too many agruments.
+#
+¿\tld¿ ./tu.sh bob bobby
+2: wrong number of arguments, only one argument required
+Usage: ./tu.sh {username | UID}
+#
+# Let's test for the user billy.
+#
+¿\tld¿ ./tu.sh billy
+No, the user does not exist.
+#
+# Let's test for the user mgc
+#
+¿\tld¿ ./tu.sh mgc
+Yes, the user exists.
+#
+# Let's test for the mgc account using mgc's UID.
+#
+¿\tld¿ ./tu.sh 1000
+Yes, the user exists.
+\end{lstlisting}
+
+\section{here string and here documents}
+
+You will frequently encounter \keyword{here strings} represented by three less than symbols \tbi{<{}<{}<{}} when studying code or script writing. You will aslo encounter \keyword{here documents} represented by two less than symbols \tbi{<{}<{}}.
+
+You can get more information on these items by searching the \emph{bash} manpage.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+man bash | grep -A29 "Here Documents"
+\end{lstlisting}
+
+\subsection{The here string and IFS}
+
+We can push a string into the command line's standin. That is, we can send strings to the actual command line for processing using the \emph{here string <{}<{}<{}}. \keyword{IFS} stands for \emph{In Field Separator}, that is, the character that we use to separate a list of items.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Define a variable, a simple path. Set the / as the field separator and get the fourth field.
+#
+# But, get the 4th field of what? We use the 'here string' function to pass myvar to awk.
+#	
+¿\tld¿ myvar="/home/mgc/Downloads/Youtubers"
+
+¿\tld¿ awk -F/ '{print $4}' <<< $myvar
+Downloads
+
+¿\tld¿ awk -F/ '{print $5}' <<< $myvar
+Youtubers
+
+¿\tld¿ awk -F/ '{print $6}' <<< $myvar
+¿\tld¿ 
+¿\tld¿ awk -F/ '{print $1}' <<< $myvar
+¿\tld¿ 
+#
+# So, it looks like we have to interpret the $n as $n-1. Alternatively, we could say, what is the field before the nth / ? So, $4, is the 3rd field, the field before the fourth /.
+#
+# Here is a simple example of the here string. Note, I also illustrate the impact of using single and double quotes.
+#
+¿\tld¿ tr a-z A-Z <<< 'you are shouting!'
+YOU ARE SHOUTING!
+
+¿\tld¿ tr a-z A-Z <<< "you are shouting!"
+YOU ARE SHOUTING!
+
+¿\tld¿ tr a-z A-Z <<< 'you are shouting! $myvar'
+YOU ARE SHOUTING! $MYVAR
+
+¿\tld¿ tr a-z A-Z <<< "you are shouting! $myvar"
+YOU ARE SHOUTING! /HOME/MGC/DOWNLOADS/YOUTUBERS	
+#
+# You may want to write a script to process network addresses. How would we break an IP address down into the individual octets that make up the address? 
+#
+¿\tld¿ IFS="." read oct1 oct2 oct3 oct4 <<< "190.93.243.190"
+¿\tld¿ echo $oct4
+190
+#
+# After setting the IFS, we would typically want to unset the IFS after we are finished.
+#
+¿\tld¿ unset IFS
+#
+# What if we had a list separated by a punctuation mark? We could set the IFS to the punctuation mark and then print our list as line items. Our list of path names includes some paths that have names with spaces. We therefore needed to use some marker to separate each path name. I chose a comma.
+#
+¿\tld¿ cat printlst.sh
+#!/bin/bash
+IFS=','
+lst='/mnt,/var/lib/vmware/Virtual Machines,/dev,/proc,/sys,/tmp/very temp,/usr/methye portage,/var/tmp'
+for i in $lst; do echo $i; done
+unset IFS
+
+¿\tld¿ ./printlst.sh
+/mnt
+/var/lib/vmware/Virtual Machines
+/dev
+/proc
+/sys
+/tmp/very temp
+/usr/methye portage
+/var/tmp
+#
+# If you avoid using spaces in file and directory path names, your Linux life will be so much easier. I created another script: printmylst.sh. I separated each path name with a space, used the underscore for complex directory names, and did not use the IFS variable.
+#
+¿\tld¿ ./printmylst.sh
+/mnt
+/var/lib/vmware/Virtual_Machines
+/dev
+/proc
+/sys
+/tmp/very_temp
+/usr/methye_portage
+/var/tmp
+
+¿\tld¿ cat printmylst.sh
+#!/bin/bash
+lst='/mnt /var/lib/vmware/Virtual_Machines /dev /proc /sys /tmp/very_temp /usr/methye_portage /var/tmp'
+for i in $lst; do echo $i; done
+\end{lstlisting}
+
+\subsection{cut and awk to isolate fields and here strings}
+
+You will often encounter the \keyword{cut} and \keyword{awk} commands. The options for these commands are dissimilar, but the syntax is quite similar. \emph{cut} and \emph{awk} are both used to scan for patterns and process lines of text in \tbi{documents}, \tbi{not in variables}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's define a variable, but first a few preliminaries. 1.There are no spaces before or after the equal sign when you set the value of the variable. 2. Spaces within the definition of the variable, the string, are hardcoded.
+#
+# Incorrectly place a space after the variable name, before the equal sign.
+#
+¿\tld¿ myvar ="Linux Rocks"
+bash: myvar: command not found...
+#
+# Incorrectly place a space after the equal sign.
+#
+¿\tld¿ myvar= "Linux Rocks"
+bash: Linux Rocks: command not found...
+#
+# Define the variable correctly, no spaces before or after the equal sign.
+#
+¿\tld¿ myvar="Linux Rocks"
+
+¿\tld¿ echo "What is my variable? $myvar"
+What is my variable? Linux Rocks
+#
+# What would happen if we put spaces in the definition?
+#
+¿\tld¿ myvar="¿\qquad¿Linux Rocks"
+
+¿\tld¿ echo "What is my variable? $myvar"
+What is my variable?¿\qquad¿Linux Rocks
+#
+# However, pay attention, if you just echo $myvar, the output is left-adjusted to the command line and the hardcoded spaces are not displayed.
+#
+¿\tld¿ echo $myvar
+Linux Rocks
+#
+# Ok, let's redefine myvar.
+#
+¿\tld¿ myvar="/home/mgc/Downloads/Youtubers"
+#
+# Ok, let's echo the variable.
+#
+¿\tld¿ echo myvar
+myvar
+#
+# Oh yeah, when we refer to a variable, we have to proceed its name with the dollar sign.
+#
+¿\tld¿ echo $myvar
+/home/mgc/Downloads/Youtubers
+#
+# Let's see if we can get the second field when the field separator is the forward slash /.
+#	
+cut -f2 -d/ $myvar	
+cut: /home/mgc/Downloads/Youtubers: No such file or directory
+#
+# Well, that didn't work. cut works on files, not variables! So, let's send the string to cut as a if it were a document.
+#
+¿\tld¿ cut -f2 -d/ <<< $myvar
+home
+#
+# We could also use the awk command.
+#
+¿\tld¿ awk -F/ '{print $2}' <<<$myvar
+home
+#
+# Let's take that leading slash from our variable.
+#
+¿\tld¿ myvar="home/mgc/Downloads/Youtubers"
+
+¿\tld¿ cut -f2 -d/ <<< $myvar
+mgc
+
+¿\tld¿ awk -F/ '{print $2}' <<<$myvar
+mgc
+
+\end{lstlisting}
+
+So, with \keyword{awk} and \keyword{cut}, if there is a leading delimiter in our string, we must assume that there is something before that leading delimiter in our count.
+
+When there is a leading delimiter, in our case the \textsl{/home/mgc/Downloads/Youtubers}, the second field is actually the first text field, since we implicitly consider the phantom field before the leading delimiter. Our second field is thus \textsl{home}. 
+
+But, when there is no leading delimiter, \textsl{home/mgc/Downloads/Youtubers}, we count the number of delimiters, two in our case, and select the field in front of this second delimiter, which in the second example is field \textsl{mgc}.
+
+\subsection{here documents and piping to /dev/null}
+
+Like \keyword{here strings}, the \keyword{here document} can be sent to a command for processing. The syntax for a \emph{here document} is fairly similar, instead of 3 less than symbols we use two less than symbols followed by the name of the \emph{here document}. The name can be any string, but typically \keyword{EOF} is used which stands for \emph{end of file}. We can also use the concept of the \emph{here document} interactively at the command line and embed a \emph{here document} within our scripts.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's work interactively at the command prompt. Here we count the number of words that I type interactively.
+#
+¿\tld¿ wc -w << EOF
+> Estragon: Nothing to be done.
+> Vladimir: I'm beginning to come around to that opinion. All my life I've tried to put it from me, saying Vladimir, be reasonable, you haven't tried everything. And I resumed the struggle. So there you are again.
+> Estragon: Am I?
+> EOF
+45
+#
+# So, the here document is begun and terminated with the string EOF. As stated above, the string to begin the here document can be any string, but you must terminate your document with the same string...and the string is case sensitive. You can't start the here document with EOF and try to terminate the document with eof.
+#
+\end{lstlisting}
+
+I created a script that backs up my \textsl{/home/mgcr/scripts} folder. I will run it manually whenever I want to backup this folder to a share on my second hard drive \textsl{/mnt/backupdrive}. In the script, I am using the archiving utility \keyword{tar} to archive the contents of the \textsl{scripts} directory into a single archive file called \textsl{homer.tar}. Note, that I send my error messages, if any, to the black hole. I also use the \emph{test} condition. If the backup is successful, \$? = 0 and \emph{bustatus} will equal the string \emph{Backup was successful!}. If the backup fails, the message will be \emph{Backup failed!}. The \keyword{mail} command is used to send an email. I am using \emph{here document} to create the message. The string \emph{END\_MESSAGE} begins and ends the message.
+
+\&\& = and
+
+|| = or
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat mybackup.sh
+¿\#¿!/bin/bash
+#
+# Run tar command to backup the scripts directory.
+#
+tar -cvf /mnt/backupdrive/homer.tar /home/mgcr/scripts 2>/dev/null
+#
+# Was the backup successful? $(date) is today's date, $hostname = my PC name
+#
+[ $? -eq 0 ] && bustatus="Backup was successful!" || bustatus="Backup failed!"
+#
+# Send an email to my account using environment variables and text that is part of the script.
+# -s = subject of email
+#
+mail -s 'Backup status' mgc@amisk.com<<END_MESSAGE
+The backup job finished.
+End date: $(date)
+Hostname : $(hostname)
+Status : $bustatus
+END_MESSAGE
+#
+# Ok, let's run the script. Nothing is displayed on the command line. Why? The script should have sent the succesful copies to the command line. Since, no copy commands appeared, it is safe to say no copying took place. Also, I sent my errors to the black hole. The only way to truly find out if the backup was successful is to check my email. 
+#
+¿\tld¿ ./mybackup.sh
+¿\tld¿
+\end{lstlisting}
+
+So, here is the email that I received.
+
+The backup job finished.\\
+End date: Sun Feb 21 15:23:14 PST 2016\\
+Hostname : LIB2015\\
+Status : Backup failed!
+
+So, the backup failed. Why did it fail? How can we find out? If you recall, I mentioned in a previous section that we may want to delay using the feature to send our error messages to a black hole until our script successfully runs. You have two basic editing options to modify our script for further troubleshooting.
+
+\begin{enumerate}
+	\item{Using vi, copy the line with the error message redirect and comment out one of the two duplicate lines. Then, remove the redirect from the line that is not a comment.}
+	\item{Using vi, edit the line and remove the redirect.}
+\end{enumerate}
+
+I prefer using the first method. Sometimes, the command can be quite complicated. If I edit the line, I may forget how the original line was written. Let's begin again. I've left out the rest of the comments so that the duplicate line with the redirect stands out.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat mybackup.sh
+#!/bin/bash
+tar -cvf /mnt/backupdrive/homer.tar /home/mgcr/scripts 
+#tar -cvf /mnt/backupdrive/homer.tar /home/mgcr/scripts 2>/dev/null
+[ $? -eq 0 ] && bustatus="Backup was successful!" || bustatus="Backup failed!"
+mail -s 'Backup status' mgd@amisk.com<<END_MESSAGE
+The backup job finished.
+End date: $(date)
+Hostname : $(hostname)
+Status : $bustatus
+END_MESSAGE
+#
+# Let's run the command again.
+#
+¿\tld¿ ./mybackup.sh
+tar: /mnt/backupdrive/homer.tar: Cannot open: Permission denied
+tar: Error is not recoverable: exiting now
+#
+# Well, that's clear...so, only root has write access to that drive.
+#
+¿\tld¿ ls -la /mnt
+total 16
+drwxr-xr-x.  4 root     root         4096 Sep 10 01:23 .
+dr-xr-xr-x. 24 root     root         4096 Dec 22 11:15 ..
+drwxr-xr-x.  8 root     root         4096 Nov 16 09:09 backupdrive
+drwxr-xr-x.  2 mgcr mygrp		 4096 Aug 31 12:31 win7
+#
+# I need to change the permissions on backupdrive or run my command with sudo privilege. I chose the former, I will change the folder/file permissions on backupdrive. I use the chown command to change ownership from root to mgcr. Note, I need sudo to do this.
+#
+¿\tld¿ sudo chown -R mgcr: /mnt/backupdrive
+¿\tld¿ ls -la /mnt
+total 16
+drwxr-xr-x.  4 root     root         4096 Sep 10 01:23 .
+dr-xr-xr-x. 24 root     root         4096 Dec 22 11:15 ..
+drwxr-xr-x.  8 mgcr mygrp 4096 Nov 16 09:09 backupdrive
+drwxr-xr-x.  2 mgcr mygrp 4096 Aug 31 12:31 win7
+#
+# Ok, let's try again...
+#
+¿\tld¿ ./mybackup.sh
+/home/mgcr/scripts/
+/home/mgcr/scripts/gl.err
+.
+.
+/home/mgcr/scripts/myvar
+/home/mgcr/scripts/1
+#
+# Well, that's positive. To check, let's use the tar command to list the contents of my tarred archive. Yep, they're all there!
+#
+¿\tld¿ tar -tf /mnt/backupdrive/homer.tar
+/home/mgcr/scripts/
+/home/mgcr/scripts/gl.err
+.
+.
+/home/mgcr/scripts/myvar
+/home/mgcr/scripts/1
+\end{lstlisting}
+
+Ok, now that we have a successful backup, I receive the following email.
+
+The backup job finished.\\
+End date: Sun Feb 22 15:33:42 PST 2016\\
+Hostname : LIB2015\\
+Status : Backup was successful!
+
+But, we need to remove the line without the redirect from our code and uncomment our original line with the redirect. But, this time I want to redirect both the command output and errors to the black hole (using \&> and not 2>). I verified that my script works, so I do not need to see the copy commands and I know there are now no errors.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat mybackup.sh
+#!/bin/bash 
+#
+# Tar my scripts directory and send command output and errors to the black hole.
+#
+tar -cvf /mnt/backupdrive/homer.tar /home/mgcr/scripts &>/dev/null 
+#
+# Determine status by checking test results of previous command.
+#
+[ $? -eq 0 ] && bustatus="Backup was successful!" || bustatus="Backup failed!"
+#
+# Use here document to create text of email message.
+#
+mail -s 'Backup status' mgd@amisk.com<<END_MESSAGE
+The backup job finished.
+End date: $(date)
+Hostname : $(hostname)
+Status : $bustatus
+END_MESSAGE
+
+¿\tld¿ ./mybackup.sh
+¿\tld¿
+# 
+# As we can see from the above, the copy statements are no longer sent to the command line, we are just returned to an empty command prompt after we hit the 'enter' key to invoke the script. I still get the email notification that the backup was successful.
+#
+\end{lstlisting}
+
+I now have a script that I can use to backup any files and folders that I wish to place on my backup drive. What is interesting is that now that I know my script works, I can simpify it even further. Do I need the test statement in its current form? I know that the script works. I could simply replace it with: bustatus="Backup is complete". 
+
+\subsection{bc and here strings and documents}
+
+If you recall from our discussion on the \keyword{bc} command, we can echo complex calculations to the \keyword{bc} command. Let's take a look again and see how we can replace this design and use instead \keyword{here strings} and \keyword{here documents}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# How many kilobytes in a gigabyte?
+#
+¿\tld¿ echo "k=1024; m=k*k; g=k*m; g" | bc
+1073741824
+#
+# Let's use the here string instead and eliminate the echo.
+#
+¿\tld¿ <<< "k=1024; m=k*k; g=k*m; g" bc
+1073741824
+#
+# Let's use the here document concept.
+#
+¿\tld¿ << EOF bc
+> k=1024
+> m=k*k
+> g=k*m
+> g
+> EOF
+1073741824	
+\end{lstlisting}
+
+\subsection{here documents, editing text inline, and redirecting output}
+
+We can use \keyword{here documents} to edit text interactively and redirect the output to a file. Here is a simple example: Note, the complexity of the beginning command. I start with the \keyword{cat} command and a \keyword{here document} that I pipe to the \keyword{sed} command which then sends the result of its operation to the file \emph{anonymous}. Cool!
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat << EOF | sed 's/ight/ite/' > anonymous
+> There was a yound lady named Bright
+> who traveled much faster than light.
+> She ¿set¿ out one day
+> in a relative way,
+> and came back the previous night.
+> EOF
+
+¿\tld¿ cat anonymous
+There was a yound lady named Brite
+who traveled much faster than lite.
+She ¿set¿ out one day
+in a relative way,
+and came back the previous nite.	
+\end{lstlisting}
+
+\subsection{cat alternative to EOF}
+
+There is an alternative to using the \keyword{here document} construct when we are interactively creating a file at the command line. What you type after the \keyword{cat} command to start entering code can be very brief or very long and complex.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's use the previous bc command.
+#
+¿\tld¿ echo "k=1024; m=k*k; g=k*m; g" | bc
+1073741824
+#
+# Let's create a script that contains only that line. We are going to use a technique called file redirection. When we hit enter, the cursor sits below the next line and waits for our input.
+#
+¿\tld¿ cat > bytes.sh
+
+#
+# After we type the next line, we hit the ctrl and d keys simultaneously to end the input and to create the bytes.sh file.
+#
+echo "k=1024; m=k*k; g=k*m; g" | bc
+¿\tld¿
+
+¿\tld¿ cat bytes.sh
+echo "k=1024; m=k*k; g=k*m; g" | bc
+#
+# Make the file executable.
+#
+¿\tld¿ chmod u+x bytes.sh
+#
+# Run the file...
+#
+¿\tld¿ ./bytes.sh
+1073741824
+
+¿\tld¿ bash bytes.sh
+1073741824
+¿\tld¿ 
+\end{lstlisting}
+
+\subsection{another alternative to EOF}
+
+You can start writing code right from the command line when you begin with a conditional such as \keyword{if}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I am going to test for the existence of a file called AA.txt. As soon as I type the closing fi the conditional is executed.
+#
+¿\tld¿ if [ -a AA.txt ]
+> then echo "file exists"
+> else echo "file does not exist"
+> fi
+file does not exist
+#
+# At this point, I hit the up arrow and my entire block of code is placed on the command line. I just scroll back and change AA.txt to A.txt and hit the enter key. Note, the shell adds the optional semi-colons.
+#
+¿\tld¿ if [ -a A.txt ]; then echo "file exists"; else echo "file does not exist"; fi
+file exists
+#
+# Let's get a quick listing.
+#
+¿\tld¿ ls A.*
+A.txt  A.txt.shar
+¿\tld¿ 
+\end{lstlisting}
+
+
+\section{The short and curlies}
+
+You often will encounter the use of \textbf{\{\}} curly brackets. Sometimes these brackets are meaningful and necessary, at other times, they are redundant and clutter the code. The best advice is: \tbi{KISS}, \tbi{keep it simple stupid} or should that be \tbi{keep it stupid simple}.
+
+However, please read the \keyword{Parameter Expansion} section of the \emph{bash} man page. Curly braces are more commonly used to help in substituting, replacing, or extracting strings.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I will start off by illustrating the mis-use of curly braces...that you sometimes will encounter on web pages.
+#
+¿\tld¿ var="they're_done_like_dinner"
+#
+# I want the first field. Note, the curly brackets are an essential piece of awk's print statement.
+#
+¿\tld¿ awk -F_ '{print $1}' <<< "${var}"
+they're
+#
+# Double quotes are used to evaluate what is inside, so in this example, they are redundant and can be removed.
+#
+¿\tld¿ awk -F_ '{print $1}' <<< ${var}
+they're
+#
+# What is the point of enclosing the variable inside curly brackets? They also can be removed.
+#
+¿\tld¿ awk -F_ '{print $1}' <<< $var
+they're
+#
+# But, we can't use single curved brackets because now the construct is a command expansion, var is not a command, it is a variable.
+#
+¿\tld¿ awk -F_ '{print $1}' <<< $(var)
+bash: var: command not found...
+#
+# What about square brackets? Nope, square brackets are used for arithmetic.
+#
+¿\tld¿ awk -F_ '{print $1}' <<< $[var]
+bash: they're_done_like_dinner: syntax error: invalid arithmetic operator (error token is "'re_done_like_dinner")
+#
+# Let's switch tracks a bit. Please see the bash man page
+#
+¿\tld¿ man bash | grep -A10 '${parameter/pattern/string}'
+       ${parameter/pattern/string}
+       ¿\color{red}{Pattern substitution.}¿   The pattern is expanded to produce a pattern just as in  pathname  expansion. Parameter  is  expanded  and the longest match of pattern against its value is replaced with string.If pattern begins with /, all matches of pattern are replaced with string.  Normally only the  first match  is  replaced.  If pattern begins with ¿\tbi{\#}¿, it must match at the beginning of the expanded value of parameter.  If pattern beins with %, it must match at the end of the expanded value  of  parameter.   If string is null, matches of pattern are deleted and the / following pattern may be omitted. If parameter is @ or *, the substitution operation is applied to each positional parameter in  turn, and the expansion is the resultant list.  If parameter is an array variable subscripted with @ or *, the substitution operation is applied to each member of the array in turn, and the expansion is the resultant list.
+#
+# We can use curly braces to segment a file name. First we assign the name of a file with multiple file extensions to a variable name.
+#
+¿\tld¿ myfile=scrunchy.tar.bz
+#
+# What's the first part of my file name? Be careful, in the command below, each % does not represent one position from the last extension. Instead '%%' is shorthand for the left-most component of the file name according to the pattern. Starting from the end, the longest match is .tar.bz. The pattern is .*.  You can interpret the * as everything, until the end. The command basically says, take this longest match and delete it.
+#
+¿\tld¿ echo ${myfile%%.*}
+scrunchy
+#
+# Lets's use a single % which says take the shortest match. The shortest match is .bz. So, the command answers the question, "What's the last file extension?" and then deletes it.
+#
+¿\tld¿ echo ${myfile%.*}
+scrunchy.tar
+#
+# We can also use the # symbol, but since # operates from the start of the parameter, we have to modify the command slightly. With a single #, starting from the beginning of the parameter, the shortest string, would be: scrunchy. Note, the # precedes *.
+#
+¿\tld¿ echo ${myfile#*.}
+tar.bz
+#
+# And, with two #'s, the longest string would be: scrunchy.tar.
+#
+¿\tld¿ echo ${myfile##*.}
+bz
+# Let's redefine myfile.
+#
+¿\tld¿ myfile=big.scrunchy.tar.bz
+
+¿\tld¿ echo ${myfile%%.*}
+big
+
+¿\tld¿ echo ${myfile%.*}
+big.scrunchy.tar
+
+¿\tld¿ echo ${myfile##*.}
+bz
+
+¿\tld¿ echo ${myfile#*.}
+scrunchy.tar.bz
+#
+# Note, if you tried to use more than two % or #, these parameters would be be ignored and the full file name would be printed.
+#
+¿\tld¿ echo ${myfile###*.}
+big.scrunchy.tar.bz
+
+¿\tld¿ echo ${myfile%%%.*}
+big.scrunchy.tar.bz
+	
+#
+# Let's look at some other examples...
+#	
+¿\tld¿ echo "a{x,y,z}wazoo"
+a{x,y,z}wazoo
+#
+# Hey, what happened here? The echo command just echoed my string. Oh yeah, with echo, double quotations don't interpret what's inside, the contents are interpreted literally. We have to let the shell interpret our strings by dropping the quotations.
+#
+¿\tld¿ echo a{x,y,z}wazoo
+axwazoo aywazoo azwazoo
+#
+# Let's nest the braces...
+#
+¿\tld¿ echo a{b{c,d},e}
+abc abd ae
+#
+# Pay attention to the commas! Note how they affect the command...the two outer braces are interpreted literally.
+#
+¿\tld¿ echo a{b{c,d}e}
+a{bce} a{bde}
+#
+# A practical example...create 4 subdirectories in my home directory: /home/me/c, /home/me/php, /home/me/python, and /home/me/html.
+#
+¿\tld¿ mkdir /home/me{c,php,python,html}
+#
+# Create three files: ab.txt, ac.txt, and ad.txt.
+#
+¿\tld¿ touch a{b,c,d}.txt
+
+\end{lstlisting}
+
+
+\section{Using shortcuts at the command line}
+
+All these options are typed simultaneously. So, \emph{esc + .} means type the \emph{esc} key and the period key simultaneously. esc=escape key, alt=alt key, ctrl=ctrl key. It does not matter whether you chose the right or left ctrl or alt keys.
+
+\begin{enumerate}
+	\item{\tbi{esc + .} Shortcut for the argument of the previous command}
+		\begin{itemize}
+			\item \tbi{vi mycmd.sh}  create a script, save and exit.
+			\item \tbi{chmod u+x}  after you type the x and a space, type esc. and the line becomes...
+			\item \tbi{chmod u+x mycmd.sh}
+		\end{itemize}
+	\item{\tbi{alt + .}  cycle through the previous commands, keep pressing the period for the toggle}
+	\item{\tbi{alt + r}  undo all changes to the line}
+	\item{\tbi{cmd alt + ctrl + e} expand a cmd to its alias}
+			\begin{itemize}
+			\item \tbi{grep}  now type alt+ctrl+e, we want to see if grep has an alias, it does
+			\item \tbi{grep -{}-{}color-auto}
+			\end{itemize}
+	\item{\tbi{ctrl + p}  cycle back through command history}
+	\item{\tbi{alt + f}  move forward one word}
+	\item{\tbi{alt + b}  move backward one word}
+	\item{\tbi{Home key or ctrl + a}  move to beginning of line}
+	\item{\tbi{End key or ctrl + e}  move to end of line}
+    \item{\tbi{esc + u}  at beginning of word, change word to upper case; if cursor is partway through a way, change rest of word to upper case}
+    \item{\tbi{esc + l}  change to lower case}
+    \item{\tbi{ctrl + u}  delete from the cursor to beginning of line}
+    \item{\tbi{ctrl + k}  delete from the cursor to end of line}
+    \item{\tbi{ctrl + w}  delete from the cursor to beginning of word}
+    \item{\tbi{ctrl + l}  clear the screen leaving current line at top of window}
+    \item{\tbi{ctrl + -}  decrease font size of current window}
+    \item{\tbi{ctrl + +}  increase font size of current window}
+    \item{\tbi{ctrl + shift + -}  undo the last changes on a line}
+    \item{\tbi{ctrl + t}  transpose the character under the cursor with the previous character}
+    \item{\tbi{!!}  execute the last command}
+    \item{\tbi{sudo !!}  execute the last command as root}
+    \item{\tbi{!cmd}  execute the last use of: cmd}
+    \item{\tbi{\textasciicircum{}arg\textasciicircum{}argnew} - replace the argument in the last command with: argnew}
+		    \begin{itemize}
+		    	\item \tbi{pgrep sshd} - what is the process id of the sshd process?
+		    	\item \tbi{\textasciicircum{}sshd\textasciicircum{}remmina}  what is the process id of the remmina process?
+		    	\item \tbi{two lines of output} prgrep remmina followed by its process id.
+		    \end{itemize}
+    \item{\tbi{!n} - execute the nth command in history}    
+\end{enumerate}
+
+\subsection{glob-expand-word}
+
+Again, I refer to the manpage...
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# I want some information on: glob-expand-word
+#
+¿\tld¿ man bash | grep -A3 "^\ *glob-expand-word"
+glob-expand-word (C-x *)
+The word before point is treated as a pattern for pathname expansion, and the list of matching file names is inserted, replacing the word. If a numeric argument is supplied, an asterisk is  appended before pathname expansion.
+#
+# The bash man page uses capital C as an abbreviateion for the CTRL key. Therefore, to invoke glob-expand-word, we hold down the ctrl and x keys simultaneously and then let them go and then type the * key.
+#
+¿\tld¿ pwd
+/home/mgcr/scripts
+#
+# Type the following command, but don't press enter.
+#
+¿\tld¿ ls ~/scripts	
+#
+# Instead of enter, type ctrl + x simultaneously and let go of the keys. Next, type an asteriks: * Pathname expansion occurs, the tilde is replace by the full name. Now, hit the enter key to see the file listing.
+#
+¿\tld¿ ls /home/mgcr/scripts 
+1  errors.doc  gl.err  myfile.lst  myservices.sh  myvar        
+printmylst.sh  quotes.sh EchoPWD.sh  exits.sh    gl.suc  
+my.lst my.txt  printlst.sh  pwdls.sh  success.doc
+#
+# Let's try pattern expansion with the wildcard. Type the following command, but do not hit the enter key.
+#
+¿\tld¿ cat *.doc
+#
+# Instead of enter, type ctrl + x simultaneously and let go of the keys. Next, type *. Pathname expansion occurs and the line becomes populated with the names of all the *.doc files. Press enter to display the contents of the files.
+#
+¿\tld¿ cat errors.doc success.doc 
+bash: ./Echopwd: No such file or directory
+/home/mgcr/scripts
+#
+# It is safe to assume that cat outputs the content of the files in sequential order.
+#
+¿\tld¿ cat errors.doc
+bash: ./Echopwd: No such file or directory
+
+¿\tld¿ cat success.doc
+/home/mgcr/scripts
+\end{lstlisting}
+
+\tbi{\textcolor{red}{Challenge:}} \textit{How would you print the file name as a header above the catted output of several files? \hyperlink{catfileheaders}{Answer}}
+
+\section{Calling functions}
+
+There are a number of ways to create custom scripts or functions and making them available from anywhere on your command prompt. It is unlikely that you would have that many custom scripts, so which method you choose is up to personal preference.
+
+\subsection{Create a scripts directory}
+
+I have a scripts directory in my home directory. I added the path to this scripts directory to my \$PATH environment variable. If I do not add that path to my \$PATH variable, at the command line, I would not be able to call my scripts from other directories.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ ld | grep scripts
+drwxr-xr-x.   2 mgcr mygrp     4096 Mar  9 12:26 scripts
+
+¿\tld¿ grep scripts .bashrc
+export PATH="/home/mgcr/scripts:$PATH"
+#
+# I have a simple script that reads arguments until there are none left. Each argument is passed to the file statement to check its file type. Note, the script is executable only by user mgcr.
+#
+¿\tld¿ ls -la my.sh
+4 -rwxr--r--. 1 mgcr mygrp 56 Mar  9 12:58 my.sh
+
+¿\tld¿ cat ~/scripts/my.sh
+¿\#¿!/bin/bash
+# This script accepts filenames as arguments and then outputs the filetype.
+while [ $¿\#¿ -ne 0 ]
+do
+file  "$1"
+shift
+done
+#
+# I can therefore call my.sh from any directory regarless of where I am located at the command line. Let's try to call my.sh from the root of my home directory. I provide two file arguments: ps.man and pts.sh and the script tells me the type of file for each.
+#
+¿\tld¿ pwd
+/home/mgcr
+
+¿\tld¿ my.sh ps.man pts.sh
+ps.man: UTF-8 Unicode text
+pts.sh: ASCII text
+\end{lstlisting}
+
+\subsection{Create a .functions file and load it from .bashrc}
+
+As mentioned earlier in this chapter, in \textsl{.bashrc}, we can test for the existence of a file and call/load it from \textsl{.bashrc}. You can then put all your functions in this one file. Linux users tend to create system-like files as hidden files. Hiddens files have a prepended period in front of their name. Hidden files are not listed with the normal list command \emph{ls}. You have to use the \emph{ls} with the \emph{all} and \emph{full} options in order to see hidden files. I thus have chosen to create a hidden functions file called \textsl{.functions}.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Add these lines to ¿\tldi¿/.bashrc in order to load all our functions.
+#
+if [ -f ¿\ttbb¿/.functions ]
+. ¿\ttbb¿/.functions
+fi
+#
+# The first line of  the my.sh script, the shebang is only needed in scripts. We can remove that line when we define our functions inside a .funciton file. I have only one function in my .functions file called: fighter. 
+#
+¿\tld¿ cat .functions
+function fighter() 
+{
+	while [ $¿\#¿ -ne 0 ]
+	do
+	file $1
+	shift
+	done
+}
+
+# After we make changes to the .functions file, we need to source' that file or source our .bashrc file in order for the changes to be current, that is, available.
+#
+¿\tld¿ source .functions
+#
+# We can now call the function by name c/w arguments. Obviously, the two file arguments must be in the directory from where we invoke the fighter function.
+#
+¿\tld¿ fighter ps.man pts.sh
+ps.man: UTF-8 Unicode text
+pts.sh: ASCII text
+#
+# If the files are in another directory, we would have to provide the full path.
+#
+¿\tld¿ fighter /bin/zsh
+/bin/zsh: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=8d97ead7650a20f61d976874e5d8b1497c18771e, stripped
+\end{lstlisting}
+
+\subsection{Create a .functionsdir folder and use a separate file for each function}
+
+I decided to hide the scripts directory by calling it: .functionsdir. However, the individual function files inside this directory are not hidden. I had an issue sourcing hidden files using the \emph{for do loop} when my function files were hidden. Another item on my todo list!
+
+\howto{How do you source hidden files using a for do loop?}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Here are the lines of code from my .bashrc file. Note, the if statement tests for the existence of the .functionsdir directory. I then use a for loop to loop through each file. The period before $file is shorthand for the command: source. When my function files were hidden files, this command would not work. Note: I am using grep to just display the lines from my .bashrc directory related to functionsdir.
+#
+¿\tld¿ grep -A3 "Source global functionsdir" .bashrc
+# Source global functionsdir
+if [ -d /home/mgcr/.functionsdir ]; then
+for file in /home/mgcr/.functionsdir/*; do . $file; done
+fi
+#
+# We also have to append the path to .functionsdir to our environment $PATH variable in .bashrc. Note, we have to escape the dollar sign in our grep statement.
+#
+¿\tld¿ grep "functionsdir:\$PATH" .bashrc
+export PATH="/home/mgcr/.functionsdir:$PATH"
+#
+# Ok, now source your .bashrc file to make these changes available. I now have two functions: trudeau and boxer.
+#
+¿\tld¿ trudeau
+Absolutely smoked Brazeau!
+Fight called in third round.
+
+¿\tld¿ boxer ps.man pts.sh
+ps.man: UTF-8 Unicode text
+pts.sh: ASCII text
+#
+# Let's cat our scripts. Note, I used the same file name as the function definition. You do not have to do this. I just did it for convenience. Do you doubt me? Test by renaming a function file. Make a change to the function file. Source .bashrc. Call the function.
+#
+¿\tld¿ cat boxer
+function boxer()
+{
+	while [ $¿\#¿ -ne 0 ]
+	do
+	file $1
+	shift
+	done
+}
+
+¿\tld¿ cat trudeau
+function trudeau()
+{
+	echo "Absolutely smoked Brazeau!"
+	echo "Fight called in third round."
+}
+\end{lstlisting}
+
+\subsection{Create a function at the command line}
+
+If you just want to work with a function temporarily or if you want to test whether or not your function works, you can type the function at the command line.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Note the semi-colon at the end of the actual code.
+#
+¿\tld¿ hithere () {echo "Ow's she gettin' on, me lad?";}
+¿\tld¿ hithere
+Ow's she gettin' on, me lad?
+\end{lstlisting}
+
+\subsection{Naming conventions for functions}
+
+While working at the Linux command line, you will frequently realise that the way that you were doing something is deficient in some way. For example, I did not implement or follow any naming convention for my functions in \textsl{\ttb{}.bashrc}, \textsl{\ttb{}.functions}, and \textsl{\ttb{}functionsdir}. Not having a naming convention makes it difficult to filter out and search for my functions.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Function names and definitions may be listed using the typeset or 'typeset -f' commands. I will show a truncated output of the 'typeset -f' command. I show only the first function _dbus_send and the last function tu. I also add the command to get a count of how many lines make up the entire function list.
+#
+¿\tld¿ typeset -f ; typset -f | wc -l
+__dbus_send () 
+{ 
+local IFS='
+';
+local cur="${COMP_WORDS[COMP_CWORD]}";
+if [[ "$cur" == *=* ]]; then
+cur=${cur/*=/};
+fi;
+COMPREPLY=($(compgen -W "$(/usr/libexec/dbus-bash-completion-helper dbus-send ${COMP_WORDS[@]:0})" -- $cur))
+}
+.
+.
+tu () 
+{ 
+echo $1 | tr '[a-z]' '[A-Z]'
+}
+2514
+#
+# So, 2514 lines are needed to define all available functions.  We can also get a list of just the function names by using the -F option. Note, we have 137 declared functions.
+#
+¿\tld¿ typeset -F ; typeset -F | wc -l
+declare -f __dbus_send
+declare -f __expand_tilde_by_ref
+declare -f __get_cword_at_cursor_by_ref
+.
+.
+declare -f tl
+declare -f trudeau
+declare -f tu
+137
+#
+# Obviously, some of the functions are provided by the kernel and some of the functions are ones that I created.
+#
+\end{lstlisting}
+
+Ok, so how would we grep my functions according to where they were created? We would need a naming convention.
+
+\begin{itemize}
+	\item[] \tbi{\ttb{}.bashrc} Functions stored here would have names prepended with \textsl{b\_}.
+	\item[] \tbi{\ttb{}.functions} Functions stored here would have names prepended with \textsl{f\_}.
+	\item[] \tbi{\ttb{}functionsdir} Functions stored here would have names prepended with \textsl{fd\_}.
+\end{itemize}
+
+Alright, let's change the function names that are in my \textsl{\ttb{}.functions} file and my \textsl{\ttb{}functionsdir} folder. I can then list my functions by the naming convention using a simple \keyword{grep} pipe.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+¿\tld¿ cat .functions
+function f_fighter() 
+{
+while [ $# -ne 0 ]
+do
+file $1
+shift
+done
+echo "All done."
+}
+#
+# Better name for this function.
+#
+function f_flst() 
+{
+while [ $# -ne 0 ]
+do
+file $1
+shift
+done
+echo "All done."
+}
+#
+# After you change the names and save the file, source .bashrc.
+#
+¿\tld¿ source .bashrc
+#
+# Ok, we know that we have 137 functions avaialble to the shell. We can now filter and list those functions declared in our .functions file.
+#
+¿\tld¿ typeset -F | grep f_
+declare -f f_fighter
+declare -f f_flst
+#
+# I also renamed the script functions in my .functionsdir folder.
+#
+¿\tld¿ typeset -F | grep fd_
+declare -f fd_boxer
+declare -f fd_trudeau
+
+¿\tld¿ cat .functionsdir/boxer
+function fd_boxer()
+{
+while [ $# -ne 0 ]
+do
+file $1
+shift
+done
+}
+\end{lstlisting}
+
+There is an obvious drawback with this method. We are adding a layer of complexity to our names and thus it will take a bit more effort to call or type our functions at the command line. So, there is a trade-off. We need both simplicity for typing and uniqueness for grepping. It comes down to personal preference.
+
+\textbf{\color{red}Challenge:} How would you extract the contents of one specific function from  the typeset list? This is not an easy challenge. You have to grep the function name. You also have to grep the opening curly bracket and closing curly brackets and everything in between. You do not want to include anything else. Think about this! Trust me, it is not a trivial challenge. \textit{Don't just look at my solution! Experiment and see if you are on the right track!} \hyperlink{prgrm_typeset}{Answer}
+
+\section{Variable names and shell levels}
+
+Variables are only know at the same shell level.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+# Let's define a variable using upper-case called: ANSWER.
+#
+¿\tld¿ ANSWER=Canada
+#
+# Ok, let's echo to the command line.
+#
+¿\tld¿ echo answer
+answer
+#
+# Oops, remember, Linux is case-sensitive.
+#
+¿\tld¿ echo ANSWER
+ANSWER
+#
+# Oh, right, when we refer to a variable name in our code, we prepend the dollar sign.
+#
+¿\tld¿ echo $ANSWER
+Canada
+#
+# What shell level are we at?
+#
+¿\tld¿ echo $SHLVL
+2
+#
+# Ok, let's open another bash window, which will be at another shell level.
+#
+¿\tld¿ bash
+¿\tld¿ echo $SHLVL
+3
+#
+# Hey, my new shell level doesn't know about the variable.
+#
+¿\tld¿ echo $ANSWER
+¿\tld¿
+#
+# We type 'exit' to return to the first shell.
+#
+¿\tld¿ exit
+#
+# Ok, we can make a variable global by exporting it. That is, the export command makes a variable always available, at any shell level. However, the variable assignment is only temporarily available, as long as we stay logged on.
+#
+¿\tld¿ export $ANSWER
+#
+# Open another bash session.
+#
+¿\tld¿ bash
+#
+# Do we know about the variable? Turns out we don't. Why?
+¿\tld¿ echo $ANSWER
+¿\tld¿
+¿\tld¿ exit
+#
+# We have to export not what is used to call the variable $ANSWER, but the variable name itself, ANSWER. $ANSWER would be interpreted as Canada, but there is no variable called: Canada.
+#
+¿\tld¿ export ANSWER
+#
+# Open the new shell once again.
+#
+¿\tld¿ bash
+#
+# Do we know about the ANSWER?
+#
+¿\tld¿ echo $ANSWER
+Canada
+#
+# What was the question? ¿\href{http://www.quanthockey.com/nhl/records/nhl-players-all-time-points-leaders.html}{What country has 40 of the top 50 NHL All-Time Points Leaders?}¿
+#
+# How do we unset the variable assignment? There are two ways to do this.
+#
+¿\tld¿ unset ANSWER
+¿\tld¿ ANSWER=
+#
+# Hey, I always want my answer anytime, anywhere, after all logons! I would use any of the following to append the export statement to my .bashrc file. Note, I am exporting the variable name, not the call representation of the variable name. Use one of the following...
+#
+¿\tld¿ echo "export ANSWER=Canada">>$HOME/.bashrc
+
+¿\tld¿ echo "export ANSWER=Canada">>~/.bashrc
+
+¿\tld¿ echo "export ANSWER=Canada">>/home/mgcr/.bashrc
+\end{lstlisting}
+
+\section{Editing configuration files}
+
+\textit{I recommend that you always make a backup copy of any configuration file prior to making changes.} Trust me, you will save yourself a lot of work and you will have less stressful work days if you follow this advice.\\
+
+ I initially created a script that I ran whenever I wanted to edit a configuration file. The script first checks to see whether or not I already have a backup file. If I don't, a backup is made. If I already have a backup file, the backup file is not altered. You don't want to alter the backup file. You always want it to be the starting configuration.\\
+ 
+ I will show this initial script and then provide a modification. You will not want just the original file. You will continually be editing some configuration files. And, at some point, you will make a mistake and you will need to go back to the previous working version. For example, you may want to revert back to the version that had last week's changes. Therefore, I altered the backup so that it backs up our configuration file appending a time stamp each time I opened a configuration file with my script.
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
+#
+#  In memory of the Commodore computer, I named the script vic.sh. No, not really! It is a cue for 'vi configuration'. The if statement tests for the existence of a file with a .bak extension. If it exists, vi simply opens the file for reading or editing. If the file doesn't exist,  a backup is made and then vi opens for reading or editing the file.
+#
+¿\tld¿ cat vic.sh
+¿\#¿!/bin/bash
+if [ -e $1.bak ]
+then
+echo "Backup of original configuration file already exists."
+vi $1
+else
+echo "Backed up original configuration file before this first edit."
+cp $1{,.bak}
+vi $1
+fi
+#
+# Let's see it in action. Do I have any config files in my directory? I use two wildcard *, one for the actual name and the second to list any backup files, those with a *.bak extension.
+#
+¿\tld¿ ls *.cfg*
+myconfig.cfg
+
+¿\tld¿ cat myconfig.cfg 
+# Default configuration for my super program
+a=5
+¿\tld¿
+#
+# Ok, let's try and edit the file. In this case, I used the full name of the script to begin editing my config file. After I finished the edit and closed vi, the message appeared after the prompt.
+#
+¿\tld¿ vic.sh myconfig.cfg
+Backed up original configuration file before this first edit.
+#
+# Ok, let's list our config files and display our changes.
+#
+¿\tld¿ cat myconfig.cfg
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+
+¿\tld¿ cat myconfig.cfg.bak
+# Default configuration for my super program
+a=5
+
+#
+# Let's make a second change.
+#
+¿\tld¿ vic.sh myconfig.cfg
+Backup of original configuration file already exists.
+
+¿\tld¿ cat myconfig.cfg
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+# An additional change
+c=6
+
+¿\tld¿ cat myconfig.cfg.bak
+# Default configuration for my super program
+a=5
+#
+# Ok, so my script works. The backup file will always be the original configuration file. Now, let's look at ammending the script so that each change has a backup file with a different date stamp. Now, when I open any script, a backup is immediately created with a time stamp. 
+#
+¿\tld¿ cat vic.sh
+¿\#¿!/bin/bash
+edit_time=$(date "+%Y.%m.%d-%H.%M.%S")
+cp $1{,.$edit_time}
+vi $1
+#
+# I am going to open myconfig.cfg and then close it without any changes. Note, a backup is still created.
+#
+¿\tld¿ vic.sh myconfig.cfg
+#
+# Ok, let's take a look at our file listing.
+#
+¿\tld¿ ls *.cfg*
+myconfig.cfg  myconfig.cfg.2016.03.12-11.28.49  myconfig.cfg.bak
+#
+# That's a bit difficult to read, let's get a full file listing.
+#
+¿\tld¿ ls -la *.cfg*
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg.2016.03.12-11.28.49
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg.bak
+#
+# What's in the new backup file?
+#
+¿\tld¿ cat myconfig.cfg.2016.03.12-11.28.49 
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+# An additional change
+c=6
+#
+# This time, I am going to open my config file and make another change. I will add the line: d=7. My script will make another backup of myconfig.cfg, the contents are the same as the previous backup, but with a different time stamp.
+#
+¿\tld¿ vic.sh myconfig.cfg
+
+¿\tld¿ ls -la *.cfg*
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg.2016.03.12-11.28.49
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg.2016.03.12-11.29.28
+-rw-r--r--. 1 mgcr mygrp myconfig.cfg.bak
+#
+# The two time stamp backups will be the same because we are backing up the same version of myconfig.cfg. When we last opened myconfig.cfg, we made no changes, but a time-stamped backup was still created. As the following diff command shows, there is no difference.
+#
+¿\tld¿ diff myconfig.cfg.2016.03.12-11.28.49  myconfig.cfg.2016.03.12-11.29.28 
+¿\tld¿
+#
+# Let's cat our files...
+#
+¿\tld¿ cat myconfig.cfg.2016.03.12-11.28.49
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+# An additional change
+c=6
+
+¿\tld¿ cat myconfig.cfg.2016.03.12-11.29.28 
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+# An additional change
+c=6
+
+¿\tld¿ cat myconfig.cfg
+# Default configuration for my super program
+a=5
+# Another change
+b=5
+# An additional change
+c=6
+# Yet another change.
+d=7
+#
+# The next time you make a change, the new time stamp backup will be the same as the current version of myconfig.cfg.
+#
+\end{lstlisting}
+
+\textbf{\color{red}Challenge:}
+So, I now have a working script that makes a time stamp backup of all changes to a configuration file. The only drawback is that the script also makes a time stamp backup of a configuration file when you open the configuration file for reading or viewing. We don't need another backup because we didn't make any changes. We have a couple of options. When you know that you are just going to read, open the configuration file with \emph{vi} and not with \emph{vic.sh}. Or, add a check to see if the configuration file differs from the new time stamped backup. If it doesn't differ, delete the backup. 
+
+\add[inline]{Provide solution on how to delete new time stamped backup if it does not differ.}

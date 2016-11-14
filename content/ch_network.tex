@@ -1,0 +1,229 @@
+\chapter{Network Processes}
+\label{ch:networkprocesses}
+\pagestyle{fancy}
+
+\fancyhf{} % here we clear any fancy header settings
+%% Note, the first page of every chapter does not have a header.
+\fancyhead[OC]{\leftmark} % O=odd pages, C= center, leftmark defaults to Chapter number and title
+\fancyhead[EC]{\rightmark} % E = even pages, C = center, rightmark defaults to number of current section
+%%
+%% Set, headheight to eliminate warning message "Package Fancyhdr Warning: \headheight is too small (12.0pt): Make it at least 13.59999pt.
+\setlength{\headheight}{13.6pt} 
+%%
+% The next line would put a line at the bottom of every page starting from the second page of every chapter, if it was uncommented.
+%%
+%\renewcommand{\footrulewidth}{1pt}
+%%
+\cfoot{\thepage} % c = center, foot = footer, thepage = page number
+\rhead{\includegraphics[width=.5cm]{figures/smCanadianFlag}}
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+The world would be a dull place if every computing device stood alone as its own little island of blinking bits. I can't wait for the day when I can dispense with all my computing devices and replace them with a micro-chip embedded in my head. Will you also join the Cyborg collective?
+
+\section{Models, no not that kind}
+
+Visit these two URLs: \href{https://en.wikipedia.org/wiki/OSI\_model}{OSI} and \href{https://en.wikipedia.org/wiki/Internet_protocol_suite}{TCP/IP} and review your understanding of these two basic network models. These Wikipedia links give a very general overview of each model. There is a ton of information on the Internet that covers both topics and \textit{I encourage you to get a basic understanding of each model}. Interestingly, you are still required to master these topics in order to challenge the foundation \href{https://learningnetwork.cisco.com/community/certifications/ccna/ccna_exam_v2/exam-topics}{CCNA Exam}.\\
+
+So, why do you need to understand these models? I suggest that a basic understanding will help you when you are troubleshooting issues such as lack of connectivity or saturation of network bandwidth. You begin by looking for root causes. For example, suppose my PC can't connect to the Internet. Let's troubleshoot using the 4-layer TCP/IP model...slightly amended.
+
+\setlist[enumerate]{leftmargin=*}
+\begin{enumerate}[label=\textbf{Step \arabic*}]
+	\item {Brain on Layer: How's the lobotomy working out? Is your PC turned on?}
+	\item { Link Layer: Is your network cable plugged in? Is your wireless card enabled, turned on?}
+	\item {Internet Layer: Have you correctly configured your IP information? Does your system have the correct settings for DNS? If your system uses DHCP, is the DHCP server available?} 
+	\item {Transport Layer: Are you trying to use a service or application using a specific port? Is your firewall blocking that port?}
+	\item {Application Layer: Is the application configured correctly? Is there a .config file that has to be edited in order to enable a specific protocol or destination IP address? Is SeLinux blocking your application?}
+\end{enumerate}
+
+\section{Network Protocols and Ports}
+
+Again, you will need a fundamental understanding of network protocols and ports. A \tbi{network protocol} is a set of rules that govern communication between two nodes on a network. There are two types of network protocols: \tbi{TCP} and \tbi{UDP}. Combined together these two protocols establish all \tbi{Internet Protocol (IP)} traffic.\\
+
+Click \href{http://www.diffen.com/difference/TCP\_vs\_UDP}{here} for an excellent overview of the difference between the two protocols.
+
+Basically, if you want reliable connections use TCP. If you want fast and efficient connections and don't mind the odd dropped packet use UDP.
+
+One of the most important features of both protocols is that they are each segmented into service names and port numbers in order to distinguish between the different services that run over each protocol.  Click \href{http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml}{here} for the official list of the port number registry.\\
+
+ As you work with Linux, you will become very familiar with the most commonly encountered port numbers. For example, most people know that web browsers use either TCP port numbers 80 (insecure-http) or 443 (secure-https) connections. You don't want your banking transaction to fail half-way through the connection, so you use TCP.  Alternatively, streaming audio may use a UDP port number such as 554, Real Time Streaming Protocol. Does it really matter if you loose just one itsy, bitsy packet while head banging to Metallica?
+
+\section{Listing TCP and UDP processes}
+
+\tbi{netstat} \tbi{\textit{\color{red}is}} one of the commands you should master if you want to know what network processes are running on your PC. Some would say \tbi{\textit{\color{red}was}} one of the most useful, as it has become transplanted by the \tbi{ss} command. Ok, let's get a bit of information about theses packages from their manpages.
+
+\subsection{netstat and ss commands}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# Tell me about the ss command.
+#
+¿\tld¿ man ss | grep -A2 -x NAME
+NAME
+ss - another utility to investigate sockets
+
+¿\tld¿ man ss | grep -A2 -x DESCRIPTION
+DESCRIPTION
+ss  is  used  to  dump socket statistics. It allows showing information similar to netstat.  It can display more TCP and state informations than other tools.
+#
+# Tell me about the netstat command.
+#
+¿\tld¿ man netstat | grep -A2 -x NAME
+NAME
+netstat - Print network connections, routing tables, interface statistics, masquerade connections, and multicast memberships.
+
+¿\tld¿ man netstat | grep -A2 -x DESCRIPTION
+DESCRIPTION
+Netstat prints information about the Linux networking subsystem.  The type of information printed  is  controlled by the first argument, as follows:
+#
+# What would follow in the man page is a long list of the options that can be used with 'netstat'...the list is very long so I will not display the list.
+#
+\end{lstlisting}
+
+\subsection{Monitoring TCP processes}
+
+Okeedokee, let's look at some \keyword{netstat} examples for the TCP protocol. These examples can form the base for an intensive exploration of the \emph{sort} and \emph{uniq} commands. \textit{Try changing their position, dropping one command, adding options...experiment!}
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+#
+# -p=program, -t=tcp, -u=udp, -a=all(listening and non-listenting), n=numeric, show numerical addresses instead of trying to determine symbolic host, port or usernames
+#	
+#
+# First thing that you learn is that sudo is your friend!
+#
+¿\tld¿ netstat -ptan
+(Not all processes could be identified, non-owned process info
+will not be shown, you would have to be root to see it all.)
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address  Foreign Address   State   PID/Program   
+tcp        0      0 0.0.0.0:445    0.0.0.0:*         LISTEN  -                 
+.
+.
+tcp6       0      0 :::17500       :::*              LISTEN   18224/scope 
+#
+# Let's try that again with sudo. Note, for formatting purposes, I edited the headings: R-Q is actually Recv-Q and S-Q is Send-Q.
+#
+¿\tld¿ sudo netstat -ptan
+Proto R-Q S-Q Local Address    Foreign Address  State  PID/Program name   
+tcp     0   0 0.0.0.0:445            0.0.0.0:*  LISTEN  1592/smbd 
+.
+.
+tcp     0   0 10.0.0.20:51660  52.84.18.166:443 ESTABLISHED 18224/scope       
+tcp     0   0 10.0.0.20:42738    10.0.0.21:443  ESTABLISHED 2900/evolution      
+tcp     0  17 10.0.0.20:36696  38.17.167.12:443 ESTABLISHED 2600/opera             
+.
+.
+tcp6    0   0 :::17500          :::*             LISTEN      18224/scope 
+#
+# See what I see? I can list the IP addresses my Opera browser is pulling from. I can also see the local and remote protocol numbers.
+#
+¿\tld¿ sudo netstat -ptan | grep opera
+tcp  0  0 192.168.0.20:40176  198.252.206.25:443  ESTABLISHED 2760/opera          
+tcp  0  0 192.168.0.20:41008  23.222.152.174:80   ESTABLISHED 2760/opera          
+¿\tld¿ 
+#
+# Let's remove the -n=numeric option. Note, we now get the protocol names (if available) instead of the protocol numbers. For example, microsoft-ds and not its protocol number 445. I also just want the first 6 TCP sessions in the list.
+#       
+¿\tld¿ sudo netstat -pta | head -6
+Active Internet connections (servers and established)
+Proto R-Q S-Q Local Address           Foreign Address  State   PID/Program    
+tcp     0   0 0.0.0.0:microsoft-ds    0.0.0.0:*        LISTEN  1592/smbd           
+tcp     0   0 localhost.localdo:17600 0.0.0.0:*        LISTEN  14012/scope      
+tcp     0   0 localhost.localdo:17603 0.0.0.0:*        LISTEN  14012/scope       
+tcp     0   0 0.0.0.0:6051            0.0.0.0:*        LISTEN  992/agent       
+
+# Hmm, I now want a connection count for each unique State. Note: I use two sort commands! For example, there are 5 established chrome connections.
+#   
+¿\tld¿ sudo netstat -ptan | awk '{print $6 " " $7 }' | sort | uniq -c | sort -nr -k 2
+5 ESTABLISHED 2911/chrome
+5 CLOSE_WAIT 14012/scope
+4 LISTEN 1592/smbd
+.
+.
+1 ESTABLISHED 18432/firefox
+1 established) 
+#
+# Ok, I just want those connections that are listening.
+#
+¿\tld¿ sudo netstat -ptan | awk '{print $6 " " $7 }' | sort | uniq -c | sort -nr -k 1 | grep -i listen
+4 LISTEN 1592/smbd
+4 LISTEN 14012/scope
+2 LISTEN 2616/vino-server
+2 LISTEN 1570/sshd
+2 LISTEN 1546/cupsd
+1 LISTEN 992/agent
+1 LISTEN 2633/httpd
+1 LISTEN 1907/dnsmasq
+#
+# Wait a sec, isn't there a listening option for netstat? -l=listening
+#
+¿\tld¿ sudo netstat -ptln | awk '{print $6 " " $7 }' | sort | uniq -c | sort -nr -k 1
+4 LISTEN 1592/smbd
+4 LISTEN 14012/scope
+2 LISTEN 2616/vino-server
+2 LISTEN 1570/sshd
+2 LISTEN 1546/cupsd
+1 LISTEN 992/agent
+1 LISTEN 2633/httpd
+1 LISTEN 1907/dnsmasq
+1 Foreign Address
+1  
+#
+# I am not sure what that trailing 1 represents. This 'sudo netstat' command also looks like a good candidate for an alias.
+#	
+\end{lstlisting}
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Monitoring TCP Processes}\label{table:processes-tcp}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+sudo netstat -ptan | sort & List of all TCP sessions sorted by connection type.\\[2mm]
+sudo netstat -ptan | sort | uniq -c & List of all TCP sessions sorted by unique connection type and with a total count for each connection type.\\[2mm]
+sudo netstat -pta | sort & List of all TCP sessions sorted by connection type c/w protocol names, not protocol numbers.\\[2mm]
+sudo netstat -ptan | grep firefox & See the details of all the Firefox browser connections.\\[2mm]
+sudo netstat -ptan | grep -i established & List the connections to the outside world.\\[2mm]
+sudo netstat -ptan | grep -i listen & What processes are listening for a connection to the outside world? Are all these process legitimate?\\[2mm]
+sudo netstat -ptan | grep -i tcp6 & When o' when are you going to implement TCP6?\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\subsection{Monitoring UDP processes}
+
+We know that TCP is a streaming protocol between a server and clients. The protocol is reliable and requires a separate state for each server-client stream. TCP initiates connections in a listen/accept mode and when requested it sets up a server-client connection state. UDP is a connectionless, unreliable datagram (message) protocol, so there is no need to listen for new connections. UDP datagrams can arrive in any order from any source. Therefore, the \emph{netstat -l} (listening) option is not relevant when working with UDP. However, see the examples below. Its use with UDP does provide some interesting results.\\
+
+Let's look at some \keyword{netstat} examples for the \tbi{UDP} protocol. 
+
+\begin{tabularx}{\linewidth}{>{\bfseries}X | X} % the X is needed to wrap text
+\caption{Monitoring UDP Processes}\label{table:processes-udp}\\ % title of Table
+\toprule
+\normalfont{Command} & Action \\% inserts table heading, unbolds 1st column heading
+\midrule
+sudo netstat -pu & List all established UDP sessions\\[2mm]
+sudo netstat -pua & List all UDP sessions.\\[2mm]	
+sudo netstat -pual & This lists all UDP sessions and is equivalent to the previous command. So, the addition of the -l option adds no new information.\\[2mm]
+sudo netstat -pul & This command lists all UDP sessions except established connections. So the -l option without the -a option acts as a kind of filter removing established connections.\\[2mm]
+\bottomrule
+\end{tabularx}
+
+\section{Network Interfaces}
+
+Typically a PC will have only one physical network interface. However, servers could easily be multi-homed. 
+
+\begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
+¿\tld¿ netstat -i
+Kernel Interface table
+Iface  MTU   RX-OK RX-ERR RX-DRP RX-OVR TX-OK TX-ERR TX-DRP TX-OVR Flg
+eno1   1500 162052      0      0 0     137389      0      0      0 BMRU
+lo    65536    418      0      0 0        418      0      0      0 LRU
+virbr0 1500      0      0      0 0          0      0      0      0 BMU
+\end{lstlisting}
+
+This is the interface listing on my PC. I have one physical network card, en01. I have a \href{http://www.tldp.org/LDP/nag/node66.html}{loopback inteface} and I have a virtual interface, virbr0. The virbr0, or "Virtual Bridge 0" interface is used for NAT (Network Address Translation). It is provided by the libvirt library and virtual environments sometimes use it to connect to the outside network. I run Virtual Machine Manager on my PC in order to run a virtual, nasty Windoze 7 system because some vendors refuse to write Linux versions of their software clients.\\
+
+Challenge: \textit{How many physical interfaces does my PC or server have? \hyperlink{numints}{Answer}}
+
+\todo[inline]{Examples for ss command}
+

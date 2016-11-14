@@ -1,0 +1,115 @@
+%\usepackage[colorlinks]{hyperref}
+%\usepackage[
+%colorlinks=true
+%,breaklinks
+%]{hyperref}
+
+\usepackage{zref-base,zref-lastpage}
+\usepackage{etexcmds}
+\usepackage{pdfescape}
+
+\makeatletter
+
+% Help counters for numbering URLs
+\newcounter{UrlList}
+\newcounter{UrlListAux}
+\renewcommand*{\theUrlList}{UrlList\the\value{UrlList}}
+\renewcommand*{\theUrlListAux}{UrlList\the\value{UrlListAux}}
+
+% Each URL gets a reference with text, url and page number.
+\zref@newprop{UrlList@Text}{\UrlList@Text}
+\zref@newprop{UrlList@HexLink}[3F3F]{\UrlList@HexLink}
+\zref@newlist{UrlList}
+\zref@addprops{UrlList}{UrlList@Text, UrlList@HexLink, page}
+\zref@newprop{UrlList@Max}{\the\value{UrlList}}
+\zref@addprops{LastPage}{UrlList@Max}
+
+% Switch is needed in the list of URLs to disable URL recording.
+\newif\ifUrlList@
+
+% Hyperref internal is redefined to write the label with the URL data
+\newcommand\saved@hyper@linkurl{}
+\let\saved@hyper@linkurl\hyper@linkurl
+\renewcommand{\hyper@linkurl}[2]{%
+  % #1: text
+  % #2: URL
+  \ifUrlList@
+  \else
+    \begingroup
+      \refstepcounter{UrlList}%
+      \protected@edef\UrlList@Text{#1}%
+      \@onelevel@sanitize\UrlList@Text
+      \EdefEscapeHex\UrlList@HexLink{#2}%
+      \zref@labelbylist{\theUrlList}{UrlList}%
+    \endgroup
+  \fi
+  \saved@hyper@linkurl{#1}{#2}%
+}
+
+% \UrlList checks, whether are URL references and prints the list of URLs
+\newcommand*{\UrlList}{%
+  \zref@refused{LastPage}%
+  \edef\UrlList@Max{%
+    \zref@extractdefault{LastPage}{UrlList@Max}{-1}%
+  }%
+  \ifnum\UrlList@Max<0 %
+    \@latex@warning@no@line{Rerun LaTeX to get list of URLs}%
+  \else
+    \UrlList@true
+    \begin{UrlListEnv}%
+      \let\UrlList@LastPage\@empty
+      \setcounter{UrlListAux}{0}%
+      \@whilenum\value{UrlListAux}<\UrlList@Max\do{%
+        \stepcounter{UrlListAux}%
+        \zref@refused{\theUrlListAux}%
+        \zref@ifrefundefined{\theUrlListAux}{%
+        }{%
+          \EdefUnescapeHex\UrlList@Link{%
+            \zref@extract{\theUrlListAux}{UrlList@HexLink}%
+          }%
+          \zref@def@extract\UrlList@Text{\theUrlListAux}{UrlList@Text}%
+          \zref@def@extract\UrlList@Page{\theUrlListAux}{page}%
+          \edef\UrlList@Next{%
+            \noexpand\UrlListItem{%
+              \etex@unexpanded\expandafter{\UrlList@Page}%
+            }{%
+              \etex@unexpanded\expandafter{\UrlList@Link}%
+            }{%
+              \etex@unexpanded\expandafter{\UrlList@Text}%
+            }%
+          }%
+          \ifx\UrlList@Page\UrlList@LastPage
+          \else
+            \expandafter\UrlListPage\expandafter{\UrlList@Page}%
+            \let\UrlList@LastPage\UrlList@Page
+          \fi
+          \UrlList@Next
+        }%
+      }%
+    \end{UrlListEnv}%
+  \fi
+}
+\makeatletter
+
+% USER configuration
+
+% Environment UrlListEnv surrounds the list of URLs, if
+% URLs are available.
+\newenvironment{UrlListEnv}{%
+  \begin{description}%
+}{%
+  \end{description}%
+}
+
+% \UrlListPage{<page>}
+% Sets the page header
+\newcommand*{\UrlListPage}[1]{%
+  \item[\hyperlink{page.#1}{Page #1}]\mbox{}%
+}
+
+% \UrlListItem{<page>}{<URL>}{<text>}
+% Formats a URL entry
+\newcommand*{\UrlListItem}[3]{%
+  \\\relax#3 \dots\ \href{#2}{\nolinkurl{#2}}%
+}  
+\makeatother

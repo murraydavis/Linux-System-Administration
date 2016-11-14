@@ -1,0 +1,48 @@
+%% Macros
+
+%% Name references...slightly modified from source.
+% http://tex.stackexchange.com/questions/178720/reference-chapter-number
+\newcommand{\chapref}[1]{\autoref{#1}. \nameref{#1}}
+% http://stackoverflow.com/questions/1491842/references-with-text-in-latex
+\newcommand{\secref}[1]{\autoref{#1}. \nameref{#1}}
+
+%% Text fomats
+\newcommand{\tbi}[1]{\textbf{\textit{#1}}} % bold and italics around text
+\newcommand{\tqs}[1]{\textquotesingle{#1}\textquotesingle} % single upright quote around text
+\newcommand{\tgr}[1]{\textasciigrave{#1}\textasciigrave} % grave accent around text
+\newcommand{\imp}[1]{\underline{\textit{#1}}} % underline and italics
+%\newcommand{\ttb}{{\raisebox{0.5ex}{\texttildelow{}}}\textbackslash{}}
+\newcommand{\ttb}{{\raisebox{0.5ex}{\texttildelow{}}}/} % centered tilde followed by forward slash
+\newcommand{\ttbb}{{\raisebox{0.5ex}{\texttildelow{}}}} % centered tilde
+\newcommand{\tbx}{\{\} \textbackslash{}; } % backslash
+\newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]} % centered tilde within [] for command prompt
+\newcommand{\tldc}{\color[rgb]{0.133,0.545,0.133}[\raisebox{0.5ex}\texttildelow{}]} % centered tilde within [] inside comments
+\newcommand{\tldi}{\color[rgb]{0.133,0.545,0.133}\raisebox{0.5ex}\texttildelow{}} % centered tilde by itself inside comments
+\newcommand{\minus}{\text{-}}
+\newcommand{\minusc}{\color[rgb]{0.133,0.545,0.133}\text{-}}
+% Typeset LaTeX and TeX
+\newcommand{\latex}{\LaTeX\xspace} % typeset LaTeX
+\newcommand{\tex}{\TeX\xspace} % typeset TeX
+\newcommand{\keyword}[1]{\textsf{\slshape #1}\index{#1}}
+
+% Manual versioning on title_page_1.tex
+\providecommand{\versionnumber}{1.0}
+
+% Item list format
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{$\cdot$}
+\renewcommand{\labelitemiii}{$\diamond$}
+\renewcommand{\labelitemiv}{$\ast$}
+
+% label items
+\newenvironment{titlemize}[1]{%
+	\paragraph{#1}
+	\begin{itemize}}
+	{\end{itemize}}
+
+\makeatletter
+\let\@sverbatim\@verbatim
+\def\@verbatim{\@sverbatim \verbatimwithtick}
+{\catcode``=13 \gdef\verbatimwithtick{\chardef`=18 }} 
+\makeatother
+
