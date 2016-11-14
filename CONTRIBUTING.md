@@ -15,7 +15,7 @@ If you wish to supply actual code examples in the LaTeX format, I ask that you u
 
 The best way to typeset a command prompt in LaTeX so that it appears as a tilde [~] centered inside square brackets is to use my **tld** LateX macro: 
 ```
-\newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}<br>
+\newcommand{\tld}{[\raisebox{0.5ex}\texttildelow{}]}
 ```
 So, when compiled, the above code will appear as the following in the main.pdf document. Actually, the appearance of this markdown document is not quite correct, the tilde is not quite centered where as in the main.pdf document, the tilde is centered.
 
@@ -28,13 +28,13 @@ The upside down question marks is a feature of the lstlisting package. At the st
 ```
 \begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines]
 ```
-If bash command output is in tabular form, I must add an additional instruction.<br>
+If bash command output is in tabular form, I must add an additional instruction.
 ```
 \begin{lstlisting}[escapeinside={¿}{¿},frame=single,breaklines,columns=fixed]
 ```
-### Linux Code
+### Bash Code
 
-Linux code should conform to standard bash syntax. Please test your code to ensure that it works and provide the output of commands. If you use .bashrc aliases and functions as part of your command, please provide those aliases and functions.
+Bash code should conform to standard bash syntax. Please test your code to ensure that it works and provide the output of commands. If you use .bashrc aliases and functions as part of your command, please provide those aliases and functions.
 
 ### References
 
