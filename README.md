@@ -1,6 +1,6 @@
 ### Linux System Administrator My 90:9:1 Contribution
 
-Mastering The Command Line - A Latex Compiled Document
+## A Latex Compiled Document
 
 The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you cannot simply download and read the main.pdf document. github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly. The easiest way to get the main.pdf document is just to download the whole repository. Click on the green button "Clone or download". Download the zip file, go to the download folder, unzip the zip file, cd into the unzipped folder, and then launch main.pdf with firefox. Those familiar with github can of course simply clone the repository using either SSH or HTTPS.
 
@@ -10,7 +10,36 @@ cd Linux-System-Administration-master/
 firefox main.pdf &
 ```
 
-### Compile Steps using TeXstudio
+## Mastering the Command Line
+
+This book is based on Fedora 22/23. It covers the following topics:
+
+1. Creating user profiles in order to define command prompts, aliases, and functions
+
+2. Bash programming
+
+3. Linux builtin commands and GNU Core Utils
+
+4. manpages
+
+5. vi text editor
+
+6. find command and simple file tricks
+
+7. text processing: grep, awk, sed
+
+8. Managing users and groups: useradd, userdel, usermod, groupadd, groupdel, groupmod
+
+9. Monitoring and managing processes: ps, strace, pgrep, nice, renice 
+
+10. Archive and compression tools: zip, tar, gzip, zgrep
+
+11. dnf
+
+12. SELinux
+
+
+## Compile Steps using TeXstudio
 
 1. Complile main.tex. Click the green compile arrow or press F6.
 
@@ -22,7 +51,7 @@ firefox main.pdf &
 
 5. Open main.pdf from within TeXstudio. Click the page icon with the magnifying glass. main.pdf should open inline on the right-hand side. Click the red PDF icon as the top of the inline PDF to open in your external PDF viewer.
 
-### Notes about directory structure and main.tex.
+## Notes about directory structure and main.tex.
 
 main.tex is located in the root directory and when compiled, it calls three packages.
 
