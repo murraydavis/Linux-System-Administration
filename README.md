@@ -53,7 +53,7 @@ This book is based on Fedora 22/23. It covers the following topics:
 
 ### Notes about directory structure and main.tex.
 
-main.tex is located in the root directory and when compiled, it calls three packages.
+main.tex is located in the root directory and when compiled it creates main.pdf. It calls three packages that help define typesetting rules.
 
 * settings/macros.tex
 
@@ -61,7 +61,7 @@ main.tex is located in the root directory and when compiled, it calls three pack
 
 * settings/page.tex
 
-main.tex also calls 19 other .tex documents.
+main.tex also calls 19 other .tex documents in order to build the structure of the document.
 
 * content/ch_intro
 
