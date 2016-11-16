@@ -1,8 +1,8 @@
 ## Linux System Administration My 90:9:1 Contribution
 
-### A Latex Compiled Document
+### A Latex Compiled Document on Mastering the Command Line for Linux System Administration
 
-The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. If you don't want to compile the documents, you can instead just get the book, the main.pdf document.
+The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF book called main.pdf. If you don't want to compile the documents, you can instead just get the book, the main.pdf document. The book is about 340 pages long and includes a table of contents, a list of figures and tables, and an index of keywords, all of which are dynamic links.
 
 #### Github Site and downloading main.pdf
 
@@ -18,7 +18,7 @@ firefox main.pdf &
 
 I also cloned this project to Sourceforge. It is available at: [Linux-System-Administration](https://sourceforge.net/projects/linux-system-administration). Fortunately, if you just want main.pdf, you can right-click on the file and open it with your default Adobe reader or save it locally.
 
-### Content - Mastering the Command Line
+### Content
 
 This book is based on Fedora 22/23. It covers the following topics:
 
