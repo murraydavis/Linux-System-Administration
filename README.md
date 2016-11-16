@@ -1,8 +1,12 @@
-## Linux System Administrator My 90:9:1 Contribution
+## Linux System Administration My 90:9:1 Contribution
 
 ### A Latex Compiled Document
 
-The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. However, if you are not interested in LaTeX, you cannot simply download and read the main.pdf document. github renders the main.pdf as html so it does not load as a dynamic pdf within github. As well, it does not download correctly. The easiest way to get the main.pdf document is just to download the whole repository. Click on the green button "Clone or download". Download the zip file, go to the download folder, unzip the zip file, cd into the unzipped folder, and then launch main.pdf with firefox. Those familiar with github can of course simply clone the repository using either SSH or HTTPS.
+The documents in this GitHub repository will allow you to compile a LaTeX package of documents in order to generate a PDF document called main.pdf. If you don't want to compile the documents, you can instead just get the book, the main.pdf document.
+
+#### Github Site and downloading main.pdf
+
+When you click on main.pdf document from within the github site, the document is rendered as html within your web browser, but not as a true pdf document with dynamic links. Apparently that feature is coming soon to the github website. As well, if you right-click main.pdf and choose to save it locally to your PC, it does not download correctly as a pdf document. The easiest way to get the main.pdf document is just to download the whole repository. Click on the green button "Clone or download". Download the zip file, go to the download folder, unzip the zip file, cd into the unzipped folder, and then launch main.pdf with firefox. Those familiar with github can of course simply clone the repository using either SSH or HTTPS.
 
 ```
 unzip Linux-System-Administration-master.zip
@@ -10,7 +14,11 @@ cd Linux-System-Administration-master/
 firefox main.pdf &
 ```
 
-### Mastering the Command Line
+#### Sourceforge Site and downloading main.pdf
+
+I also cloned this project to Sourceforge. It is available at: [Linux-System-Administration](https://sourceforge.net/projects/linux-system-administration). Fortunately, if you just want main.pdf, you can right-click on the file and open it with your default Adobe reader or save it locally.
+
+### Content - Mastering the Command Line
 
 This book is based on Fedora 22/23. It covers the following topics:
 
@@ -18,7 +26,7 @@ This book is based on Fedora 22/23. It covers the following topics:
 
 2. Bash programming
 
-3. Linux builtin commands and GNU Core Utils
+3. Linux builtin commands and GNU CoreUtils
 
 4. manpages
 
@@ -26,7 +34,7 @@ This book is based on Fedora 22/23. It covers the following topics:
 
 6. find command and simple file tricks
 
-7. text processing: grep, awk, sed
+7. text processing and Regex: grep, awk, sed
 
 8. Managing users and groups: useradd, userdel, usermod, groupadd, groupdel, groupmod
 
@@ -34,9 +42,13 @@ This book is based on Fedora 22/23. It covers the following topics:
 
 10. Archive and compression tools: zip, tar, gzip, zgrep
 
-11. dnf
+11. dnf package manager
 
 12. SELinux
+
+13. Network processes
+
+14. ACLs, setuid, setguid, sticky-bit
 
 
 ### Compile Steps using TeXstudio
