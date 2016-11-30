@@ -20,7 +20,7 @@ I also cloned this project to Sourceforge. It is available at: [Linux-System-Adm
 
 ### Content
 
-This book is based on Fedora 22/23. It covers the following topics:
+This book is based on Fedora 23/24. It covers the following topics:
 
 1. Creating user profiles in order to define command prompts, aliases, and functions
 
