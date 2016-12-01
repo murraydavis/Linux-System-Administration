@@ -2,7 +2,7 @@
 
 ### A Latex Compiled Document on Exploring the Command Line for Linux System Administration
 
-This article is principally about one thing: working at the command line using Linux builtin commands and [Gnu Coreutils](http://www.gnu.org/software/coreutils/coreutils.html){target="_blank"}. If you become proficient at the command line, you will have mastered an important piece of becoming a Linux System Administrator. I wrote this book using the LaTeX typesetting system, thus the title of this article is: Writing about Linux System Administration using LaTeX.
+This article is principally about one thing: working at the command line using Linux builtin commands and [Gnu Coreutils](http://www.gnu.org/software/coreutils/coreutils.html). If you become proficient at the command line, you will have mastered an important piece of becoming a Linux System Administrator. I wrote this book using the LaTeX typesetting system, thus the title of this article is: Writing about Linux System Administration using LaTeX.
 
 My intention was to create a high-quality typeset book that covers many topics that will appeal to those new to Linux and new to the command line. As well, the book should also be helpful to junior Linux System Administrators wishing to improve their understanding of scripting and working at the command line.
 
@@ -73,7 +73,7 @@ The SELinux package is introduced.
 
 ### How to get the PDF book without compiling
 
-Since the book is in PDF form and shared as a [github project](https://github.com/murraydavis/Linux-System-Administration){target="_blank"}, this article provides a summary of what you get when you clone my github project or when you simply download the book itself.
+Since the book is in PDF form and shared as a [github project](https://github.com/murraydavis/Linux-System-Administration), this article provides a summary of what you get when you clone my github project or when you simply download the book itself.
 
 The source documents in the GitHub repository will allow you to compile the LaTeX documents in order to generate the PDF book called main.pdf. If you don't want to compile the documents, you can instead just get the book, the main.pdf document. The book is about 340 pages long and includes a table of contents, a list of figures and tables, and an index of keywords; all of which are dynamic internal links within the PDF book.
 
@@ -89,7 +89,7 @@ firefox main.pdf &
 
 #### Sourceforge Site and downloading main.pdf
 
-I also cloned this project to Sourceforge. It is available at: [Linux-System-Administration](https://sourceforge.net/projects/linux-system-administration){target="_blank"}. Fortunately, if you just want main.pdf, you can right-click on the file and open it with your default Adobe reader or save it locally.
+I also cloned this project to Sourceforge. It is available at: [Linux-System-Administration](https://sourceforge.net/projects/linux-system-administration). Fortunately, if you just want main.pdf, you can right-click on the file and open it with your default Adobe reader or save it locally.
 
 ### Compiling the source code
 
