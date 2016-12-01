@@ -2,7 +2,7 @@
 
 ### A Latex Compiled Document on Exploring the Command Line for Linux System Administration
 
-This article is principally about one thing: working at the command line using Linux builtin commands and [Gnu Coreutils](http://www.gnu.org/software/coreutils/coreutils.html){target=_blank"}. If you become proficient at the command line, you will have mastered an important piece of becoming a Linux System Administrator. I wrote this book using the LaTeX typesetting system, thus the title of this article is: Writing about Linux System Administration using LaTeX.
+This article is principally about one thing: working at the command line using Linux builtin commands and [Gnu Coreutils](http://www.gnu.org/software/coreutils/coreutils.html){target="_blank"}. If you become proficient at the command line, you will have mastered an important piece of becoming a Linux System Administrator. I wrote this book using the LaTeX typesetting system, thus the title of this article is: Writing about Linux System Administration using LaTeX.
 
 My intention was to create a high-quality typeset book that covers many topics that will appeal to those new to Linux and new to the command line. As well, the book should also be helpful to junior Linux System Administrators wishing to improve their understanding of scripting and working at the command line.
 
