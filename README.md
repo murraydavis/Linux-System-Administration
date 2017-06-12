@@ -8,7 +8,7 @@ My intention was to create a high-quality typeset book that covers many topics t
 
 ### Content of the book
 
-This book was written on Fedora 23/24. However, most commands should work on Debian based systems such as Ubuntu. The biggest difference will be that Debian based systems use apt as a package manager whereas Fedora uses dnf. The book has the following chapters:
+This book was written on Fedora 23/24/25. However, most commands should work on Debian based systems such as Ubuntu. The biggest difference will be that Debian based systems use apt as a package manager whereas Fedora uses dnf. The book has the following chapters:
 
 #### Chapter 1. Is ya 'ard at it al de time or wa?
 
