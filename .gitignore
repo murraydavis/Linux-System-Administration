@@ -1,3 +1,6 @@
+.DS_Store
+._*.svn
+.*.swp
 *.aux
 *.out
 *.idx
