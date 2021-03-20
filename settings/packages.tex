@@ -125,11 +125,14 @@
 \usepackage{enumitem} % needed for some options in enumerate and indent
 \usepackage{todonotes} % needed for todos
 
+%% Remove Package inputenc Error: Invalid UTF-8 byte sequence in ch_handy.tex, ch_manuals.tex, ch_selinux.tex
+\usepackage [latin1]{inputenc}
+
 % Create Index
 %\usepackage{nomencl}
 %\makenomenclature
 % user0:Make Nomenclature makeindex -s nomencl.ist -t %.nlg -o %.nls %.nlo
-\usepackage{makeidx}
+\usepackage{imakeidx}
 \makeindex
 %\usepackage[splitindex]{imakeidx}
 %\makeindex[options=-s latex.ist -c, intoc, columns=3]

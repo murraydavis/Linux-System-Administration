@@ -2,7 +2,9 @@
 
 ### Revisions
 
-I have begun an update on March 20, 2021 working on a Fedora 33 build.
+I began an update on March 20, 2021 working on a Fedora 33 build. See:
+REVISION.MAR20.2021.md for the revisions needed to get main.tex to compile
+correctly.
 
 ### A Latex Compiled Document on Exploring the Command Line for Linux System Administration
 
