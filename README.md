@@ -139,11 +139,18 @@ You will now have the following additional documents: main.aux, main.idx, main.l
 
 #### Compile using TeXstudio
 
-1. Open the file, main.tex. Click the green compile arrow or press F6.
+1. Open the main.tex file.
 
-2. Compile main.tex a second time.
+2. Create a user command that is required to create the index at the end of
+   main.pdf. Click Options/Customize TeXStudio/Build and then
+   click the Add button. Call the user command: user0:Make Nomenclature. The
+comand is: makeindex %.nlo -t %.nlg -o %.nls. Run the command: Tools/Users and
+chose 1. Make Nomenclature or press Alt-Shift-F1.
 
-5. Open main.pdf from within TeXstudio. Click the page icon with the magnifying glass. main.pdf should open inline on the right-hand side. Click the red PDF icon as the top of the inline PDF to open in your external PDF viewer.
+3. Click the compile icon or press F6. Repeat this process so that the index is
+   created.
+
+4. Open main.pdf from within TeXstudio. Click the page icon with the magnifying glass. main.pdf should open inline on the right-hand side. Click the red PDF icon as the top of the inline PDF to open in your external PDF viewer.
 
 #### Notes about directory structure and main.tex.
 
