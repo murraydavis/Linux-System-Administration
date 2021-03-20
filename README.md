@@ -1,4 +1,8 @@
-## Writing about Linux System Administration using LaTeX
+﻿## Writing about Linux System Administration using LaTeX
+
+### Revisions
+
+I have begun an update on March 20, 2021 working on a Fedora 33 build.
 
 ### A Latex Compiled Document on Exploring the Command Line for Linux System Administration
 
