@@ -31,12 +31,12 @@ Command name: user0:Make Nomenclature
 Command: makeindex %.nlo -t %.nlg -o %.nls 
 
 ### content/ch_handy.tex
-line 1121, I had to remove this line
-like  --format, but interpret backslash escapes, and do not out‐
+line 1121, I had to remove this line: 
+ like  --format, but interpret backslash escapes, and do not out‐
 
 ### content/ch_manuals.tex
-line 458, I had to remove these lines
-These  functions  return  information  about  a file, in the buffer pointed to
+line 458, I had to remove these lines:
+ These  functions  return  information  about  a file, in the buffer pointed to
 by stat.  No permissions are required on the file itself, but—in the case of
 stat(), fstatat(), and lstat()—execute (search)  permission is required on all
 of the directories in pathname that lead to the file.
