@@ -1,5 +1,12 @@
 ## Compile of main.tex did not work...on a Fedora 33 system.
 
+My original build was completed in 2017. I compiled it on a Fedora 25 system.
+In March, 2021, I cloned the Linux-System-Administration repos to my new box
+that had Fedora 33 installed and a recent version of TeX.
+
+I tried to compile main.tex using TeXStudio, but serveral errors were thrown. This is how
+I fixed the compile errors.
+
 ### My system
 $ tex --version
 TeX 3.14159265 (TeX Live 2020)
