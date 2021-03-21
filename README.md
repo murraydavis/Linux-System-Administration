@@ -6,7 +6,7 @@ I began an update on March 20, 2021 working on a Fedora 33 build. See:
 REVISION.MAR20.2021.md for the revisions needed to get main.tex to compile
 correctly.
 
-### A Latex Compiled Document on Exploring the Command Line for Linux System Administration
+### A Latex Compiled Document on Linux System Administration using the command line
 
 This article is principally about one thing: working at the command line using Linux builtin commands and [Gnu Coreutils](http://www.gnu.org/software/coreutils/coreutils.html). If you become proficient at the command line, you will have mastered an important piece of becoming a Linux System Administrator. I wrote this book using the LaTeX typesetting system, thus the title of this article is: Writing about Linux System Administration using LaTeX.
 
@@ -102,7 +102,7 @@ I also cloned this project to Sourceforge. It is available at: [Linux-System-Adm
 
 The following steps are for those who wish to clone my project files and compile main.tex to produce main.pdf.
 
-1. First clone the project to your PC. You typically will do this using the web command provided by github...the green Cone or Download button. 
+1. First clone the project to your PC. You typically will do this using the web command provided by github...the green Cone or Download button.
 
 ```
 cd yourdirectory
@@ -125,7 +125,7 @@ drwxr-xr-x. 2 you yourgroup    4096 Dec  1 18:49 literature
 drwxr-xr-x. 2 you yourgroup    4096 Dec  1 18:49 settings
 ```
 
-This download preserved the document structure. You can now compile main.tex. I uploaded main.pdf to the github project so users could simple get that document without having to compile the source code. 
+This download preserved the document structure. You can now compile main.tex. I uploaded main.pdf to the github project so users could simple get that document without having to compile the source code.
 
 #### Compile at the command line.
 
